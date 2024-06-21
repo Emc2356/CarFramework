@@ -1,0 +1,2 @@
+for now i am not importing stb via git submodules as i only use stb_image
+in the future if i use more parts of the stb project this will be a git submodule
