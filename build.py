@@ -883,7 +883,7 @@ def define_details() -> None:
     Executable(
         name="sandbox.out",
         sources=[
-            SourceFile("SandBox/src/main.cpp", watches=["./Car/include/Car/Core/Core.hpp"]),
+            "SandBox/src/main.cpp",
         ],
         extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
         extra_link_flags=[],

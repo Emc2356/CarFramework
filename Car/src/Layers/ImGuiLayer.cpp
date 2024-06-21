@@ -52,7 +52,7 @@ namespace Car {
 		// Setup Platform/Renderer bindings
 		#if defined(CR_OPENGL)
 			ImGui_ImplGlfw_InitForOpenGL(window, true);
-		ImGui_ImplOpenGL3_Init("#version 410");
+			ImGui_ImplOpenGL3_Init("#version 410");
 		#else
 		#error only opengl is supported right now
 		#endif
