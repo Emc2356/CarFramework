@@ -61,7 +61,7 @@ def define_details() -> None:
         extra_build_flags=[],
         extra_defines=[]
     )
-    
+
     StaticLibrary(
         name="ImGui",
         out_filepath="./libraries/",
@@ -151,6 +151,7 @@ def define_details() -> None:
             "./vendor/imgui/",
             "./vendor/glm/",
             "./vendor/debugbreak/",
+            "./vendor/entt/src/",
         ],
     )
 
@@ -169,6 +170,7 @@ def define_details() -> None:
             "./vendor/imgui/",
             "./vendor/glm/",
             "./vendor/debugbreak/",
+            "./vendor/entt/src/",
         ],
         libraries=[
             "GL",

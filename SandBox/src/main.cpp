@@ -93,4 +93,6 @@ private:
     glm::vec3 mPosition = glm::vec3(0.0f);
 };
 
-Car::Application *Car::createApplication() { return new Sandbox(); }
+Car::Application *Car::createApplication() {
+    return new Sandbox();
+}
