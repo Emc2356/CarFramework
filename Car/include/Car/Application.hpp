@@ -10,8 +10,6 @@
 #include "Car/Layers/ImGuiLayer.hpp"
 #include "Car/Window.hpp"
 
-#include <stdio.h>
-
 
 namespace Car {
 	class Application {
