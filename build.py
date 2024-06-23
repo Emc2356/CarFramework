@@ -4,7 +4,7 @@ from BuildIt import *
 import sys
 
 
-@build_spec
+@buildspec
 def glfw_posix():
     StaticLibrary(
         name="glfw",
@@ -45,7 +45,7 @@ def glfw_posix():
     )
 
 
-@build_spec
+@buildspec
 def glfw_windows() -> None:
     StaticLibrary(
         name="glfw",
@@ -85,7 +85,7 @@ def glfw_windows() -> None:
     )
 
 
-@build_spec
+@buildspec
 def define_details() -> None:
     Compiler.set_toolchain("GNU")
     Compiler.set_c_standard(17)
