@@ -140,14 +140,10 @@ namespace Car {
     }
 
     Ref<Texture2D> Texture2D::Create(const std::string& filepath, bool flipped, Format format, Format internalFormat, Type type) {
-        // TODO: this
-        auto ret = createRef<OpenGLTexture2D>(filepath, flipped, format, internalFormat, type);
-        return *(Ref<Texture2D>*)&ret;
+        return createRef<OpenGLTexture2D>(filepath, flipped, format, internalFormat, type);
     }
 
     Ref<Texture2D> Texture2D::Create(uint32_t width, uint32_t height, uint8_t* buffer, Format format, Format internalFormat, Type type) {
-        // TODO: this
-        auto ret = createRef<OpenGLTexture2D>(width, height, buffer, internalFormat, format, type);
-        return *(Ref<Texture2D>*)&ret;
+        return createRef<OpenGLTexture2D>(width, height, buffer, internalFormat, format, type);
     }
 }

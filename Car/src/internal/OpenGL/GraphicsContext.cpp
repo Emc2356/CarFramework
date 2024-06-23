@@ -64,7 +64,7 @@ void APIENTRY crGlDebugCallback(GLenum source, GLenum type, GLuint id,
 
 namespace Car {
 	OpenGLGraphicsContext::OpenGLGraphicsContext(GLFWwindow* windowHandle) : mWindowHandle(windowHandle) {
-        // TODO add asserts 
+        CR_ASSERT(windowHandle, "Interal Error: null window handle sent to gl graphics context");
 	}
 
 	void OpenGLGraphicsContext::init() {

@@ -32,7 +32,6 @@ namespace Car {
     void Application::run() {
         mImGuiLayer.onAttach();
         while (isRunning) {
-            // TODO: calculate DT
             double time = Time::Get();
             Timestep dt = time - mLastFrameTime;
             mLastFrameTime = time;

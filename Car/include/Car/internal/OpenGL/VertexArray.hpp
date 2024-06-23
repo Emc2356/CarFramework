@@ -4,7 +4,7 @@
 
 
 namespace Car {
-    class OpenGLVertexArray : VertexArray {
+    class OpenGLVertexArray : public VertexArray {
     public:
         OpenGLVertexArray(Ref<VertexBuffer> vb, Ref<IndexBuffer> ib, Ref<Shader> shader);
         virtual ~OpenGLVertexArray() override;

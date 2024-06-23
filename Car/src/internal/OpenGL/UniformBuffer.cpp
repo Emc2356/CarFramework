@@ -31,8 +31,6 @@ namespace Car {
 	}
 
     Ref<Car::UniformBuffer> UniformBuffer::Create(uint32_t size, uint32_t binding, Buffer::Usage usage) {
-        // TODO: this
-        auto ret = createRef<OpenGLUniformBuffer>(size, binding, usage);
-        return *(Ref<UniformBuffer>*)&ret;
+        return createRef<OpenGLUniformBuffer>(size, binding, usage);
     }
 }

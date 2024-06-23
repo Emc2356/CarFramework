@@ -5,7 +5,7 @@
 
 
 namespace Car {
-    class OpenGLRenderer : Renderer {
+    class OpenGLRenderer : public Renderer {
     protected:
         virtual void InitImpl() override;
         virtual void ClearColorImpl(float r, float g, float b, float a) override;

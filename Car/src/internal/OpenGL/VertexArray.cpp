@@ -29,8 +29,6 @@ namespace Car {
 
 
     Ref<VertexArray> VertexArray::Create(Ref<VertexBuffer> vb, Ref<IndexBuffer> ib, Ref<Shader> shader) {
-        // TODO: this
-        auto ret = createRef<OpenGLVertexArray>(vb, ib, shader);
-        return *(Ref<VertexArray>*)&ret;
+        return createRef<OpenGLVertexArray>(vb, ib, shader);
     }
 }

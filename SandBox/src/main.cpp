@@ -36,6 +36,12 @@ public:
         mVao = Car::VertexArray::Create(vbo, ibo, mShader);
 
         mTexture = Car::Texture2D::Create("resources/images/pg_np.png", true);
+
+        /*
+        Car::Entity entity = Car::ESC::newEnity();
+        Car::ECS::Attach<PositionComponent>(entity, glm::vec2(0.0, 0.0));
+        Car::ECS::Attach<SpriteComponent>(entity, Rect(x, y, w, h), spritesheet);
+        */
     }
 
     virtual ~Sandbox() override {} 
