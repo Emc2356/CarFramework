@@ -4,7 +4,7 @@ import sys
 import os
 
 
-def define(platform_or_func):
+def build_spec(platform_or_func):
     if callable(platform_or_func):
         if "win" in platform_or_func.__name__:
             if "win" in sys.platform:
