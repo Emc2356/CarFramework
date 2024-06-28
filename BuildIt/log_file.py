@@ -3,19 +3,19 @@ import os
 
 
 class LogFile:
-    data: dict[str, float] = {}
-    log_file: Path = Path.cwd() / "build" / "log.log"
-    is_loaded: bool = False
+    data = {}
+    log_file = Path.cwd() / "build" / "log.log"
+    is_loaded = False
 
     @classmethod
-    def update(cls, file) -> None:
+    def update(cls, file):
         if not cls.is_loaded:
             cls.load()
             cls.is_loaded = True
         cls.set(str(file), os.path.getmtime(str(file)))
 
     @classmethod
-    def set(cls, name: str, time: float) -> None:
+    def set(cls, name, time):
         if not cls.is_loaded:
             cls.load()
             cls.is_loaded = True
@@ -23,14 +23,14 @@ class LogFile:
         cls.save()
 
     @classmethod
-    def get(cls, name: str) -> float:
+    def get(cls, name):
         if not cls.is_loaded:
             cls.load()
             cls.is_loaded = True
         return cls.data.get(name, 0)
 
     @classmethod
-    def load(cls) -> None:
+    def load(cls):
         cls.log_file.parent.mkdir(exist_ok=True)
         cls.log_file.touch(exist_ok=True)
 
@@ -43,7 +43,7 @@ class LogFile:
             cls.data[lines[i]] = float(lines[j])
 
     @classmethod
-    def save(cls) -> None:
+    def save(cls) :
         with cls.log_file.open("w") as f:
             for name, time in cls.data.items():
                 f.write(f"{name}\n{time}\n")

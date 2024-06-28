@@ -1,16 +1,16 @@
-from BuildIt.logger import Logger
+from .logger import Logger
 
 import subprocess
 
 
 class CommandQueue:
-    size: int = 1
-    queue: list[list[str]] = []
-    messages: list[str] = []
-    fail_messages: list[str] = []
+    size = 1
+    queue = []
+    messages = []
+    fail_messages = []
 
     @classmethod
-    def add(cls, command: list[str], message: str, fail_message: str) -> None:
+    def add(cls, command, message, fail_message) -> None:
         cls.queue.append(command)
         cls.messages.append(message)
         cls.fail_messages.append(fail_message)

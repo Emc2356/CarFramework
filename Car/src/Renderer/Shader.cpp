@@ -8,11 +8,9 @@ namespace Car {
         // TODO: make shaderc work properly, or at least fucking compile
         // so we have something proper and not this shit
 
-        const auto shader = Shader::CreateImpl(
+        return Shader::CreateImpl(
             readFile("./resources/shaders/" + vertexShaderName),
             readFile("./resources/shaders/" + fragmeantShaderName)
-        );
-
-        return shader;
+        );;
     }
 }

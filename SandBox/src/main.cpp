@@ -8,7 +8,7 @@
 class Sandbox : public Car::Application {
 public:
     Sandbox() : mCamera(16.0f/9.0f, 2) {
-        Car::Renderer::EnableBlending();
+        Car::Renderer2D::EnableBlending();
 
         std::vector<float> vertices = {
             -0.5,  0.5 , 0.0,  1.0, // top left
@@ -53,6 +53,11 @@ public:
         ImGui::ShowDemoWindow(&demo);
         ImGui::Begin("Time");
         ImGui::Text("dt=%lf", dt);
+        static bool v = true;
+        if (ImGui::Button("Vsync", {200, 100})) {
+            v = !v;
+            getWindow()->setVSync(v);
+        }
         ImGui::End();
     }
 
@@ -78,17 +83,16 @@ public:
     void onRender() override {
         mCamera.setPosition(mPosition);
         mCamera.setRotation(mRotation);
-        Car::Renderer::BeginScene(mCamera);
+        Car::Renderer2D::BeginScene(mCamera);
 
-        Car::Renderer::ClearColor(0x1C1C1CFFu);
-        Car::Renderer::Clear();
-
+        Car::Renderer2D::ClearColor(0x1C1C1CFFu);
+        Car::Renderer2D::Clear();
+ 
         mTexture->bind(5);
 
-        Car::Renderer::DrawTriangles(mVao);
+        Car::Renderer2D::DrawTriangles(mVao);
 
-
-        Car::Renderer::EndScene();
+        Car::Renderer2D::EndScene();
     }
 private:
     Car::Ref<Car::VertexArray> mVao;

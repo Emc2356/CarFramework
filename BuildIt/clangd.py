@@ -1,23 +1,24 @@
 from pathlib import Path
 
-from BuildIt.register import Register
-from BuildIt.compiler import Compiler
-from BuildIt.logger import Logger
+from .register import Register
+from .build import Functions
+from .compiler import Compiler
+from .logger import Logger
 
 import json
 
 
 def generate_clangd_commands() -> None:
+    Functions.execute()
     result = []
-
     for static_library in Register().static_libraries:
         c_build_command, cxx_build_command = Compiler.construct_build_command(static_library)
 
         for source_file in static_library.sources:
             Logger.info(f"generating command for {source_file}")
-            if source_file.has_suffx(".cpp") or source_file.has_suffx(".cc"):
+            if source_file.has_suffix(".cpp") or source_file.has_suffix(".cc"):
                 build_command = cxx_build_command
-            elif source_file.has_suffx(".c"):
+            elif source_file.has_suffix(".c"):
                 build_command = c_build_command
             else:
                 Logger.warn(f"unrecognized file extension `{source_file.path.suffix}` for {source_file}, assuming C++")
@@ -32,9 +33,9 @@ def generate_clangd_commands() -> None:
         c_build_command, cxx_build_command = Compiler.construct_build_command(executable)
 
         for source_file in executable.sources:
-            if source_file.has_suffx(".cpp") or source_file.has_suffx(".cc"):
+            if source_file.has_suffix(".cpp") or source_file.has_suffix(".cc"):
                 build_command = cxx_build_command
-            elif source_file.has_suffx(".c"):
+            elif source_file.has_suffix(".c"):
                 build_command = c_build_command
             else:
                 Logger.warn(f"unrecognized file extension `{source_file.path.suffix}` for {source_file}, assuming C++")

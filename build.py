@@ -1,11 +1,21 @@
 #!/usr/bin/env python
 
 from BuildIt import *
+import subprocess
 import sys
 
 
 @buildspec
-def glfw_posix():
+def pch_posix_gnu_clang() -> None:
+    PreCompiledHeader(
+        source="./Car/include/Car/Core/crpch.hpp",
+        extra_build_flags=[],
+        extra_defines=[]
+    )
+
+
+@buildspec
+def glfw_posix_gnu_clang() -> None:
     StaticLibrary(
         name="glfw",
         out_filepath="./libraries/",
@@ -37,21 +47,19 @@ def glfw_posix():
         ],
         extra_defines=[
             ("_GLFW_X11",),
+            ("_POSIX_C_SOURCE", "200809L"),
         ],
-        include_directories=[
-            "./vendor/glfw/include/",
-        ],
+        include_directories=[],
         depends_on=[]
     )
 
 
 @buildspec
-def glfw_windows() -> None:
+def glfw_windows_gnu_clang() -> None:
     StaticLibrary(
         name="glfw",
         out_filepath="./libraries/",
         sources=[
-            "./vendor/glfw/src/glfw_config.h",
             "./vendor/glfw/src/context.c",
             "./vendor/glfw/src/init.c",
             "./vendor/glfw/src/input.c",
@@ -78,34 +86,42 @@ def glfw_windows() -> None:
             ("_GLFW_WIN32",),
             ("_CRT_SECURE_NO_WARNINGS",),
         ],
-        include_directories=[
-            "./vendor/glfw/include/",
-        ],
+        include_directories=[],
         depends_on=[]
     )
 
 
 @buildspec
-def define_details() -> None:
-    Compiler.set_toolchain("GNU")
-    Compiler.set_c_standard(17)
-    Compiler.set_cxx_standard(17)
-    Compiler.add_build_flags("-g3", "-Og")
-
-    Compiler.add_define("DEBUG")
-    Compiler.add_define("_DEBUG", "1")
-    Compiler.add_define("CR_DEBUG")
-
-    PreCompiledHeader(
-        source="./Car/include/Car/Core/crpch.hpp",
-        extra_build_flags=[],
-        extra_defines=[]
+def glad_posix_gnu_clang() -> None:
+    StaticLibrary(
+        name="glad",
+        out_filepath="./libraries/",
+        sources=[
+            "./vendor/glad/src/gl.c",
+            "./vendor/glad/src/vulkan.c",
+        ],
+        include_directories=[],
     )
 
+
+@buildspec
+def stb_posix_gnu_clang() -> None:
+    StaticLibrary(
+        name="stb",
+        out_filepath="./libraries/",
+        sources=[
+            "./vendor/stb/src/stb_image.c"
+        ],
+        include_directories=[],
+    )
+
+
+@buildspec
+def imgui_posix_gnu_clang() -> None:
     StaticLibrary(
         name="ImGui",
         out_filepath="./libraries/",
-            sources=[
+        sources=[
             "./vendor/imgui/imgui_demo.cpp",
             "./vendor/imgui/imgui_draw.cpp",
             "./Car/src/ext/ImGui/imgui_impl_car.cpp",
@@ -118,39 +134,15 @@ def define_details() -> None:
         extra_defines=[
             ("GLFW_INCLUDE_NONE",),
         ],
-        include_directories=[
-            "./Car/include/",
-            "./vendor/imgui/",
-            "./vendor/glad/include/",
-            "./vendor/glfw/include/",
-            "./vendor/debugbreak/",
-        ],
+        include_directories=[],
         depends_on=[
             "glad"
         ]
     )
-    StaticLibrary(
-        name="glad",
-        out_filepath="./libraries/",
-        sources=[
-            "./vendor/glad/src/gl.c",
-            "./vendor/glad/src/vulkan.c",
-        ],
-        include_directories=[
-            "./vendor/glad/include/",
-        ],
-    )
-    StaticLibrary(
-        name="stb",
-        out_filepath="./libraries/",
-        sources=[
-            "./vendor/stb/src/stb_image.c"
-        ],
-        include_directories=[
-            "./vendor/stb/include/",
-        ],
-    )
 
+
+@buildspec(BuildSpecFlags.GNU | BuildSpecFlags.CLANG | BuildSpecFlags.POSIX)
+def car_engine_posix_gnu_clang() -> None:
     StaticLibrary(
         name="Car",
         out_filepath="./libraries/",
@@ -161,11 +153,14 @@ def define_details() -> None:
             "./Car/src/Layers/Layer.cpp",
             "./Car/src/Layers/ImGuiLayer.cpp",
             "./Car/src/Layers/LayerStack.cpp",
+            "./Car/src/Scene/UUID.cpp",
+            "./Car/src/Scene/Scene.cpp",
             "./Car/src/Renderer/Buffer.cpp",
             "./Car/src/Renderer/Shader.cpp",
             "./Car/src/internal/GLFW/Window.cpp",
             "./Car/src/internal/GLFW/Input.cpp",
             "./Car/src/internal/GLFW/Time.cpp",
+            "./Car/src/internal/OpenGL/Renderer2D.cpp",
             "./Car/src/internal/OpenGL/GraphicsContext.cpp",
             "./Car/src/internal/OpenGL/Shader.cpp",
             "./Car/src/internal/OpenGL/IndexBuffer.cpp",
@@ -173,7 +168,6 @@ def define_details() -> None:
             "./Car/src/internal/OpenGL/VertexArray.cpp",
             "./Car/src/internal/OpenGL/UniformBuffer.cpp",
             "./Car/src/internal/OpenGL/Texture2D.cpp",
-            "./Car/src/internal/OpenGL/Renderer.cpp",
         ],
         extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
         extra_defines=[
@@ -183,17 +177,30 @@ def define_details() -> None:
         depends_on=[
             "ImGui", "glad", "stb", "glfw"
         ],
-        include_directories=[
-            "./Car/include/",
-            "./vendor/stb/include/",
-            "./vendor/glad/include/",
-            "./vendor/glfw/include/",
-            "./vendor/imgui/",
-            "./vendor/glm/",
-            "./vendor/debugbreak/",
-            "./vendor/entt/src/",
-        ],
+        include_directories=[],
     )
+
+
+@buildspec(BuildSpecFlags.CORE | BuildSpecFlags.POSIX | BuildSpecFlags.WINDOWS, __name__ == "__main__")
+def core_win_posix() -> None:
+    Compiler.set_toolchain(Toolchain.CLANG)
+    Compiler.set_c_standard(17)
+    Compiler.set_cxx_standard(17)
+    # Compiler.add_build_flags("-O3", "-g0")
+    Compiler.add_build_flags("-O0", "-g3")
+
+    Compiler.add_define("DEBUG")
+    Compiler.add_define("_DEBUG", "1")
+    Compiler.add_define("CR_DEBUG")
+
+    Compiler.add_include_directory("./Car/include/")
+    Compiler.add_include_directory("./vendor/stb/include/")
+    Compiler.add_include_directory("./vendor/glad/include/")
+    Compiler.add_include_directory("./vendor/glfw/include/")
+    Compiler.add_include_directory("./vendor/imgui/")
+    Compiler.add_include_directory("./vendor/glm/")
+    Compiler.add_include_directory("./vendor/debugbreak/")
+    Compiler.add_include_directory("./vendor/entt/src/")
 
     Executable(
         name="sandbox.out",
@@ -202,16 +209,7 @@ def define_details() -> None:
         ],
         extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
         extra_link_flags=[],
-        include_directories=[
-            "./Car/include/",
-            "./vendor/stb/include/",
-            "./vendor/glad/include/",
-            "./vendor/glfw/include/",
-            "./vendor/imgui/",
-            "./vendor/glm/",
-            "./vendor/debugbreak/",
-            "./vendor/entt/src/",
-        ],
+        include_directories=[],
         libraries=[
             "GL",
             "fmt",
@@ -220,6 +218,24 @@ def define_details() -> None:
             ("GLFW_INCLUDE_NONE",),
         ]
     )
+
+
+@unknown_argument
+def unknown_arg(arg: str) -> bool:
+    if arg == "--deps":
+        print("getting dependencies")
+
+        returncode = subprocess.run(["git", "submodule", "init"]).returncode
+        if returncode != 0:
+            print("failed to initialize git submodules")
+            exit(1)
+        returncode = subprocess.run(["git", "submodule", "update"]).returncode
+        if returncode != 0:
+            print("failed to update git submodules")
+            exit(1)
+        return True
+
+    return False
 
 
 if __name__ == "__main__":

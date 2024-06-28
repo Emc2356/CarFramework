@@ -1,4 +1,5 @@
 #include "Car/internal/OpenGL/Shader.hpp"
+#include "Car/Core/Log.hpp"
 
 #include <glad/gl.h>
 

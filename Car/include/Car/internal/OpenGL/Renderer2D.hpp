@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Car/OrthographicCamera.hpp"
-#include "Car/Renderer/Renderer.hpp"
+#include "Car/Renderer/Renderer2D.hpp"
 
 
 namespace Car {
-    class OpenGLRenderer : public Renderer {
+    class OpenGLRenderer2D : public Renderer2D {
     protected:
         virtual void InitImpl() override;
         virtual void ClearColorImpl(float r, float g, float b, float a) override;
@@ -14,5 +14,6 @@ namespace Car {
         virtual void EndSceneImpl() override;
         virtual void EnableBlendingImpl() override;
         virtual void DrawTrianglesImpl(const Ref<VertexArray> va) override;
+        virtual void DrawSceneImpl(Ref<Scene> scene) override; 
     };
 }

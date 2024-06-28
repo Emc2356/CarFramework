@@ -1,34 +1,31 @@
-from __future__ import annotations
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
-from BuildIt.logger import Logger
+from .logger import Logger
 
 if TYPE_CHECKING:
-    from BuildIt.static_library import StaticLibrary
-    from BuildIt.precompiled_header import PreCompiledHeader
-    from BuildIt.executable import Executable
-
-
+    from .static_library import StaticLibrary
+    from .precompiled_header import PreCompiledHeader
+    from .executable import Executable
 
 
 class Register:
     __slots__ = ("precompiled_headers", "static_libraries", "executables")
 
-    __instance: Optional["Register"] = None
+    _instance = None
 
-    def __new__(cls, *args, **kwargs) -> "Register":
-        if cls.__instance is None:
-            cls.__instance = super(Register, cls).__new__(cls, *args, **kwargs)
-            cls.__instance.__init()
-        return cls.__instance
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(Register, cls).__new__(cls, *args, **kwargs)
+            cls._instance.__init()
+        return cls._instance
 
-    def __init(self):
-        self.precompiled_headers: list["PreCompiledHeader"] = []
-        self.static_libraries: list["StaticLibrary"] = []
-        self.executables: list["Executable"] = []
+    def __init(self) -> None:
+        self.precompiled_headers = []
+        self.static_libraries = []
+        self.executables = []
 
     @staticmethod
-    def submit(other: Union["PreCompiledHeader", "StaticLibrary", "Executable"]) -> None:
+    def submit(other):
         from BuildIt.static_library import StaticLibrary
         from BuildIt.precompiled_header import PreCompiledHeader
         from BuildIt.executable import Executable

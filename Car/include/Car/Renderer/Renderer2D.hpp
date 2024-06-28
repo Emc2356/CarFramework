@@ -6,9 +6,11 @@
 #include "Car/Renderer/UniformBuffer.hpp"
 #include "Car/Renderer/VertexArray.hpp"
 
+#include "Car/Scene/Scene.hpp"
+
 
 namespace Car {
-    class Renderer {
+    class Renderer2D {
     public:
         static void Init() { sInstance->InitImpl(); }
 
@@ -27,6 +29,8 @@ namespace Car {
         static void EnableBlending() { sInstance->EnableBlendingImpl(); }
 
         static void DrawTriangles(const Ref<VertexArray> va) { sInstance->DrawTrianglesImpl(va); }
+
+        static void DrawScene(Ref<Scene> scene) { sInstance->DrawSceneImpl(scene); }
     protected:
         virtual void InitImpl() = 0;
         virtual void ClearColorImpl(float r, float g, float b, float a) = 0;
@@ -35,9 +39,10 @@ namespace Car {
         virtual void EndSceneImpl() = 0;
         virtual void EnableBlendingImpl() = 0;
         virtual void DrawTrianglesImpl(const Ref<VertexArray> va) = 0;
+        virtual void DrawSceneImpl(Ref<Scene> scene) = 0;
     protected:
         Ref<UniformBuffer> mCarUniformBuffer;
     private:
-        static Car::Renderer* sInstance;
+        static Car::Renderer2D* sInstance;
     };
 }

@@ -1,5 +1,5 @@
 #include "Car/Application.hpp"
-#include "Car/Renderer/Renderer.hpp"
+#include "Car/Renderer/Renderer2D.hpp"
 #include "Car/Time.hpp"
 
 
@@ -17,7 +17,7 @@ namespace Car {
         mWindow = Car::Window::Create();
         mWindow->setEventCallback(CR_BIND_FN1(Car::Application::onEvent));
 
-        Renderer::Init();
+        Renderer2D::Init();
     }
 
     Application::~Application() {

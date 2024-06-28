@@ -21,9 +21,16 @@
 #include "Car/Utils.hpp"
 
 /////////////////////////////////////////
+///////////////// SCENE /////////////////
+/////////////////////////////////////////
+#include "Car/Scene/Scene.hpp"
+#include "Car/Scene/Entity.hpp"
+#include "Car/Scene/UUID.hpp"
+
+/////////////////////////////////////////
 /////////// RENDERING ITEMS /////////////
 /////////////////////////////////////////
-#include "Car/Renderer/Renderer.hpp"
+#include "Car/Renderer/Renderer2D.hpp"
 #include "Car/Renderer/Shader.hpp"
 #include "Car/Renderer/VertexArray.hpp"
 #include "Car/Renderer/Texture2D.hpp"

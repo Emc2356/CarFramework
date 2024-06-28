@@ -8,6 +8,7 @@
 #include <memory>
 #include <stdexcept>
 #include <chrono>
+#include <random>
 
 #include <initializer_list>
 
