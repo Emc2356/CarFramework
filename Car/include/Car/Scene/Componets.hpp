@@ -36,7 +36,6 @@ namespace Car {
 		glm::vec3 scale = { 1.0f, 1.0f, 1.0f };
 
 		TransformComponent() = default;
-		TransformComponent(const TransformComponent&) = default;
 		TransformComponent(const glm::vec3& translation)
 			: translation(translation) {}
 
@@ -55,7 +54,6 @@ namespace Car {
 	struct SpriteComponent {
     public:
 		SpriteComponent() = default;
-		SpriteComponent(const SpriteComponent&) = default;
         SpriteComponent(const Ref<Texture2D>& texture, uint32_t x, uint32_t y, uint32_t w, uint32_t h)  : texture(texture), rect(x, y, w, h) {}
         SpriteComponent(const Ref<Texture2D>& texture, const Rect& r) : texture(texture), rect(r) {}
 		SpriteComponent(const Ref<Texture2D>& texture) : texture(texture), rect(0, 0, texture->getWidth(), texture->getHeight()) {}
