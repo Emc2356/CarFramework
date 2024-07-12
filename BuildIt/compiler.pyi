@@ -9,10 +9,10 @@ from .precompiled_header import PreCompiledHeader
 
 
 class Toolchain(enum.IntEnum):
-    NONE: int
-    GNU: int
-    CLANG: int
-    MSVC: int
+    NONE: Toolchain
+    GNU: Toolchain
+    CLANG: Toolchain
+    MSVC: Toolchain
 
 
 class Compiler:

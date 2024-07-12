@@ -6,7 +6,7 @@ import sys
 
 
 @buildspec
-def pch_posix_gnu_clang() -> None:
+def pch_windows_posix_gnu_clang() -> None:
     PreCompiledHeader(
         source="./Car/include/Car/Core/crpch.hpp",
         extra_build_flags=[],
@@ -92,7 +92,7 @@ def glfw_windows_gnu_clang() -> None:
 
 
 @buildspec
-def glad_posix_gnu_clang() -> None:
+def glad_windows_posix_gnu_clang() -> None:
     StaticLibrary(
         name="glad",
         out_filepath="./libraries/",
@@ -105,7 +105,7 @@ def glad_posix_gnu_clang() -> None:
 
 
 @buildspec
-def stb_posix_gnu_clang() -> None:
+def stb_windows_posix_gnu_clang() -> None:
     StaticLibrary(
         name="stb",
         out_filepath="./libraries/",
@@ -117,7 +117,7 @@ def stb_posix_gnu_clang() -> None:
 
 
 @buildspec
-def imgui_posix_gnu_clang() -> None:
+def imgui_windows_posix_gnu_clang() -> None:
     StaticLibrary(
         name="ImGui",
         out_filepath="./libraries/",
@@ -141,8 +141,8 @@ def imgui_posix_gnu_clang() -> None:
     )
 
 
-@buildspec(BuildSpecFlags.GNU | BuildSpecFlags.CLANG | BuildSpecFlags.POSIX)
-def car_engine_posix_gnu_clang() -> None:
+@buildspec
+def car_engine_windows_posix_gnu_clang() -> None:
     StaticLibrary(
         name="Car",
         out_filepath="./libraries/",
@@ -153,18 +153,18 @@ def car_engine_posix_gnu_clang() -> None:
             "./Car/src/Layers/Layer.cpp",
             "./Car/src/Layers/ImGuiLayer.cpp",
             "./Car/src/Layers/LayerStack.cpp",
-            "./Car/src/Scene/UUID.cpp",
-            "./Car/src/Scene/Scene.cpp",
             "./Car/src/Renderer/Buffer.cpp",
             "./Car/src/Renderer/Shader.cpp",
+            "./Car/src/Renderer/Renderer2D.cpp",
             "./Car/src/internal/GLFW/Window.cpp",
             "./Car/src/internal/GLFW/Input.cpp",
             "./Car/src/internal/GLFW/Time.cpp",
-            "./Car/src/internal/OpenGL/Renderer2D.cpp",
+            "./Car/src/internal/OpenGL/Renderer.cpp",
             "./Car/src/internal/OpenGL/GraphicsContext.cpp",
             "./Car/src/internal/OpenGL/Shader.cpp",
             "./Car/src/internal/OpenGL/IndexBuffer.cpp",
             "./Car/src/internal/OpenGL/VertexBuffer.cpp",
+            "./Car/src/internal/OpenGL/SSBO.cpp",
             "./Car/src/internal/OpenGL/VertexArray.cpp",
             "./Car/src/internal/OpenGL/UniformBuffer.cpp",
             "./Car/src/internal/OpenGL/Texture2D.cpp",
@@ -186,8 +186,8 @@ def core_win_posix() -> None:
     Compiler.set_toolchain(Toolchain.CLANG)
     Compiler.set_c_standard(17)
     Compiler.set_cxx_standard(17)
-    # Compiler.add_build_flags("-O3", "-g0")
-    Compiler.add_build_flags("-O0", "-g3")
+    # Compiler.add_build_flags("-O3")
+    Compiler.add_build_flags("-g")
 
     Compiler.add_define("DEBUG")
     Compiler.add_define("_DEBUG", "1")
@@ -206,6 +206,10 @@ def core_win_posix() -> None:
         name="sandbox.out",
         sources=[
             "SandBox/src/main.cpp",
+        ],
+        # TODO: Implement this system
+        static_libraries=[
+            "Car",
         ],
         extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
         extra_link_flags=[],

@@ -89,7 +89,7 @@ class Compiler:
     def construct_build_command_gnu(cls, other, ignore_pch):
         command_c: list[str] = [
             cls.c_compiler,
-            f"-std={cls.c_standard}",
+            f"-std=c{cls.c_standard}",
         ]
         command_cxx: list[str] = [
             cls.cxx_compiler,

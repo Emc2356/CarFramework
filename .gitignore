@@ -3,9 +3,14 @@
 compile_commands.json
 imgui.ini
 /.vscode
+/.zed
 /.cache
 /.mypy_cache
 **/__pycache__
+
+# profiling files
+*perf.*
+analysis.txt
 
 # Prerequisites
 *.d

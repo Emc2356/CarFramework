@@ -27,16 +27,14 @@ namespace Car {
         virtual void setRepeatX(bool v) = 0;
         virtual void setRepeatY(bool v) = 0;
 
-        uint32_t getWidth() const { return mWidth; }
-        uint32_t getHeight() const { return mHeight; }
-        uint32_t getBPP() const { return mBPP; }
+        virtual uint32_t getWidth() const = 0;
+        virtual uint32_t getHeight() const = 0;
+        virtual uint32_t getBPP() const = 0;
+
+        virtual bool operator==(Ref<Texture2D> other) const = 0;
+        virtual bool operator!=(Ref<Texture2D> other) const = 0;
 
         static Ref<Texture2D> Create(const std::string& filepath, bool flipped=false, Format format=Format::RGBA, Format internalFormat=Format::RGBA8, Type type=Type::Byte);
         static Ref<Texture2D> Create(uint32_t width, uint32_t height, uint8_t* buffer=nullptr, Format format=Format::RGBA, Format internalFormat=Format::RGBA8, Type type=Type::Byte);
-    public:
-        uint32_t mWidth;
-        uint32_t mHeight;
-        // bits per pixel
-        uint32_t mBPP;
     };
 }

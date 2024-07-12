@@ -1,47 +1,12 @@
 #include <Car/Car>
 
-#include <GLFW/glfw3.h>
-#include <glad/gl.h>
-
-
 
 class Sandbox : public Car::Application {
 public:
-    Sandbox() : mCamera(16.0f/9.0f, 2) {
-        Car::Renderer2D::EnableBlending();
+    Sandbox() {
+        Car::Renderer::EnableBlending();
 
-        std::vector<float> vertices = {
-            -0.5,  0.5 , 0.0,  1.0, // top left
-            0.5 ,  0.5 , 1.0,  1.0, // top right
-            0.5 ,  -0.5,1.0, 0.0, // bottom right
-            -0.5,-0.5,0.0, 0.0, // bottom left
-        };
-        Car::Ref<Car::VertexBuffer> vbo = Car::VertexBuffer::Create(vertices.data(), vertices.size(), Car::Buffer::Usage::StaticDraw, Car::Buffer::Type::Float);
-
-        Car::BufferLayout layout = {
-            {"iPos", Car::BufferLayout::DataType::Float2},
-            {"iUv", Car::BufferLayout::DataType::Float2},
-        }; 
-
-        vbo->setLayout(layout); 
-
-        std::vector<uint32_t> indices = {
-            0, 1, 2,
-            2, 3, 0
-        };
-        Car::Ref<Car::IndexBuffer> ibo = Car::IndexBuffer::Create(indices.data(), indices.size(), Car::Buffer::Usage::StaticDraw, Car::Buffer::Type::UnsignedInt);
-
-        mShader = Car::Shader::Create("texture.vert", "texture.frag");
-
-        mVao = Car::VertexArray::Create(vbo, ibo, mShader);
-
-        mTexture = Car::Texture2D::Create("resources/images/pg_np.png", true);
-
-        /*
-        Car::Entity entity = Car::ESC::newEnity();
-        Car::ECS::Attach<PositionComponent>(entity, glm::vec2(0.0, 0.0));
-        Car::ECS::Attach<SpriteComponent>(entity, Rect(x, y, w, h), spritesheet);
-        */
+        mTexture = Car::Texture2D::Create("resources/images/pg_np.png");
     }
 
     virtual ~Sandbox() override {} 
@@ -49,58 +14,34 @@ public:
     virtual bool onWindowCloseEvent(Car::WindowCloseEvent&) override { isRunning = false; return true; }
 
     virtual void onImGuiRender(double dt) override {
-        bool demo = true;
-        ImGui::ShowDemoWindow(&demo);
-        ImGui::Begin("Time");
-        ImGui::Text("dt=%lf", dt);
-        static bool v = true;
-        if (ImGui::Button("Vsync", {200, 100})) {
-            v = !v;
-            getWindow()->setVSync(v);
-        }
-        ImGui::End();
-    }
-
-    virtual void onUpdate(double dt) override {
-        if (Car::Input::IsKeyPressed(CR_KEY_LEFT)) {
-            mRotation += 360 * dt;
-        } else if (Car::Input::IsKeyPressed(CR_KEY_RIGHT)) {
-            mRotation -= 360 * dt;
-        }
-
-        if (Car::Input::IsKeyPressed(CR_KEY_A)) {
-            mPosition.x += 2 * dt;
-        } else if (Car::Input::IsKeyPressed(CR_KEY_D)) {
-            mPosition.x -= 2 * dt;
-        }
-        if (Car::Input::IsKeyPressed(CR_KEY_W)) {
-            mPosition.y -= 2 * dt;
-        } else if (Car::Input::IsKeyPressed(CR_KEY_S)) {
-            mPosition.y += 2 * dt;
-        }
+        UNUSED(dt);
+        ImGui::Begin("Performance");
+        
+        ImGui::Text("[FPS]: %f", 1/dt);
+        
+        ImGui::End();        
     }
 
     void onRender() override {
-        mCamera.setPosition(mPosition);
-        mCamera.setRotation(mRotation);
-        Car::Renderer2D::BeginScene(mCamera);
-
-        Car::Renderer2D::ClearColor(0x1C1C1CFFu);
-        Car::Renderer2D::Clear();
+        Car::Renderer::ClearColor(0.1f);
+        Car::Renderer::Clear();
  
-        mTexture->bind(5);
-
-        Car::Renderer2D::DrawTriangles(mVao);
-
-        Car::Renderer2D::EndScene();
+        Car::Renderer2D::Begin();
+        
+        auto [mX, mY] = Car::Input::MousePos();
+        
+        Car::Renderer2D::DrawTexture(mTexture, {mX , mY , 96, 96});
+        Car::Renderer2D::DrawTexture(mTexture, {256, 256, 96, 96});
+        
+        Car::Rect rect = {512, 512, 96, 96};
+        for (uint32_t i = 0; i < 19998; i++) {
+            Car::Renderer2D::DrawTexture(mTexture, rect);
+        }
+        
+        Car::Renderer2D::End();
     }
 private:
-    Car::Ref<Car::VertexArray> mVao;
-    Car::Ref<Car::Shader> mShader;
-    Car::OrthographicCamera mCamera;
     Car::Ref<Car::Texture2D> mTexture;
-    float mRotation = 0;
-    glm::vec3 mPosition = glm::vec3(0.0f);
 };
 
 Car::Application *Car::createApplication() {

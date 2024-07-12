@@ -1,19 +1,19 @@
 import enum
 
 class BuildSpecFlags(enum.IntFlag):
-    NONE: int
+    NONE: BuildSpecFlags
 
     # platforms
-    WINDOWS: int
-    POSIX: int
-    MACOS: int
+    WINDOWS: BuildSpecFlags
+    POSIX: BuildSpecFlags
+    MACOS: BuildSpecFlags
 
     # toolchains
-    GNU: int
-    CLANG: int
-    MSVC: int
+    GNU: BuildSpecFlags
+    CLANG: BuildSpecFlags
+    MSVC: BuildSpecFlags
 
     # special flags
-    CORE: int
+    CORE: BuildSpecFlags
 
     def to_str(self) -> str: ...

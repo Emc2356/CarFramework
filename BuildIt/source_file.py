@@ -36,10 +36,10 @@ class SourceFile:
         return LogFile.get(str(self.path)) != os.path.getmtime(str(self.path))
 
     def object_file_upto_date(self):
-        return not (
-                self.was_modified() and
-                self.to_object_filename().exists() and
-                all(x.was_modified() for x in self.watches)
+        return (
+            not self.was_modified() and
+            self.to_object_filename().exists() and
+            all(x.was_modified() for x in self.watches)
         )
 
     def has_suffix(self, suffix):
@@ -48,13 +48,11 @@ class SourceFile:
     def to_object_filename(self):
         from BuildIt.compiler import Compiler
 
-        build_dir = Compiler.build_directory
-        ret = Compiler.build_directory
-
-        for s in Path(self.path).parts:
-            if s in build_dir.parts:
-                continue
-            ret /= s
+        ret = Path(
+            os.path.commonpath([Compiler.build_directory, str(self.path.absolute())]),
+            "build",
+            str(self.path)
+        )
 
         return ret.with_suffix(".o")
 

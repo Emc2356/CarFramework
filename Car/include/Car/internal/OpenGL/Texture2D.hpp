@@ -16,11 +16,21 @@ namespace Car {
 
         virtual void bind(uint32_t slot=0) const override;
         virtual void unbind() const override;
+
+        virtual uint32_t getWidth() const override { return mWidth; }
+        virtual uint32_t getHeight() const override { return mHeight; }
+        virtual uint32_t getBPP() const override { return mBPP; }
+
+        virtual bool operator==(Ref<Texture2D> other) const override { return mID == ((OpenGLTexture2D*)other.get())->mID; }
+        virtual bool operator!=(Ref<Texture2D> other) const override { return mID != ((OpenGLTexture2D*)other.get())->mID; }
     
         virtual void setFilters(int min, int mag) override;
         virtual void setRepeatX(bool v) override;
         virtual void setRepeatY(bool v) override;
     private:
         uint32_t mID;
+        uint32_t mWidth;
+        uint32_t mHeight;
+        uint32_t mBPP;
     };
 }

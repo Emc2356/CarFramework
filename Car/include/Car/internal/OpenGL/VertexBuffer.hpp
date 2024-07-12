@@ -6,19 +6,27 @@
 namespace Car {
     class OpenGLVertexBuffer : public VertexBuffer {
     public:
-        OpenGLVertexBuffer(void* data, uint32_t count, Buffer::Usage usage, Buffer::Type type);
-        OpenGLVertexBuffer(uint32_t count, Buffer::Usage usage, Buffer::Type type);
+        OpenGLVertexBuffer(void* data, uint32_t size, Buffer::Usage usage);
+        OpenGLVertexBuffer(uint32_t size, Buffer::Usage usage);
         virtual ~OpenGLVertexBuffer() override;
 
         virtual void setLayout(const BufferLayout& layout) override;
+        virtual const BufferLayout& getLayout() const override { return mLayout; }
+        
+        virtual uint32_t getSize() const override { return mSize; }
+        virtual Buffer::Usage getUsage() const override { return mUsage; }
 
         virtual void bind() const override;
         virtual void unbind() const override;
 
-        virtual void updateData(void* data, uint32_t count, uint32_t offset) override;
+        virtual void updateData(void* data, uint32_t size, uint32_t offset) override;
 
         void applyLayout() const;
     private:
+        BufferLayout mLayout;
+        uint32_t mSize;
+        Buffer::Usage mUsage;
+        // OpenGL specific
         uint32_t mID;
         uint32_t mOpenGLUsage;
     };

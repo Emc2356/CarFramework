@@ -172,6 +172,7 @@ def build_gnu() -> None:
                         f"compiling {source_file}",
                         f"failed to compile {source_file}"
                     )
+                    needs_rebuilding = True
 
                     # save the time
                     LogFile.update(str(source_file))
@@ -201,7 +202,6 @@ def build_gnu() -> None:
             for source_file in executable.sources:
                 Logger.info(f"{source_file}")
 
-                Logger.info(f"generating command for {source_file}")
                 if source_file.has_suffix(".cpp") or source_file.has_suffix(".cc"):
                     build_command = cxx_build_command
                 elif source_file.has_suffix(".c"):
@@ -231,7 +231,7 @@ def build_gnu() -> None:
 
         for executable in Register().executables:
             command: list[str] = [Compiler.linker] + Compiler.link_flags + executable.extra_link_flags
-
+            
             static_library_directories: set = set()
             for static_library in Register().static_libraries:
                 static_library_directories.add(static_library.out_filepath)
@@ -293,6 +293,7 @@ def build_clang() -> None:
                 LogFile.update(header.source)
             else:
                 Logger.info(f"`{header.source}` already up to date")
+    
     if len(Register().static_libraries) > 0:
         for library in Register().static_libraries:
             c_build_command, cxx_build_command = Compiler.construct_build_command(library)
@@ -325,6 +326,7 @@ def build_clang() -> None:
                     # save the time
                     LogFile.update(str(source_file))
                     changed_static_libraries = True
+                    needs_rebuilding = True
                 else:
                     Logger.info(f"`{source_file}` already up to date")
 
@@ -350,7 +352,6 @@ def build_clang() -> None:
             for source_file in executable.sources:
                 Logger.info(f"{source_file}")
 
-                Logger.info(f"generating command for {source_file}")
                 if source_file.has_suffix(".cpp") or source_file.has_suffix(".cc"):
                     build_command = cxx_build_command
                 elif source_file.has_suffix(".c"):
@@ -364,7 +365,7 @@ def build_clang() -> None:
 
                 object_file.parent.mkdir(parents=True, exist_ok=True)
 
-                if not source_file.object_file_upto_date() or changed_static_libraries:
+                if not source_file.object_file_upto_date():
                     CommandQueue.add(
                         build_command + ["-o", str(object_file), str(source_file)],
                         f"compiling {source_file}",
@@ -402,8 +403,8 @@ def build_clang() -> None:
             for static_library in sort_static_libraries()[::-1]:
                 command.append("-l")
                 command.append(f"{str(static_library.name)}")
-
-            if not Path(executable.name).exists() or changed_executables:
+            
+            if not Path(executable.name).exists() or changed_executables or changed_static_libraries:
                 CommandQueue.add(
                     command,
                     f"linking objects into `{executable.name}`",

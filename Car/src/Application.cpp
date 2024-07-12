@@ -1,5 +1,6 @@
 #include "Car/Application.hpp"
 #include "Car/Renderer/Renderer2D.hpp"
+#include "Car/Renderer/Renderer.hpp"
 #include "Car/Time.hpp"
 
 
@@ -17,6 +18,7 @@ namespace Car {
         mWindow = Car::Window::Create();
         mWindow->setEventCallback(CR_BIND_FN1(Car::Application::onEvent));
 
+        Renderer::Init();
         Renderer2D::Init();
     }
 
@@ -25,6 +27,8 @@ namespace Car {
         for (auto it = mLayerStack.end(); it!= mLayerStack.begin(); ) {
             (*--it)->onDetach();
         }
+        Renderer::Shutdown();
+        Renderer2D::Shutdown();
     }
 
     const Application* Application::Get() { return sInstance; }

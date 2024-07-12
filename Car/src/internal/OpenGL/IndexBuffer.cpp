@@ -76,6 +76,37 @@ namespace Car {
     }
 
     void OpenGLIndexBuffer::updateData(void* data, uint32_t count, uint32_t offset) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mID);
+            // just update the buffer without relocating the block of memory
+            if (count <= mCount) {
+                glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, count * Buffer::sizeOfType(mType), data);    
+            } else {
+                // since the offset is 0 we dont need to save any data
+                if (offset == 0) {
+                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * Buffer::sizeOfType(mType), nullptr, mOpenGLUsage);
+                    mCount = count;
+                // here we need to save the data from 0 to offset
+                } else {
+                    // read the buffer
+                    void* mapped = glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, offset, GL_MAP_READ_BIT);
+                    
+                    CR_ASSERT(mapped, "Failed to map buffer, OpenGL");
+    
+                    void* temp = malloc((offset + count) * Buffer::sizeOfType(mType));
+                    // save up to offset
+                    memcpy(temp, mapped, offset * Buffer::sizeOfType(mType));
+                    memcpy((uint8_t*)mapped + offset * Buffer::sizeOfType(mType), data, count * Buffer::sizeOfType(mType));
+                    
+                    glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+    
+                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, (count + offset) * Buffer::sizeOfType(mType), mapped, mOpenGLUsage);
+                    
+                    free(temp);
+                    
+                    mCount = count + offset;
+                }
+            }
+        
         glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset * Buffer::sizeOfType(mType), count * Buffer::sizeOfType(mType), data);    
     }
 
