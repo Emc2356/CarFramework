@@ -24,7 +24,7 @@ namespace Car {
                 : width(width), height(height), title(title), vsync(vsync), eventCallback(eventCallback) {}
             Properties(uint32_t width, uint32_t height, const std::string& title, bool vsync)
                 : width(width), height(height), title(title), vsync(vsync), eventCallback(nullptr) {}
-            Properties() : width(1280), height(720), title("Car Engine"), vsync(true), eventCallback(nullptr) {}
+            Properties() : width(1280), height(720), title("Car Framework"), vsync(true), eventCallback(nullptr) {}
 
             uint32_t width;
             uint32_t height;
