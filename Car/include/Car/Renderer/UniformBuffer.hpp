@@ -11,14 +11,10 @@ namespace Car {
 
         virtual void setData(const void* data, uint32_t offset=0) = 0;
 
-        uint32_t getSize() const { return mSize; }
-        uint32_t getBinding() const { return mBinding; }
-        Buffer::Usage getUsage() const { return mUsage; }
+        virtual uint32_t getSize() const = 0;
+        virtual uint32_t getBinding() const = 0;
+        virtual Buffer::Usage getUsage() const = 0;
 
-        static Ref<Car::UniformBuffer> Create(uint32_t size, uint32_t binding, Buffer::Usage usage);  
-    protected:
-        uint32_t mSize;
-        uint32_t mBinding;
-        Buffer::Usage mUsage;
+        static Ref<Car::UniformBuffer> Create(uint32_t size, uint32_t binding, Buffer::Usage usage);
     };
 }

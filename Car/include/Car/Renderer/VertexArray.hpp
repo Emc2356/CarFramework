@@ -11,20 +11,16 @@ namespace Car {
     public:
         virtual ~VertexArray() = default;
 
-        void setVertexBuffer(Ref<VertexBuffer> vb) { mVb = vb; }
-        void setIndexBuffer(Ref<IndexBuffer> ib) { mIb = ib; }
-        void setShader(Ref<Shader> shader) { mShader = shader; }
+        virtual void setVertexBuffer(Ref<VertexBuffer> vb) = 0;
+        virtual void setIndexBuffer(Ref<IndexBuffer> ib) = 0;
+        virtual void setShader(Ref<Shader> shader) = 0;
 
-        Ref<VertexBuffer> getVertexBuffer() const { return mVb; }
-        Ref<IndexBuffer> getIndexBuffer() const { return mIb; }
-        Ref<Shader> getShader() const { return mShader; }
+        virtual Ref<VertexBuffer> getVertexBuffer() const = 0;
+        virtual Ref<IndexBuffer> getIndexBuffer() const = 0;
+        virtual Ref<Shader> getShader() const = 0;
 
         virtual void bind() const = 0;
 
         static Ref<VertexArray> Create(Ref<VertexBuffer> vb, Ref<IndexBuffer> ib, Ref<Shader> shader);
-    protected:
-        Ref<VertexBuffer> mVb;
-        Ref<IndexBuffer> mIb;
-        Ref<Shader> mShader;
     };
 }

@@ -20,7 +20,6 @@ namespace Car {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mID);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * Buffer::sizeOfType(type), data, mOpenGLUsage);
         mCount = count;
-        mData = data;
         mUsage = usage;
         mType = type;
 
@@ -50,7 +49,6 @@ namespace Car {
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * Buffer::sizeOfType(type), nullptr, mOpenGLUsage);
 
         mCount = count;
-        mData = nullptr;
         mUsage = usage;
         mType = type;
 
