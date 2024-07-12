@@ -33,24 +33,20 @@ namespace Car {
             eventCallbackFn eventCallback;
         };
     public:
-        virtual ~Window() {};
+        virtual ~Window() = default;
 
         virtual void onUpdate() = 0;
 
-        uint32_t getWidth() const { return mProperties.width; }
-        uint32_t getHeight() const { return mProperties.height; }
-        float getAspectRation() const {return (float)mProperties.width / (float)mProperties.height; }
-        const std::string& getTitle() const { return mProperties.title; }
-        bool isVSync() const { return mProperties.vsync; }
+        virtual uint32_t getWidth() const = 0;
+        virtual uint32_t getHeight() const = 0;
+        virtual float getAspectRation() const = 0;
+        virtual const std::string& getTitle() const = 0;
+        virtual bool isVSync() const = 0;
 
-        void setEventCallback(const eventCallbackFn& callback) { mProperties.eventCallback = callback; }
+        virtual void setEventCallback(const eventCallbackFn& callback) = 0;
         virtual void setVSync(bool enabled) = 0;
 
         static Ref<Window> Create(const Properties& properties=Properties());
-
         virtual void* getNativeWindow() const = 0;
-    protected:
-        GraphicsContext* mContext;
-        Car::Window::Properties mProperties;
     };
 }

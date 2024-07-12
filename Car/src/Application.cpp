@@ -4,9 +4,6 @@
 #include "Car/Time.hpp"
 
 
-#define CR_DEFAULT_EVENT UNUSED(event); return false
-
-
 namespace Car {
     Application* sInstance = nullptr;
 
@@ -106,14 +103,14 @@ namespace Car {
         CR_CORE_TRACE("overlay poped");
     }
 
-    bool Application::onMouseButtonPressedEvent(MouseButtonPressedEvent& event) { CR_DEFAULT_EVENT; }
-    bool Application::onMouseButtonReleasedEvent(MouseButtonReleasedEvent& event) { CR_DEFAULT_EVENT; }
-    bool Application::onMouseMovedEvent(MouseMovedEvent& event) { CR_DEFAULT_EVENT; }
-    bool Application::onMouseScrolledEvent(MouseScrolledEvent& event) { CR_DEFAULT_EVENT; }
-    bool Application::onKeyPressedEvent(KeyPressedEvent& event) { CR_DEFAULT_EVENT; }
-    bool Application::onKeyReleasedEvent(KeyReleasedEvent& event) { CR_DEFAULT_EVENT; }
-    bool Application::onWindowResizeEvent(WindowResizeEvent& event) { CR_DEFAULT_EVENT; }
-    bool Application::onWindowCloseEvent(WindowCloseEvent& event) { UNUSED(event); isRunning = false; return true; }
-    bool Application::onWindowFocusEvent(WindowFocusEvent& event) { CR_DEFAULT_EVENT; }
-    bool Application::onWindowLostFocusEvent(WindowLostFocusEvent& event) { CR_DEFAULT_EVENT; }
+    bool Application::onMouseButtonPressedEvent(MouseButtonPressedEvent&) { return false; }
+    bool Application::onMouseButtonReleasedEvent(MouseButtonReleasedEvent&) { return false; }
+    bool Application::onMouseMovedEvent(MouseMovedEvent&) { return false; }
+    bool Application::onMouseScrolledEvent(MouseScrolledEvent&) { return false; }
+    bool Application::onKeyPressedEvent(KeyPressedEvent&) { return false; }
+    bool Application::onKeyReleasedEvent(KeyReleasedEvent&) { return false; }
+    bool Application::onWindowResizeEvent(WindowResizeEvent&) { return false; }
+    bool Application::onWindowCloseEvent(WindowCloseEvent&) { isRunning = false; return true; }
+    bool Application::onWindowFocusEvent(WindowFocusEvent&) { return false; }
+    bool Application::onWindowLostFocusEvent(WindowLostFocusEvent&) { return false; }
 }

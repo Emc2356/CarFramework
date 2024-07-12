@@ -33,10 +33,10 @@ public:
         Car::Renderer2D::DrawTexture(mTexture, {mX , mY , 96, 96});
         Car::Renderer2D::DrawTexture(mTexture, {256, 256, 96, 96});
         
-        Car::Rect rect = {512, 512, 96, 96};
-        for (uint32_t i = 0; i < 19998; i++) {
-            Car::Renderer2D::DrawTexture(mTexture, rect);
-        }
+        // Car::Rect rect = {512, 512, 96, 96};
+        // for (uint32_t i = 0; i < 19998; i++) {
+        //     Car::Renderer2D::DrawTexture(mTexture, rect);
+        // }
         
         Car::Renderer2D::End();
     }

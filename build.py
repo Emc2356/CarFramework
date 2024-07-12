@@ -156,6 +156,7 @@ def car_engine_windows_posix_gnu_clang() -> None:
             "./Car/src/Renderer/Buffer.cpp",
             "./Car/src/Renderer/Shader.cpp",
             "./Car/src/Renderer/Renderer2D.cpp",
+            "./Car/src/Renderer/GraphicsContext.cpp",
             "./Car/src/internal/GLFW/Window.cpp",
             "./Car/src/internal/GLFW/Input.cpp",
             "./Car/src/internal/GLFW/Time.cpp",
@@ -187,7 +188,7 @@ def core_win_posix() -> None:
     Compiler.set_c_standard(17)
     Compiler.set_cxx_standard(17)
     # Compiler.add_build_flags("-O3")
-    Compiler.add_build_flags("-g")
+    Compiler.add_build_flags("-ggdb")
 
     Compiler.add_define("DEBUG")
     Compiler.add_define("_DEBUG", "1")

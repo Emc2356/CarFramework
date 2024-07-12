@@ -63,11 +63,11 @@ void APIENTRY crGlDebugCallback(GLenum source, GLenum type, GLuint id,
 
 
 namespace Car {
-	OpenGLGraphicsContext::OpenGLGraphicsContext(GLFWwindow* windowHandle) : mWindowHandle(windowHandle) {
-        CR_ASSERT(windowHandle, "Interal Error: null window handle sent to gl graphics context");
+    OpenGLGraphicsContext::OpenGLGraphicsContext(GLFWwindow* windowHandle) : mWindowHandle(windowHandle) {
+           CR_ASSERT(windowHandle, "Interal Error: null window handle sent to gl graphics context");
 	}
-
-	void OpenGLGraphicsContext::init() {
+	
+    void OpenGLGraphicsContext::init() {
 		glfwMakeContextCurrent(mWindowHandle);
 		// not 100% sure if i will keep using GLFW so i use the glad
 		// built-in loader 
@@ -87,4 +87,15 @@ namespace Car {
 		glfwSwapBuffers(mWindowHandle);
 	}
 
+	void OpenGLGraphicsContext::resize(uint32_t width, uint32_t height) {
+	   glViewport(0, 0, width, height);
+	}
+	
+	Ref<GraphicsContext> GraphicsContext::Create(GLFWwindow* windowHandle) {
+        Ref<GraphicsContext> context = createRef<OpenGLGraphicsContext>(windowHandle);
+        
+        GraphicsContext::Set(context);
+        
+        return context; 
+	}
 }

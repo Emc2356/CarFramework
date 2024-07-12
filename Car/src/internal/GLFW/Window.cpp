@@ -3,19 +3,11 @@
 #include <GLFW/glfw3.h>
 #include <glad/gl.h>
 #include "Car/Core/Log.hpp"
-#include "Car/Events/Event.hpp"
 #include "Car/Events/KeyEvent.hpp"
 #include "Car/Events/MouseEvent.hpp"
 #include "Car/Events/WindowEvent.hpp"
 
-// TODO: do this at compile time so it can chose the correct context :/
-#if defined(CR_OPENGL)
-#include "Car/internal/OpenGL/GraphicsContext.hpp"
-#else
-#error not implemented yet
-#endif /*defined(CR_OPENGL)*/
-
-#include <imgui.h>
+#include "Car/Renderer/GraphicsContext.hpp"
 
 
 namespace Car {
@@ -73,11 +65,8 @@ namespace Car {
             throw std::runtime_error("Car: Failed to create GLFW window");
         }
 
-        #if defined(CR_OPENGL)
-            mContext = new Car::OpenGLGraphicsContext(mWindow);
-        #else
-        #error not implemented yet
-        #endif /*defined(CR_OPENGL)*/
+        mContext = GraphicsContext::Create(mWindow);
+        
         mContext->init();
 
         setVSync(properties.vsync);
@@ -89,7 +78,9 @@ namespace Car {
             Window::Properties& properties = *static_cast<Window::Properties*>(glfwGetWindowUserPointer(window));
             properties.width = width;
             properties.height = height;
-
+            
+            GraphicsContext::Get()->resize(width, height);
+            
             WindowResizeEvent event(width, height);
 
             properties.eventCallback(event);
