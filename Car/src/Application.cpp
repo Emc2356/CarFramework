@@ -1,4 +1,5 @@
 #include "Car/Application.hpp"
+#include "Car/ResourceManager.hpp"
 #include "Car/Renderer/Renderer2D.hpp"
 #include "Car/Renderer/Renderer.hpp"
 #include "Car/Time.hpp"
@@ -9,7 +10,7 @@ namespace Car {
 
     Application::Application() {
         CR_ASSERT(sInstance == nullptr, "Application already exists");
-        CR_CORE_TRACE("Application created");
+        CR_CORE_DEBUG("Application created");
         sInstance = this;
 
         mWindow = Car::Window::Create();
@@ -17,15 +18,17 @@ namespace Car {
 
         Renderer::Init();
         Renderer2D::Init();
+        ResourceManager::Init();
     }
 
     Application::~Application() {
-        CR_CORE_TRACE("Application shutdown");
+        CR_CORE_DEBUG("Application shutdown");
         for (auto it = mLayerStack.end(); it!= mLayerStack.begin(); ) {
             (*--it)->onDetach();
         }
-        Renderer::Shutdown();
+        ResourceManager::Shutdown();
         Renderer2D::Shutdown();
+        Renderer::Shutdown();
     }
 
     const Application* Application::Get() { return sInstance; }

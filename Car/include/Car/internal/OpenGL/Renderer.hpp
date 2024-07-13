@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Car/OrthographicCamera.hpp"
 #include "Car/Renderer/IndexBuffer.hpp"
 #include "Car/Renderer/Renderer.hpp"
 #include "Car/Renderer/Texture2D.hpp"

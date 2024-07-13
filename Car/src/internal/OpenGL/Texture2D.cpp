@@ -7,23 +7,20 @@
 
 namespace Car { 
     OpenGLTexture2D::OpenGLTexture2D(uint32_t width, uint32_t height, uint8_t* buffer, Format format, Format internalformat, Type type) {
-        uint32_t opengl_type;
         switch (type) {
-        case Texture2D::Type::Byte: opengl_type = GL_UNSIGNED_BYTE; break;
+        case Texture2D::Type::Byte: mTypeOpenGL = GL_UNSIGNED_BYTE; break;
         default:
             CR_CORE_ERROR("Unrecognized Texture2D::Type: {}", (uint32_t)type);
             CR_EXIT(1);
         }
-        uint32_t opengl_format;
         switch (format) {
-        case Texture2D::Format::RGBA: opengl_format = GL_RGBA; mBPP = 4; break;
+        case Texture2D::Format::RGBA: mFormatOpenGL = GL_RGBA; mBPP = 4; break;
         default:
             CR_CORE_ERROR("Unrecognized Texture2D::Format for format param: {}", (uint32_t)format);
             CR_EXIT(1);
         }
-        uint32_t opengl_internalformat;
         switch (internalformat) {
-        case Texture2D::Format::RGBA8: opengl_internalformat = GL_RGBA8; break;
+        case Texture2D::Format::RGBA8: mInternalFormatOpenGL = GL_RGBA8; break;
         default:
             CR_CORE_ERROR("Unrecognized Texture2D::Format for internalformat: {}", (uint32_t)internalformat);
             CR_EXIT(1);
@@ -45,27 +42,24 @@ namespace Car {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, opengl_internalformat, mWidth, mHeight, 0, opengl_format, opengl_type, buffer);
+        glTexImage2D(GL_TEXTURE_2D, 0, mInternalFormatOpenGL, mWidth, mHeight, 0, mFormatOpenGL, mTypeOpenGL, buffer);
     }
 
     OpenGLTexture2D::OpenGLTexture2D(const std::string& filepath, bool flipped, Format format, Format internalformat, Type type) {
-        uint32_t opengl_type;
         switch (type) {
-        case Texture2D::Type::Byte: opengl_type = GL_UNSIGNED_BYTE; break;
+        case Texture2D::Type::Byte: mTypeOpenGL = GL_UNSIGNED_BYTE; break;
         default:
             CR_CORE_ERROR("Unrecognized Texture2D::Type: {}", (uint32_t)type);
             CR_EXIT(1);
         }
-        uint32_t opengl_format;
         switch (format) {
-        case Texture2D::Format::RGBA: opengl_format = GL_RGBA; break;
+        case Texture2D::Format::RGBA: mFormatOpenGL = GL_RGBA; break;
         default:
             CR_CORE_ERROR("Unrecognized Texture2D::Format for format param: {}", (uint32_t)format);
             CR_EXIT(1);
         }
-        uint32_t opengl_internalformat;
         switch (internalformat) {
-        case Texture2D::Format::RGBA8: opengl_internalformat = GL_RGBA8; break;
+        case Texture2D::Format::RGBA8: mInternalFormatOpenGL = GL_RGBA8; break;
         default:
             CR_CORE_ERROR("Unrecognized Texture2D::Format for internalformat: {}", (uint32_t)internalformat);
             CR_EXIT(1); 
@@ -92,7 +86,7 @@ namespace Car {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, opengl_internalformat, mWidth, mHeight, 0, opengl_format, opengl_type, imageData);
+        glTexImage2D(GL_TEXTURE_2D, 0, mInternalFormatOpenGL, mWidth, mHeight, 0, mFormatOpenGL, mTypeOpenGL, imageData);
 
         stbi_image_free(imageData);
     } 
@@ -114,9 +108,8 @@ namespace Car {
         UNUSED(internalFormat);
         UNUSED(format);
         UNUSED(type);
-
     }
-
+    
     void OpenGLTexture2D::bind(uint32_t slot) const {
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(GL_TEXTURE_2D, mID);
@@ -126,7 +119,20 @@ namespace Car {
         glBindTexture(GL_TEXTURE_2D, mID);
     }
 
-    void OpenGLTexture2D::setFilters(int mag, int min) {
+    void OpenGLTexture2D::setFilters(Filter minFilter, Filter magFilter) {
+        int min;
+        int mag;
+        switch (minFilter) {
+            case Filter::Nearest: { min = GL_NEAREST; break; }
+            case Filter::Linear: { min = GL_LINEAR; break; }
+            case Filter::None: { CR_CORE_ERROR("minFilter for Car::Texture2D::setFilters can either be Car::Texture2D::Filter::Nearest Or Car::Texture2D::Filter::Linear"); return; }
+        }
+        switch (magFilter) {
+            case Filter::Nearest: { mag = GL_NEAREST; break; }
+            case Filter::Linear: { mag = GL_LINEAR; break; }
+            case Filter::None: { CR_CORE_ERROR("magFilter for Car::Texture2D::setFilters can either be Car::Texture2D::Filter::Nearest Or Car::Texture2D::Filter::Linear"); return; }
+        }
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag);
     }   

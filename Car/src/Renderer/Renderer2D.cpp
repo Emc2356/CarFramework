@@ -35,6 +35,7 @@ namespace Car {
     
     void Renderer2D::Init() {
         sData = new Renderer2DData();
+        // internal use only so no reason to register with the ResourceManager
         sData->texturesShader = Shader::Create("builtin/texture.vert", "builtin/texture.frag");
         sData->texturesUBO = UniformBuffer::Create(sizeof(glm::mat4), 0, Buffer::Usage::DynamicDraw);
         

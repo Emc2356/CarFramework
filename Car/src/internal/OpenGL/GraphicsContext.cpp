@@ -74,7 +74,7 @@ namespace Car {
         if (!gladLoaderLoadGL()) {
             throw std::runtime_error("Car: Failed to initialize glad");
         }
-		CR_CORE_TRACE("OpenGL Context Initialized");
+		CR_CORE_DEBUG("OpenGL Context Initialized");
 
 		#if defined(CR_DEBUG)
         	glEnable(GL_DEBUG_OUTPUT);

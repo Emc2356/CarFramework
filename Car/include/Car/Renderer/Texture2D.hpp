@@ -15,6 +15,11 @@ namespace Car {
             None,
             Byte,
         };
+        enum class Filter {
+            None,
+            Nearest,
+            Linear,
+        };
     public:
         virtual ~Texture2D() = default;
         virtual void updateData(uint8_t* buffer, Format format=Format::RGBA, Format internalFormat=Format::RGBA8, Type type=Type::Byte) = 0;
@@ -23,14 +28,14 @@ namespace Car {
         virtual void bind(uint32_t slot=0) const = 0;
         virtual void unbind() const = 0;
 
-        virtual void setFilters(int min, int mag) = 0;
+        virtual void setFilters(Filter minFilter, Filter magFilter) = 0;
         virtual void setRepeatX(bool v) = 0;
         virtual void setRepeatY(bool v) = 0;
 
         virtual uint32_t getWidth() const = 0;
         virtual uint32_t getHeight() const = 0;
         virtual uint32_t getBPP() const = 0;
-
+        
         virtual bool operator==(Ref<Texture2D> other) const = 0;
         virtual bool operator!=(Ref<Texture2D> other) const = 0;
 

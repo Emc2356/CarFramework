@@ -6,7 +6,8 @@ public:
     Sandbox() {
         Car::Renderer::EnableBlending();
 
-        mTexture = Car::Texture2D::Create("resources/images/pg_np.png");
+        mTexture = Car::ResourceManager::LoadTexture2D("pg_np.png");
+        // mFont = Car::Font::CreateFromTTF("resources/fonts/something.ttf", 50);
     }
 
     virtual ~Sandbox() override {} 
@@ -14,7 +15,6 @@ public:
     virtual bool onWindowCloseEvent(Car::WindowCloseEvent&) override { isRunning = false; return true; }
 
     virtual void onImGuiRender(double dt) override {
-        UNUSED(dt);
         ImGui::Begin("Performance");
         
         ImGui::Text("[FPS]: %f", 1/dt);
@@ -33,6 +33,8 @@ public:
         Car::Renderer2D::DrawTexture(mTexture, {mX , mY , 96, 96});
         Car::Renderer2D::DrawTexture(mTexture, {256, 256, 96, 96});
         
+        // Car::Renderer2D::DrawText(mFont, "Hello World!-");
+        
         // Car::Rect rect = {512, 512, 96, 96};
         // for (uint32_t i = 0; i < 19998; i++) {
         //     Car::Renderer2D::DrawTexture(mTexture, rect);
@@ -42,6 +44,7 @@ public:
     }
 private:
     Car::Ref<Car::Texture2D> mTexture;
+    // Car::Ref<Car::Font> mFont;
 };
 
 Car::Application *Car::createApplication() {

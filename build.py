@@ -110,7 +110,8 @@ def stb_windows_posix_gnu_clang() -> None:
         name="stb",
         out_filepath="./libraries/",
         sources=[
-            "./vendor/stb/src/stb_image.c"
+            "./vendor/stb/src/stb_image.c",
+            "./vendor/stb/src/stb_truetype.c"
         ],
         include_directories=[],
     )
@@ -150,12 +151,14 @@ def car_engine_windows_posix_gnu_clang() -> None:
             "./Car/src/EntryPoint.cpp",
             "./Car/src/Utils.cpp",
             "./Car/src/Application.cpp",
+            "./Car/src/ResourceManager.cpp",
             "./Car/src/Layers/Layer.cpp",
             "./Car/src/Layers/ImGuiLayer.cpp",
             "./Car/src/Layers/LayerStack.cpp",
             "./Car/src/Renderer/Buffer.cpp",
             "./Car/src/Renderer/Shader.cpp",
             "./Car/src/Renderer/Renderer2D.cpp",
+            "./Car/src/Renderer/Font.cpp",
             "./Car/src/Renderer/GraphicsContext.cpp",
             "./Car/src/internal/GLFW/Window.cpp",
             "./Car/src/internal/GLFW/Input.cpp",

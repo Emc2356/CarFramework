@@ -24,13 +24,16 @@ namespace Car {
         virtual bool operator==(Ref<Texture2D> other) const override { return mID == ((OpenGLTexture2D*)other.get())->mID; }
         virtual bool operator!=(Ref<Texture2D> other) const override { return mID != ((OpenGLTexture2D*)other.get())->mID; }
     
-        virtual void setFilters(int min, int mag) override;
+        virtual void setFilters(Filter minFilter, Filter magFilter) override;
         virtual void setRepeatX(bool v) override;
         virtual void setRepeatY(bool v) override;
     private:
-        uint32_t mID;
         uint32_t mWidth;
         uint32_t mHeight;
         uint32_t mBPP;
+        uint32_t mID;
+        uint32_t mInternalFormatOpenGL;
+        uint32_t mFormatOpenGL;
+        uint32_t mTypeOpenGL;
     };
 }

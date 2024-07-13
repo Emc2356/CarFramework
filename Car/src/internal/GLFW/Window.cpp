@@ -22,7 +22,7 @@ namespace Car {
         mProperties = properties;
 
         init(mProperties);
-        CR_CORE_TRACE("Window created");
+        CR_CORE_DEBUG("Window created");
     }
 
     GLFWWindow::~GLFWWindow() {
