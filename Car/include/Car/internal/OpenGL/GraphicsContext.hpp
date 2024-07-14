@@ -10,7 +10,7 @@ namespace Car {
     class OpenGLGraphicsContext : public GraphicsContext {
 	public:
 		OpenGLGraphicsContext(GLFWwindow* windowHandle);
-		virtual ~OpenGLGraphicsContext() override = default;
+		virtual ~OpenGLGraphicsContext() override;
 
 		virtual void init() override;
 		virtual void swapBuffers() override;

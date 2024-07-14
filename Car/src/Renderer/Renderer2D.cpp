@@ -30,10 +30,10 @@ struct Renderer2DData {
 };
 
 
-namespace Car {
+namespace Car::Renderer2D {
     static Renderer2DData* sData = nullptr;
     
-    void Renderer2D::Init() {
+    void Init() {
         sData = new Renderer2DData();
         // internal use only so no reason to register with the ResourceManager
         sData->texturesShader = Shader::Create("builtin/texture.vert", "builtin/texture.frag");
@@ -85,23 +85,23 @@ namespace Car {
         );
     }
     
-    void Renderer2D::Shutdown() {
+    void Shutdown() {
         free(sData->texturesVertexBufferData);
         free(sData->texturesIndexBufferData);
         delete sData;
     }
 
-    void Renderer2D::Begin() {
+    void Begin() {
         if (sData->texturesCurrentBatchSize > 0) {
             CR_CORE_ERROR("Called Car::Renderer2D::Begin() without closing the last begin");
         }
     }
     
-    void Renderer2D::End() {
+    void End() {
         FlushTextures();
     }
 
-    void Renderer2D::FlushTextures() {
+    void FlushTextures() {
         // no work to be done, early return
         if (sData->texturesCurrentBatchSize == 0) {
             return;
@@ -146,7 +146,7 @@ namespace Car {
         return sData->textureTextures.size() - 1;
     }
     
-    void Renderer2D::DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest) {
+    void DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest) {
         uint32_t i = sData->texturesCurrentBatchSize;
         
         int8_t textureID = getTextureID(texture);
@@ -194,11 +194,11 @@ namespace Car {
         sData->texturesCurrentBatchSize++;
         
         if (sData->texturesCurrentBatchSize >= sData->texturesMaxBatchSize) {
-            Renderer2D::FlushTextures();
+            FlushTextures();
         }
     }
     
-    void Renderer2D::DrawTexture(const Ref<Texture2D>& texture, const Rect& dest) {
+    void DrawTexture(const Ref<Texture2D>& texture, const Rect& dest) {
         uint32_t i = sData->texturesCurrentBatchSize;
         
         int8_t textureID = getTextureID(texture);
@@ -243,7 +243,7 @@ namespace Car {
         sData->texturesCurrentBatchSize++;
         
         if (sData->texturesCurrentBatchSize >= sData->texturesMaxBatchSize) {
-            Renderer2D::FlushTextures();
+            FlushTextures();
         }
     }
 }

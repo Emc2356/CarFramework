@@ -1,6 +1,5 @@
 #include "Car/ResourceManager.hpp"
 #include "Car/Core/Log.hpp"
-#include <filesystem>
 
 
 struct ResourceManagerData {
@@ -43,6 +42,8 @@ namespace Car {
         
         delete sData;
         sData = nullptr;
+        
+        CR_CORE_DEBUG("ResourceManager shutdown");
     }
     
     void ResourceManager::setResourceDirectory(const std::string& resourceDirectoryName) {

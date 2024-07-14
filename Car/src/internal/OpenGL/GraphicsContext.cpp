@@ -82,6 +82,10 @@ namespace Car {
         	glDebugMessageCallback(crGlDebugCallback, 0);
 		#endif
 	}
+	
+	OpenGLGraphicsContext::~OpenGLGraphicsContext() {
+	   CR_CORE_DEBUG("OpenGL Context shutdown");
+	}
 
 	void OpenGLGraphicsContext::swapBuffers() {
 		glfwSwapBuffers(mWindowHandle);

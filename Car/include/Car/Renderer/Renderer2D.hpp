@@ -5,18 +5,15 @@
 #include "Car/Core/Core.hpp"
 
 
-namespace Car {
-    class Renderer2D {
-    public:
-        static void Init();
-        static void Shutdown();
+namespace Car::Renderer2D {
+    void Init();
+    void Shutdown();
 
-        static void Begin();
-        static void End();
+    void Begin();
+    void End();
 
-        static void DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest);
-        static void DrawTexture(const Ref<Texture2D>& texture, const Rect& dest);
-        // automatically called by End and by DrawTexture as needed
-        static void FlushTextures();
-    };
+    void DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest);
+    void DrawTexture(const Ref<Texture2D>& texture, const Rect& dest);
+    // automatically called by End and by DrawTexture as needed
+    void FlushTextures();
 }

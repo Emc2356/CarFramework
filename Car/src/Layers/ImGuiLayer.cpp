@@ -9,7 +9,7 @@
 #if defined(CR_OPENGL)
 #include <backends/imgui_impl_opengl3.h>
 #else
-#error only opengl supported right now 
+#error only opengl supported right now
 #endif
 
 #include <GLFW/glfw3.h>
@@ -26,9 +26,9 @@ namespace Car {
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
 		// io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-		// for now i disabled multiple viewports as it doesnt look and feel that good in linux 
+		// for now i disabled multiple viewports as it doesnt look and feel that good in linux
 		// maybe in the future if i figure out wtf is causing it to look so bad (looking at you plasma KDE)
-		// i will enable it 
+		// i will enable it
 		// io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
 		// io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoTaskBarIcons;
 		// io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoMerge;
@@ -47,7 +47,7 @@ namespace Car {
 		}
 
 		const Application* app = Car::Application::Get();
-		GLFWwindow* window = static_cast<GLFWwindow*>(app->getWindow()->getNativeWindow());
+		GLFWwindow* window = static_cast<GLFWwindow*>(app->getWindow()->getWindowHandle());
 
 		// Setup Platform/Renderer bindings
 		#if defined(CR_OPENGL)
@@ -80,7 +80,7 @@ namespace Car {
 
     void ImGuiLayer::end() {
 		ImGuiIO& io = ImGui::GetIO();
-        
+
 		// Rendering
 		ImGui::Render();
 		#if defined(CR_OPENGL)
@@ -88,7 +88,7 @@ namespace Car {
 		#else
 		#error only opengl is supported right now
 		#endif
-        
+
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
 			GLFWwindow* backup_current_context = glfwGetCurrentContext();
 			ImGui::UpdatePlatformWindows();

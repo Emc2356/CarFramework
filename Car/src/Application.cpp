@@ -13,8 +13,15 @@ namespace Car {
         CR_CORE_DEBUG("Application created");
         sInstance = this;
 
-        mWindow = Car::Window::Create();
-        mWindow->setEventCallback(CR_BIND_FN1(Car::Application::onEvent));
+        Window::Specification windowSpec = {
+            1280,
+            720,
+            "Vroom",
+            true,
+            CR_BIND_FN1(Car::Application::onEvent)
+        };
+        
+        mWindow = createRef<Car::Window>(windowSpec);
 
         Renderer::Init();
         Renderer2D::Init();
@@ -22,13 +29,13 @@ namespace Car {
     }
 
     Application::~Application() {
-        CR_CORE_DEBUG("Application shutdown");
         for (auto it = mLayerStack.end(); it!= mLayerStack.begin(); ) {
             (*--it)->onDetach();
         }
         ResourceManager::Shutdown();
         Renderer2D::Shutdown();
         Renderer::Shutdown();
+        CR_CORE_DEBUG("Application shutdown");
     }
 
     const Application* Application::Get() { return sInstance; }
@@ -85,25 +92,25 @@ namespace Car {
     void Application::pushLayer(Layer* layer) {
         mLayerStack.pushLayer(layer);
         layer->onAttach();
-        CR_CORE_TRACE("Layer pushed");
+        CR_CORE_DEBUG("Layer pushed");
     }
 
     void Application::popLayer(Layer* layer) {
         mLayerStack.popLayer(layer);
         layer->onDetach();
-        CR_CORE_TRACE("Layer poped");
+        CR_CORE_DEBUG("Layer poped");
     }
 
     void Application::pushOverlay(Layer* layer) {
         mLayerStack.pushOverlay(layer);
         layer->onAttach();
-        CR_CORE_TRACE("overlay pushed");
+        CR_CORE_DEBUG("overlay pushed");
     }
 
     void Application::popOverlay(Layer* layer) {
         mLayerStack.popOverlay(layer);
         layer->onDetach();
-        CR_CORE_TRACE("overlay poped");
+        CR_CORE_DEBUG("overlay poped");
     }
 
     bool Application::onMouseButtonPressedEvent(MouseButtonPressedEvent&) { return false; }

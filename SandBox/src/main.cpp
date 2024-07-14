@@ -1,3 +1,4 @@
+#include "Car/Events/WindowEvent.hpp"
 #include <Car/Car>
 
 
@@ -11,15 +12,17 @@ public:
     }
 
     virtual ~Sandbox() override {} 
-
-    virtual bool onWindowCloseEvent(Car::WindowCloseEvent&) override { isRunning = false; return true; }
-
+    
     virtual void onImGuiRender(double dt) override {
         ImGui::Begin("Performance");
         
         ImGui::Text("[FPS]: %f", 1/dt);
         
-        ImGui::End();        
+        ImGui::End();   
+   
+        // ImGuiIO& io = ImGui::GetIO();
+        // CR_APP_INFO("{}", io.WantCaptureMouse);
+        
     }
 
     void onRender() override {
@@ -36,7 +39,7 @@ public:
         // Car::Renderer2D::DrawText(mFont, "Hello World!-");
         
         // Car::Rect rect = {512, 512, 96, 96};
-        // for (uint32_t i = 0; i < 19998; i++) {
+        // for (uint32_t i = 0; i < 20000; i++) {
         //     Car::Renderer2D::DrawTexture(mTexture, rect);
         // }
         
