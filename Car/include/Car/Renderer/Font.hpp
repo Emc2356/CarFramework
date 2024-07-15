@@ -23,6 +23,7 @@ namespace Car {
         Font(const std::string& path, uint32_t height, const std::string& charsToLoad=CR_DEFAULT_CHARS);
         ~Font();
         
+        glm::ivec2 measureText(const std::string& text);
         Ref<Texture2D> getTexture() const { return mTexture; }
     private:
         Ref<Texture2D> mTexture;

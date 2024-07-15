@@ -1,7 +1,8 @@
 #version 450 core
 
 layout(location=0) in vec2 iSourceUV;
-layout(location=1) in flat uint iTextureID;
+layout(location=1) in vec3 iTint;
+layout(location=2) in flat uint iTextureID;
 
 layout(location=0) out vec4 oColor;
 
@@ -41,4 +42,5 @@ void main() {
     case 14: oColor = texture(uTexture14, iSourceUV); break;
     case 15: oColor = texture(uTexture15, iSourceUV); break;
     }
+    oColor.rgb *= iTint;
 }

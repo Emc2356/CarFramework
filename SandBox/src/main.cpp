@@ -30,7 +30,7 @@ public:
         Car::Renderer2D::DrawTexture(mTexture, {mX , mY , 96, 96});
         Car::Renderer2D::DrawTexture(mTexture, {256, 256, 96, 96});
         
-        Car::Renderer2D::DrawText(mFont, "Hello World!-\nFrom too much work", {50, 50});
+        Car::Renderer2D::DrawText(mFont, "{Hello World!~\n{From too much work", {50, 50}, {.7, .7, .7});
         
         // Car::Rect rect = {512, 512, 96, 96};
         // int8_t textureID = Car::Renderer2D::getTextureID(mTexture);
@@ -50,7 +50,7 @@ Car::Application *Car::createApplication() {
     spec.width = 1280;
     spec.height = 720;
     spec.title = "Sandbox";
-    spec.vsync = false;
+    spec.vsync = true;
     spec.resizable = true;
     Car::Application::SetSpecification(spec);
     

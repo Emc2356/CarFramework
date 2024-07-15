@@ -16,9 +16,9 @@ namespace Car {
         static void Begin();
         static void End();
     
-        static void DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest);
-        static void DrawTexture(const Ref<Texture2D>& texture, const Rect& dest);
-        static void DrawText(const Ref<Font>& font, const std::string& text, const glm::ivec2& pos);
+        static void DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest, const glm::vec3& tint=glm::vec3(1.0f));
+        static void DrawTexture(const Ref<Texture2D>& texture, const Rect& dest, const glm::vec3& tint=glm::vec3(1.0f));
+        static void DrawText(const Ref<Font>& font, const std::string& text, const glm::ivec2& pos, const glm::vec3& color=glm::vec3(1.0f));
         // automatically called by End and by DrawTexture as needed
         static void FlushTextures();
         
@@ -27,7 +27,7 @@ namespace Car {
         // they flush the textures as needed
         // getTextureID returns -1 if there are already too many textures and it invalidates the current batch
         static int8_t getTextureID(const Ref<Texture2D>& texture);
-        static void DrawSubTextureFromID(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest, int8_t textureID);
-        static void DrawTextureFromID(const Rect& dest, int8_t textureID);
+        static void DrawSubTextureFromID(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest, int8_t textureID, const glm::vec3& tint=glm::vec3(1.0f));
+        static void DrawTextureFromID(const Rect& dest, int8_t textureID, const glm::vec3& tint=glm::vec3(1.0f));
     };
 }

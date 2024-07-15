@@ -89,6 +89,32 @@ namespace Car {
         
         UNUSED(mCharacters);
     }
+    
+    glm::ivec2 Font::measureText(const std::string& text) {
+        uint32_t width = 0;
+        uint32_t maxWidth = 0;
+        uint32_t height = mHeight;
+        
+        for (size_t i = 0; i < text.size(); i++) {
+            const uint8_t chr = text[i];
+            if (chr == '\n') {
+                // slight padding to stop the font looking weird 
+                // incase a glyph has the same height as the font height
+                height += mHeight + 1;
+                maxWidth = MAX(maxWidth, width);
+                width = 0;
+                continue;
+            }
+            
+            const Font::Character& character = mCharacters[chr];
+            
+            width += character.advance;
+        }
+        
+        maxWidth = MAX(maxWidth, width);
+        
+        return glm::ivec2(maxWidth, height);
+    }
 
     Font::~Font() {
         
