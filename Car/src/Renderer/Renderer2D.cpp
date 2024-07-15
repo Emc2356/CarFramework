@@ -30,10 +30,10 @@ struct Renderer2DData {
 };
 
 
-namespace Car::Renderer2D {
+namespace Car {
     static Renderer2DData* sData = nullptr;
     
-    void Init() {
+    void Renderer2D::Init() {
         sData = new Renderer2DData();
         // internal use only so no reason to register with the ResourceManager
         sData->texturesShader = Shader::Create("builtin/texture.vert", "builtin/texture.frag");
@@ -85,23 +85,23 @@ namespace Car::Renderer2D {
         );
     }
     
-    void Shutdown() {
+    void Renderer2D::Shutdown() {
         free(sData->texturesVertexBufferData);
         free(sData->texturesIndexBufferData);
         delete sData;
     }
 
-    void Begin() {
+    void Renderer2D::Begin() {
         if (sData->texturesCurrentBatchSize > 0) {
             CR_CORE_ERROR("Called Car::Renderer2D::Begin() without closing the last begin");
         }
     }
     
-    void End() {
-        FlushTextures();
+    void Renderer2D::End() {
+        Renderer2D::FlushTextures();
     }
 
-    void FlushTextures() {
+    void Renderer2D::FlushTextures() {
         // no work to be done, early return
         if (sData->texturesCurrentBatchSize == 0) {
             return;
@@ -130,7 +130,7 @@ namespace Car::Renderer2D {
         sData->texturesCurrentBatchSize = 0;
     }
     
-    int8_t getTextureID(const Ref<Texture2D>& texture) {
+    int8_t Renderer2D::getTextureID(const Ref<Texture2D>& texture) {
         for (size_t i = 0; i < sData->textureTextures.size(); i++) {
             // small trick to save some performace here and there for the vtable lookup
             if ((void*)sData->textureTextures[i].get() == (void*)texture.get()) {
@@ -146,9 +146,7 @@ namespace Car::Renderer2D {
         return sData->textureTextures.size() - 1;
     }
     
-    void DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest) {
-        uint32_t i = sData->texturesCurrentBatchSize;
-        
+    void Renderer2D::DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest) {
         int8_t textureID = getTextureID(texture);
         
         if (textureID == -1) {
@@ -156,6 +154,54 @@ namespace Car::Renderer2D {
             return;
         }
         
+        Renderer2D::DrawSubTextureFromID(texture, source, dest, textureID);
+    }
+    
+    void Renderer2D::DrawTexture(const Ref<Texture2D>& texture, const Rect& dest) {    
+        int8_t textureID = getTextureID(texture);
+        
+        if (textureID == -1) {
+            CR_CORE_ERROR("Car::Renderer2D::DrawTexture too many textures sent, maximum as 16, call Car::Renderer2D::FlushTextures if you plan on using more than 16 textures");
+            return;
+        }
+        
+        Renderer2D::DrawTextureFromID(dest, textureID);
+    }
+    
+    void Renderer2D::DrawText(const Ref<Font>& font, const std::string& text, const glm::ivec2& pos) {
+        Ref<Texture2D> texture = font->getTexture();
+        
+        int8_t textureID = getTextureID(texture);
+        
+        if (textureID == -1) {
+            CR_CORE_ERROR("Car::Renderer2D::DrawText too many textures sent, maximum as 16, call Car::Renderer2D::FlushTextures if you plan on using more than 16 textures");
+            return;
+        }
+        
+        int32_t fontHeight = font->mHeight;
+        
+        uint32_t x = pos.x;
+        uint32_t y = pos.y;
+        
+        for (size_t i = 0; i < text.size(); i++) {
+            const uint8_t chr = text[i];
+            if (chr == '\n') {
+                y += fontHeight;
+                x = pos.x;
+                continue;
+            }
+            
+            const Font::Character& character = font->mCharacters[chr];
+            
+            Renderer2D::DrawSubTextureFromID(texture, character.rect, {(int32_t)x, (int32_t)y, character.rect.w, fontHeight}, textureID);
+            
+            x += character.advance;
+        }
+    }
+    
+    void Renderer2D::DrawSubTextureFromID(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest, int8_t textureID) {
+        uint32_t i = sData->texturesCurrentBatchSize;
+            
         float textureWidth = static_cast<float>(texture->getWidth());
         float textureHeight = static_cast<float>(texture->getHeight());
         
@@ -194,19 +240,12 @@ namespace Car::Renderer2D {
         sData->texturesCurrentBatchSize++;
         
         if (sData->texturesCurrentBatchSize >= sData->texturesMaxBatchSize) {
-            FlushTextures();
+            Renderer2D::FlushTextures();
         }
     }
     
-    void DrawTexture(const Ref<Texture2D>& texture, const Rect& dest) {
+    void Renderer2D::DrawTextureFromID(const Rect& dest, int8_t textureID) {
         uint32_t i = sData->texturesCurrentBatchSize;
-        
-        int8_t textureID = getTextureID(texture);
-        
-        if (textureID == -1) {
-            CR_CORE_ERROR("Car::Renderer2D::DrawTexture too many textures sent, maximum as 16, call Car::Renderer2D::FlushTextures if you plan on using more than 16 textures");
-            return;
-        }
         
         sData->texturesVertexBufferData[i*20 + 0] = dest.x;
         sData->texturesVertexBufferData[i*20 + 1] = dest.y;
@@ -243,7 +282,7 @@ namespace Car::Renderer2D {
         sData->texturesCurrentBatchSize++;
         
         if (sData->texturesCurrentBatchSize >= sData->texturesMaxBatchSize) {
-            FlushTextures();
+            Renderer2D::FlushTextures();
         }
     }
 }

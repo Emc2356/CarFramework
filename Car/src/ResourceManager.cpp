@@ -1,13 +1,16 @@
 #include "Car/ResourceManager.hpp"
 #include "Car/Core/Log.hpp"
+#include <unordered_map>
 
 
 struct ResourceManagerData {
     std::unordered_map<std::string, Car::Ref<Car::Texture2D>> textures;
     std::unordered_map<std::string, Car::Ref<Car::Shader>> shaders;
+    std::unordered_map<std::string, Car::Ref<Car::Font>> fonts;
     std::filesystem::path resourceDirectory = "./resources";
     std::filesystem::path imagesSubdirectory = "images";
     std::filesystem::path shadersSubdirectory = "shaders";
+    std::filesystem::path fontsSubdirectory = "fonts";
 };
 
 
@@ -21,10 +24,10 @@ struct ResourceManagerData {
                                                 return; }
 
 
-namespace Car {
+namespace Car::ResourceManager {
     static ResourceManagerData* sData = nullptr;
 
-    void ResourceManager::Init() {
+    void Init() {
         if (sData != nullptr) {
             CR_CORE_ERROR("ResourceManager already initialized");
             return;
@@ -35,10 +38,10 @@ namespace Car {
         CR_CORE_DEBUG("ResourceManager Initialized");
     }
     
-    void ResourceManager::Shutdown() {
+    void Shutdown() {
         CR_RM_NEED_INITIALIZATION_RET_VOID();
         
-        ResourceManager::ClearAll();
+        ClearAll();
         
         delete sData;
         sData = nullptr;
@@ -46,38 +49,48 @@ namespace Car {
         CR_CORE_DEBUG("ResourceManager shutdown");
     }
     
-    void ResourceManager::setResourceDirectory(const std::string& resourceDirectoryName) {
+    void setResourceDirectory(const std::string& resourceDirectoryName) {
         CR_RM_NEED_INITIALIZATION_RET_VOID();
         sData->resourceDirectory = resourceDirectoryName;
     }
     
-    void ResourceManager::setImagesSubdirectory(const std::string& imagesSubdirectoryName) {
+    void setImagesSubdirectory(const std::string& imagesSubdirectoryName) {
         CR_RM_NEED_INITIALIZATION_RET_VOID();
         sData->imagesSubdirectory = imagesSubdirectoryName;
     }
     
-    void ResourceManager::setShadersSubdirectory(const std::string& shadersSubdirectoryName) {
+    void setShadersSubdirectory(const std::string& shadersSubdirectoryName) {
         CR_RM_NEED_INITIALIZATION_RET_VOID();
         sData->shadersSubdirectory = shadersSubdirectoryName;
     }
+    
+    void setFontsSubdirectory(const std::string& fontsSubdirectoryName) {
+        CR_RM_NEED_INITIALIZATION_RET_VOID();
+        sData->fontsSubdirectory = fontsSubdirectoryName;
+    }
 
-    std::string ResourceManager::getShadersSubdirectory() {
+    std::string getShadersSubdirectory() {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
         return sData->shadersSubdirectory;
     }
     
     
-    std::string ResourceManager::getResourceDirectory() {
+    std::string getResourceDirectory() {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
         return sData->resourceDirectory;
     }
     
-    std::string ResourceManager::getImagesSubdirectory() {
+    std::string getImagesSubdirectory() {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
         return sData->imagesSubdirectory;
     }
     
-    Ref<Texture2D> ResourceManager::LoadTexture2D(const std::string& name, bool flipped, Texture2D::Format format, Texture2D::Format internalFormat, Texture2D::Type type) {
+    std::string getFontsSubdirectory() {
+        CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
+        return sData->fontsSubdirectory;
+    }
+    
+    Ref<Texture2D> LoadTexture2D(const std::string& name, bool flipped, Texture2D::Format format, Texture2D::Format internalFormat, Texture2D::Type type) {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
         
         std::string fullname = sData->resourceDirectory / sData->imagesSubdirectory / name;
@@ -94,7 +107,7 @@ namespace Car {
         return texture;
     }
     
-    Ref<Texture2D> ResourceManager::LoadOrOverideTexture2D(const std::string& name, bool flipped, Texture2D::Format format, Texture2D::Format internalFormat, Texture2D::Type type) {
+    Ref<Texture2D> LoadOrOverideTexture2D(const std::string& name, bool flipped, Texture2D::Format format, Texture2D::Format internalFormat, Texture2D::Type type) {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
         
         std::string fullname = sData->resourceDirectory / sData->imagesSubdirectory / name;
@@ -106,7 +119,7 @@ namespace Car {
         return texture;
     }
     
-    Ref<Texture2D> ResourceManager::GetTexture2D(const std::string& name) {
+    Ref<Texture2D> GetTexture2D(const std::string& name) {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
         
         std::string fullname = sData->resourceDirectory / sData->imagesSubdirectory / name;
@@ -119,7 +132,7 @@ namespace Car {
         return sData->textures[fullname];
     }
     
-    bool ResourceManager::Texture2DExists(const std::string& name) {
+    bool Texture2DExists(const std::string& name) {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(false);
         
         std::string fullname = sData->resourceDirectory / sData->imagesSubdirectory / name;
@@ -127,7 +140,7 @@ namespace Car {
         return sData->textures.find(fullname) != sData->textures.end();
     }
     
-    Ref<Shader> ResourceManager::LoadShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath) {
+    Ref<Shader> LoadShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath) {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
         
         std::string fullname = sData->resourceDirectory / sData->shadersSubdirectory / vertexShaderFilepath /
@@ -145,7 +158,7 @@ namespace Car {
         return shader;
     }
     
-    Ref<Shader> ResourceManager::LoadOrOverideShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath) {
+    Ref<Shader> LoadOrOverideShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath) {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
         
         std::string fullname = sData->resourceDirectory / sData->shadersSubdirectory / vertexShaderFilepath /
@@ -158,7 +171,7 @@ namespace Car {
         return shader;        
     }
     
-    Ref<Shader> ResourceManager::GetShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath) {
+    Ref<Shader> GetShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath) {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
         
         std::string fullname = sData->resourceDirectory / sData->shadersSubdirectory / vertexShaderFilepath /
@@ -172,7 +185,7 @@ namespace Car {
         return sData->shaders[fullname];
     }
     
-    bool ResourceManager::ShaderExists(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath) {
+    bool ShaderExists(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath) {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(false);
         
         std::string fullname = sData->resourceDirectory / sData->shadersSubdirectory / vertexShaderFilepath /
@@ -181,23 +194,86 @@ namespace Car {
         return sData->shaders.find(fullname) != sData->shaders.end();
     }
     
-    void ResourceManager::ClearAll() {
-        CR_RM_NEED_INITIALIZATION_RET_VOID();
+    Ref<Font> LoadFont(const std::string& name, uint32_t height, const std::string& charsToLoad) {
+        CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
+                
+        std::string mangledName = sData->resourceDirectory / sData->fontsSubdirectory / name / ("size=" + std::to_string(height));
         
-        sData->shaders.clear();
+        std::string fullname = sData->resourceDirectory / sData->fontsSubdirectory / name;
+        
+        if (sData->fonts.find(mangledName) != sData->fonts.end()) {
+            CR_CORE_ERROR("Font {0} already loaded, see Car::ResourceManager::GetFont or Car::ResourceManager::LoadOrOverideFont", fullname);
+            return nullptr;
+        }
+        
+        Ref<Font> font = createRef<Font>(fullname, height, charsToLoad);
+        
+        sData->fonts[mangledName] = font;
+        
+        return font;
     }
     
-    void ResourceManager::ClearTexture2Ds() {
+    Ref<Font> LoadOrOverrideFont(const std::string& name, uint32_t height, const std::string& charsToLoad) {
+        CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
+                
+        std::string mangledName = sData->resourceDirectory / sData->fontsSubdirectory / name / ("size=" + std::to_string(height));
+        
+        std::string fullname = sData->resourceDirectory / sData->fontsSubdirectory / name;
+        
+        Ref<Font> font = createRef<Font>(fullname, height, charsToLoad);
+        
+        sData->fonts[mangledName] = font;
+        
+        return font;
+    }
+    
+    Ref<Font> GetFont(const std::string& name, uint32_t height) {
+        CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
+            
+        std::string mangledName = sData->resourceDirectory / sData->fontsSubdirectory / name / ("size=" + std::to_string(height));
+        
+        std::string fullname = sData->resourceDirectory / sData->fontsSubdirectory / name;
+        
+        if (sData->fonts.find(mangledName) == sData->fonts.end()) {
+            CR_CORE_ERROR("Font {0} has not been laoded, see Car::ResourceManager::LoadFont", fullname);
+            return nullptr;
+        }
+        
+        return sData->fonts[mangledName];
+    }
+    
+    bool FontExists(const std::string& name, uint32_t height) {
+        CR_RM_NEED_INITIALIZATION_RET_SPECIAL(false);
+        
+        std::string mangledName = sData->resourceDirectory / sData->fontsSubdirectory / name / ("size=" + std::to_string(height));
+        
+        return sData->fonts.find(mangledName) != sData->fonts.end();
+    }
+    
+    
+    void ClearAll() {
+        CR_RM_NEED_INITIALIZATION_RET_VOID();
+        
+        ClearTexture2Ds();
+        ClearShaders();
+        ClearFonts();
+    }
+    
+    void ClearTexture2Ds() {
         CR_RM_NEED_INITIALIZATION_RET_VOID();
         
         sData->textures.clear();
     }
     
-    void ResourceManager::ClearShaders() {
+    void ClearShaders() {
         CR_RM_NEED_INITIALIZATION_RET_VOID();
 
         sData->shaders.clear();
-        sData->textures.clear();
     }
     
+    void ClearFonts() {
+        CR_RM_NEED_INITIALIZATION_RET_VOID();
+        
+        sData->fonts.clear();
+    }    
 }

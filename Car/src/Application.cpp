@@ -7,6 +7,11 @@
 
 namespace Car {
     Application* sInstance = nullptr;
+    static Application::Specification sSpec;
+    
+    void Application::SetSpecification(const Application::Specification& spec) {
+        sSpec = spec;
+    }
 
     Application::Application() {
         CR_ASSERT(sInstance == nullptr, "Application already exists");
@@ -14,10 +19,11 @@ namespace Car {
         sInstance = this;
 
         Window::Specification windowSpec = {
-            1280,
-            720,
-            "Vroom",
-            true,
+            sSpec.width,
+            sSpec.height,
+            sSpec.title,
+            sSpec.vsync,
+            sSpec.resizable,
             CR_BIND_FN1(Car::Application::onEvent)
         };
         

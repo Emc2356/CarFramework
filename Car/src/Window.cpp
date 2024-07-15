@@ -37,6 +37,8 @@ namespace Car {
             #error not implemented yet
             #endif /*defined(CR_OPENGL)*/
 
+            glfwWindowHint(GLFW_RESIZABLE, spec.resizable ? GLFW_TRUE : GLFW_FALSE);
+            
             sIsGLFWInitialized = true;
         }
         

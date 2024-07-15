@@ -18,6 +18,7 @@ namespace Car {
             uint32_t height;
             std::string title;
             bool vsync;
+            bool resizable;
             eventCallbackFn eventCallback;
         };
     public:

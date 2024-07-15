@@ -22,17 +22,12 @@ namespace Car {
         switch (internalformat) {
         case Texture2D::Format::RGBA8: mInternalFormatOpenGL = GL_RGBA8; break;
         default:
-            CR_CORE_ERROR("Unrecognized Texture2D::Format for internalformat: {}", (uint32_t)internalformat);
+            CR_CORE_ERROR("Unrecognized Texture2D::InternalFormat for internalformat: {}", (uint32_t)internalformat);
             CR_EXIT(1);
         }
 
         mWidth = width;
         mHeight = height;
-
-        if (!buffer) {
-            CR_CORE_ERROR("Invalid buffer provided for Texture2D");
-            CR_EXIT(1);
-        }
 
         glGenTextures(1, &mID);
         glBindTexture(GL_TEXTURE_2D, mID);
@@ -150,6 +145,6 @@ namespace Car {
     }
 
     Ref<Texture2D> Texture2D::Create(uint32_t width, uint32_t height, uint8_t* buffer, Format format, Format internalFormat, Type type) {
-        return createRef<OpenGLTexture2D>(width, height, buffer, internalFormat, format, type);
+        return createRef<OpenGLTexture2D>(width, height, buffer, format, internalFormat, type);
     }
 }
