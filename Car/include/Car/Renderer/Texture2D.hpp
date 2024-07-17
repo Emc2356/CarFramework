@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Car/Core/Core.hpp"
+#include "Car/Geometry/Geometry.hpp"
 
 
 namespace Car {
@@ -35,6 +36,8 @@ namespace Car {
         virtual uint32_t getWidth() const = 0;
         virtual uint32_t getHeight() const = 0;
         virtual uint32_t getBPP() const = 0;
+        
+        virtual Rect getRect() const = 0;
         
         virtual bool operator==(Ref<Texture2D> other) const = 0;
         virtual bool operator!=(Ref<Texture2D> other) const = 0;

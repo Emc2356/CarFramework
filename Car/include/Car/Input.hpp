@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Car/Core/Core.hpp"
+#include <glm/glm.hpp>
 
 
 namespace Car::Input {
@@ -11,5 +12,5 @@ namespace Car::Input {
     int32_t MouseX();
     int32_t MouseY();
     void MousePos(int32_t* mX, int32_t* mY);
-    std::pair<int32_t, int32_t> MousePos();
+    glm::ivec2 MousePos();
 }

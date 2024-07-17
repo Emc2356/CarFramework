@@ -1,16 +1,18 @@
+#include "Car/Events/MouseEvent.hpp"
+#include "Car/Layers/Layer.hpp"
 #include <Car/Car>
 
 
-class Sandbox : public Car::Application {
+class SandboxLayer : public Car::Layer {
 public:
-    Sandbox() {
+    SandboxLayer() : Car::Layer("Sandbox Layer") {}
+    
+    virtual void onAttach() override {
         Car::Renderer::EnableBlending();
-
+        
         mTexture = Car::ResourceManager::LoadTexture2D("pg_np.png");
         mFont = Car::ResourceManager::LoadFont("zed-mono-regular.ttf", 50);
     }
-
-    virtual ~Sandbox() override {} 
     
     virtual void onImGuiRender(double dt) override {
         ImGui::Begin("Performance");
@@ -19,30 +21,37 @@ public:
         
         ImGui::End();   
     }
-
-    void onRender() override {
+    
+    virtual void onRender() override {
         Car::Renderer::ClearColor(0.1f);
         Car::Renderer::Clear();
  
         Car::Renderer2D::Begin();
         
-        auto [mX, mY] = Car::Input::MousePos();
-        Car::Renderer2D::DrawTexture(mTexture, {mX , mY , 96, 96});
-        Car::Renderer2D::DrawTexture(mTexture, {256, 256, 96, 96});
+        Car::Renderer2D::DrawTexture(mTexture, Car::Input::MousePos());
+        Car::Renderer2D::DrawTexture(mTexture, {256, 256});
         
-        Car::Renderer2D::DrawText(mFont, "{Hello World!~\n{From too much work", {50, 50}, {.7, .7, .7});
-        
-        // Car::Rect rect = {512, 512, 96, 96};
-        // int8_t textureID = Car::Renderer2D::getTextureID(mTexture);
-        // for (uint32_t i = 0; i < 19998; i++) {
-        //     Car::Renderer2D::DrawTextureFromID(rect, textureID);
-        // }
+        Car::Renderer2D::DrawText(mFont, "{Hello World!~\n{From too much work\nScore: {1.4}", {50, 50}, {.7, .7, .7});
         
         Car::Renderer2D::End();
     }
+    
 private:
     Car::Ref<Car::Texture2D> mTexture;
     Car::Ref<Car::Font> mFont;
+};
+
+
+class Sandbox : public Car::Application {
+public:
+    Sandbox() {
+        mSandboxLayer = new SandboxLayer();
+        pushLayer(mSandboxLayer);
+    }
+
+    virtual ~Sandbox() override {}
+private:
+    SandboxLayer* mSandboxLayer;
 };
 
 Car::Application *Car::createApplication() {

@@ -37,6 +37,7 @@ namespace Car {
     Application::~Application() {
         for (auto it = mLayerStack.end(); it!= mLayerStack.begin(); ) {
             (*--it)->onDetach();
+            CR_CORE_DEBUG("Layer destroyed");
         }
         ResourceManager::Shutdown();
         Renderer2D::Shutdown();
@@ -60,10 +61,14 @@ namespace Car {
             }
 
             onRender();
+            for (Layer* layer : mLayerStack) {
+                layer->onRender();
+            }
+            onImGuiRender((double)dt);
 
             mImGuiLayer.begin();
             for (Layer* layer : mLayerStack) {
-                layer->onImGuiRender();
+                layer->onImGuiRender((double)dt);
             }
             onImGuiRender((double)dt);
             mImGuiLayer.end();
@@ -73,7 +78,7 @@ namespace Car {
         mImGuiLayer.onDetach();
     }
 
-    bool Application::onEvent(Event& event) {
+    void Application::onEvent(Event& event) {
         EventDispatcher dispatcher(event);
 
         dispatcher.dispatch<WindowCloseEvent>(CR_BIND_FN1(Car::Application::onWindowCloseEvent));
@@ -83,16 +88,24 @@ namespace Car {
         dispatcher.dispatch<MouseScrolledEvent>(CR_BIND_FN1(Car::Application::onMouseScrolledEvent));
         dispatcher.dispatch<KeyPressedEvent>(CR_BIND_FN1(Car::Application::onKeyPressedEvent));
         dispatcher.dispatch<KeyReleasedEvent>(CR_BIND_FN1(Car::Application::onKeyReleasedEvent));
+        dispatcher.dispatch<KeyTypedEvent>(CR_BIND_FN1(Car::Application::onKeyTypedEvent));
         dispatcher.dispatch<WindowResizeEvent>(CR_BIND_FN1(Car::Application::onWindowResizeEvent));
         dispatcher.dispatch<WindowFocusEvent>(CR_BIND_FN1(Car::Application::onWindowFocusEvent));
         dispatcher.dispatch<WindowLostFocusEvent>(CR_BIND_FN1(Car::Application::onWindowLostFocusEvent));
-
+        
+        if (event.isHandled()) {
+            return;
+        }
+        
+        if (mImGuiLayer.onEvent(event)) {
+            return;
+        }
+        
         for (auto it = mLayerStack.end(); it!= mLayerStack.begin(); ) {
             (*--it)->onEvent(event);
             if (event.isHandled())
                 break;
         }
-        return false;
     }
 
     void Application::pushLayer(Layer* layer) {
@@ -125,6 +138,7 @@ namespace Car {
     bool Application::onMouseScrolledEvent(MouseScrolledEvent&) { return false; }
     bool Application::onKeyPressedEvent(KeyPressedEvent&) { return false; }
     bool Application::onKeyReleasedEvent(KeyReleasedEvent&) { return false; }
+    bool Application::onKeyTypedEvent(KeyTypedEvent&) { return false; }
     bool Application::onWindowResizeEvent(WindowResizeEvent&) { return false; }
     bool Application::onWindowCloseEvent(WindowCloseEvent&) { isRunning = false; return true; }
     bool Application::onWindowFocusEvent(WindowFocusEvent&) { return false; }

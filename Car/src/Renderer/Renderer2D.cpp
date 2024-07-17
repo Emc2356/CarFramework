@@ -148,6 +148,28 @@ namespace Car {
         return sData->textureTextures.size() - 1;
     }
     
+    void Renderer2D::DrawTexture(const Ref<Texture2D>& texture, const Rect& dest, const glm::vec3& tint) {
+        int8_t textureID = getTextureID(texture);
+        
+        if (textureID == -1) {
+            CR_CORE_ERROR("Car::Renderer2D::DrawTexture too many textures sent, maximum as 16, call Car::Renderer2D::FlushTextures if you plan on using more than 16 textures");
+            return;
+        }
+        
+        Renderer2D::DrawTextureFromID(dest, textureID, tint);
+    }
+    
+    void Renderer2D::DrawTexture(const Ref<Texture2D>& texture, const glm::ivec2& pos, const glm::vec3& tint) {
+        int8_t textureID = getTextureID(texture);
+            
+        if (textureID == -1) {
+            CR_CORE_ERROR("Car::Renderer2D::DrawTexture too many textures sent, maximum as 16, call Car::Renderer2D::FlushTextures if you plan on using more than 16 textures");
+            return;
+        }
+        
+        Renderer2D::DrawTextureFromID({pos.x, pos.y, (int32_t)texture->getWidth(), (int32_t)texture->getHeight()}, textureID, tint);
+    }
+    
     void Renderer2D::DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest, const glm::vec3& tint) {
         int8_t textureID = getTextureID(texture);
         
@@ -159,15 +181,15 @@ namespace Car {
         Renderer2D::DrawSubTextureFromID(texture, source, dest, textureID, tint);
     }
     
-    void Renderer2D::DrawTexture(const Ref<Texture2D>& texture, const Rect& dest, const glm::vec3& tint) {
+    void Renderer2D::DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const glm::ivec2& pos, const glm::vec3& tint) {
         int8_t textureID = getTextureID(texture);
-        
+            
         if (textureID == -1) {
-            CR_CORE_ERROR("Car::Renderer2D::DrawTexture too many textures sent, maximum as 16, call Car::Renderer2D::FlushTextures if you plan on using more than 16 textures");
+            CR_CORE_ERROR("Car::Renderer2D::DrawSubTexture too many textures sent, maximum as 16, call Car::Renderer2D::FlushTextures if you plan on using more than 16 textures");
             return;
         }
         
-        Renderer2D::DrawTextureFromID(dest, textureID, tint);
+        Renderer2D::DrawSubTextureFromID(texture, source, {pos.x, pos.y, source.w - source.x, source.h - source.w}, textureID, tint);
     }
     
     void Renderer2D::DrawText(const Ref<Font>& font, const std::string& text, const glm::ivec2& pos, const glm::vec3& color) {

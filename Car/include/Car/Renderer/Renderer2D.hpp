@@ -16,8 +16,10 @@ namespace Car {
         static void Begin();
         static void End();
     
-        static void DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest, const glm::vec3& tint=glm::vec3(1.0f));
         static void DrawTexture(const Ref<Texture2D>& texture, const Rect& dest, const glm::vec3& tint=glm::vec3(1.0f));
+        static void DrawTexture(const Ref<Texture2D>& texture, const glm::ivec2& pos, const glm::vec3& tint=glm::vec3(1.0f));
+        static void DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest, const glm::vec3& tint=glm::vec3(1.0f));
+        static void DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const glm::ivec2& pos, const glm::vec3& tint=glm::vec3(1.0f));
         static void DrawText(const Ref<Font>& font, const std::string& text, const glm::ivec2& pos, const glm::vec3& color=glm::vec3(1.0f));
         // automatically called by End and by DrawTexture as needed
         static void FlushTextures();

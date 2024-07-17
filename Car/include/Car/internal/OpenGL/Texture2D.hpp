@@ -20,6 +20,8 @@ namespace Car {
         virtual uint32_t getWidth() const override { return mWidth; }
         virtual uint32_t getHeight() const override { return mHeight; }
         virtual uint32_t getBPP() const override { return mBPP; }
+        
+        virtual Rect getRect() const override { return {0, 0, (int32_t)mWidth, (int32_t)mHeight}; }
 
         virtual bool operator==(Ref<Texture2D> other) const override { return mID == ((OpenGLTexture2D*)other.get())->mID; }
         virtual bool operator!=(Ref<Texture2D> other) const override { return mID != ((OpenGLTexture2D*)other.get())->mID; }

@@ -11,7 +11,7 @@
 namespace Car {
     class Window {
     public:
-        using eventCallbackFn = std::function<bool(Car::Event&)>;
+        using eventCallbackFn = std::function<void(Car::Event&)>;
         
         struct Specification {
             uint32_t width;

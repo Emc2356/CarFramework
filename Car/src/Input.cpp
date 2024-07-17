@@ -74,13 +74,13 @@ namespace Car::Input {
         *mY = (int32_t)mYd;
     }
 
-    std::pair<int32_t, int32_t> MousePos()  {
+    glm::ivec2 MousePos()  {
         GLFWwindow* window = Application::Get()->getWindow()->getWindowHandle();
 
         double mXd, mYd;
 
         glfwGetCursorPos(window, &mXd, &mYd);
 
-        return std::pair<int32_t, int32_t>((int32_t)mXd, (int32_t)mYd);
+        return {(int32_t)mXd, (int32_t)mYd};
     }
 }

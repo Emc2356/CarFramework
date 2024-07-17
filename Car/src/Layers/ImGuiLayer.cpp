@@ -37,11 +37,9 @@ namespace Car {
 		ImGui::StyleColorsDark();
 		//ImGui::StyleColorsClassic();
 
-
 		// When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
 		ImGuiStyle& style = ImGui::GetStyle();
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-		{
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
 			style.WindowRounding = 0.0f;
 			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 		}
@@ -67,12 +65,53 @@ namespace Car {
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
     }
-
+    
+    bool ImGuiLayer::onMouseButtonPressedEvent(MouseButtonPressedEvent& event) {
+        UNUSED(event);
+        return mWantCaptureMouse;
+    }
+    
+    bool ImGuiLayer::onMouseButtonReleasedEvent(MouseButtonReleasedEvent& event) {
+        UNUSED(event);
+        return mWantCaptureMouse;
+    }
+    
+    bool ImGuiLayer::onMouseMovedEvent(MouseMovedEvent& event) {
+        UNUSED(event);
+        return mWantCaptureMouse;
+    }
+    
+    bool ImGuiLayer::onMouseScrolledEvent(MouseScrolledEvent& event) {
+        UNUSED(event);
+        return mWantCaptureMouse;
+    }
+    
+    bool ImGuiLayer::onKeyPressedEvent(KeyPressedEvent& event) {
+        UNUSED(event);
+        return mWantCaptureKeyboard | mWantTextInput;
+    }
+    
+    bool ImGuiLayer::onKeyReleasedEvent(KeyReleasedEvent& event) {
+        UNUSED(event);
+        return mWantCaptureKeyboard | mWantTextInput;
+    }
+    
+    bool ImGuiLayer::onKeyTypedEvent(KeyTypedEvent& event) {
+        UNUSED(event);
+        return mWantCaptureKeyboard | mWantTextInput;
+    }
+    
     void ImGuiLayer::begin() {
+        ImGuiIO& io = ImGui::GetIO();
+        
+        mWantCaptureMouse = io.WantCaptureMouse;
+        mWantCaptureKeyboard = io.WantCaptureKeyboard;
+        mWantTextInput = io.WantTextInput;
+        
 		#if defined(CR_OPENGL)
         	ImGui_ImplOpenGL3_NewFrame();
 		#else
-		#error only opengl is supported right now
+		    #error only opengl is supported right now
 		#endif
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();

@@ -38,6 +38,7 @@ namespace Car {
         virtual bool onMouseScrolledEvent(MouseScrolledEvent& event);
         virtual bool onKeyPressedEvent(KeyPressedEvent& event);
         virtual bool onKeyReleasedEvent(KeyReleasedEvent& event);
+        virtual bool onKeyTypedEvent(KeyTypedEvent& event);
         virtual bool onWindowResizeEvent(WindowResizeEvent& event);
         virtual bool onWindowCloseEvent(WindowCloseEvent& event);
         virtual bool onWindowFocusEvent(WindowFocusEvent& event);
@@ -46,7 +47,7 @@ namespace Car {
         virtual void onImGuiRender(double deltaTime) {UNUSED(deltaTime); };
         
         virtual void onUpdate(double deltaTime) { UNUSED(deltaTime); }
-        virtual void onRender() = 0;
+        virtual void onRender() {}
         
         inline const Ref<Car::Window> getWindow() const { return mWindow; }
         static const Car::Application* Get();
@@ -56,7 +57,7 @@ namespace Car {
     public:
         bool isRunning=true;
     private:
-        bool onEvent(Car::Event& event);
+        void onEvent(Car::Event& event);
     private:
         Ref<Car::Window> mWindow;
         Car::ImGuiLayer mImGuiLayer;

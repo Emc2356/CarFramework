@@ -251,7 +251,7 @@ def car_engine_windows_posix_gnu_clang() -> None:
 @buildspec(BuildSpecFlags.CORE | BuildSpecFlags.POSIX | BuildSpecFlags.WINDOWS, __name__ == "__main__")
 def core_win_posix() -> None:
     Compiler.set_toolchain(Toolchain.CLANG)
-    Compiler.set_c_standard(17)
+    Compiler.set_c_standard(99)
     Compiler.set_cxx_standard(17)
     # Compiler.add_build_flags("-O3")
     Compiler.add_build_flags("-ggdb")
@@ -268,6 +268,7 @@ def core_win_posix() -> None:
     Compiler.add_include_directory("./vendor/glm/")
     Compiler.add_include_directory("./vendor/debugbreak/")
     Compiler.add_include_directory("./vendor/freetype/include")
+    Compiler.add_include_directory("./vendor/fmt/inlcude")
 
     Executable(
         name="sandbox.out",
@@ -283,7 +284,7 @@ def core_win_posix() -> None:
         include_directories=[],
         libraries=[
             "GL",
-            "fmt",
+            "fmt"
         ],
         extra_defines=[
             ("GLFW_INCLUDE_NONE",),
