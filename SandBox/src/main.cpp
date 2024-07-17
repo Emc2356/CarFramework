@@ -61,6 +61,7 @@ Car::Application *Car::createApplication() {
     spec.title = "Sandbox";
     spec.vsync = true;
     spec.resizable = true;
+    spec.useImGui = true;
     Car::Application::SetSpecification(spec);
     
     return new Sandbox();

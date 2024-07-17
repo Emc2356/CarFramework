@@ -20,6 +20,7 @@ namespace Car {
             std::string title="Vroom";
             bool vsync=true;
             bool resizable=true;
+            bool useImGui=true;
         };
     public:
         Application();

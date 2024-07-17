@@ -48,7 +48,9 @@ namespace Car {
     const Application* Application::Get() { return sInstance; }
 
     void Application::run() {
-        mImGuiLayer.onAttach();
+        if (sSpec.useImGui) {
+            mImGuiLayer.onAttach();
+        }
         while (isRunning) {
             double time = Time::Get();
             Timestep dt = time - mLastFrameTime;
@@ -64,18 +66,21 @@ namespace Car {
             for (Layer* layer : mLayerStack) {
                 layer->onRender();
             }
-            onImGuiRender((double)dt);
-
-            mImGuiLayer.begin();
-            for (Layer* layer : mLayerStack) {
-                layer->onImGuiRender((double)dt);
+            
+            if (sSpec.useImGui) {
+                mImGuiLayer.begin();
+                for (Layer* layer : mLayerStack) {
+                    layer->onImGuiRender((double)dt);
+                }
+                onImGuiRender((double)dt);
+                mImGuiLayer.end();
             }
-            onImGuiRender((double)dt);
-            mImGuiLayer.end();
 
             mWindow->onUpdate();
         }
-        mImGuiLayer.onDetach();
+        if (sSpec.useImGui) {
+            mImGuiLayer.onDetach();
+        }
     }
 
     void Application::onEvent(Event& event) {
