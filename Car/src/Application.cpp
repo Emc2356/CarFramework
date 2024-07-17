@@ -61,7 +61,8 @@ namespace Car {
             for (Layer* layer : mLayerStack) {
                 layer->onUpdate((double)dt);
             }
-
+            
+            Renderer::BeginRecording();
             onRender();
             for (Layer* layer : mLayerStack) {
                 layer->onRender();
@@ -75,6 +76,7 @@ namespace Car {
                 onImGuiRender((double)dt);
                 mImGuiLayer.end();
             }
+            Renderer::EndRecording();
 
             mWindow->onUpdate();
         }
