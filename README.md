@@ -11,6 +11,7 @@ for now it only supports OpenGL but i try to limit OpenGL specific calls to only
 3. [GLM](https://github.com/g-truc/glm) for the mathematical part of the framework
 4. [GLAD](https://gen.glad.sh/) as a OpenGL loader and in the future for vulkan extension loader
 5. [freetype](https://github.com/freetype/freetype) for the loading of fonts
+6. [shaderc](https://github.com/google/shaderc) for converting shaders to spirv at runtime
 
 # Building
 I am not 100% sure why i decided to make my own build script, maybe out of frustration from using make and the unnecessary complexity of CMake
