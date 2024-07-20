@@ -6,6 +6,7 @@ from .build import build
 from .decorators import buildspec
 from .build_spec_flags import BuildSpecFlags
 from .cli import handle_argv, unknown_argument
+from .exec_cmd import exec_cmd, ExecResult
 
 
 __all__ = [
@@ -13,6 +14,8 @@ __all__ = [
     "Toolchain",
     "Executable",
     "StaticLibrary",
+    "exec_cmd",
+    "ExecResult",
     "PreCompiledHeader",
     "build",
     "BuildSpecFlags",

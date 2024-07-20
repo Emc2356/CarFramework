@@ -1,3 +1,5 @@
+from typing import Self
+
 from pathlib import Path
 from .source_file import SourceFile
 from .register import Register
@@ -11,6 +13,8 @@ class StaticLibrary:
     extra_defines: list[tuple[str, str] | tuple[str]]
     depends_on: list[str]
     include_directories: list[str]
+    attached_precompiled_headers: list[SourceFile]
+    is_forced_cxx: bool
     
     def __init__(
         self,
@@ -22,3 +26,7 @@ class StaticLibrary:
         depends_on: list[str]=[],
         include_directories: list[str]=[]
     ): ...
+
+    def attach_precompiled_headers(self, *paths) -> Self: ...
+    def force_language_cxx(self) -> Self: ...
+    

@@ -54,16 +54,27 @@ def unknown_argument(func):
 def handle_argv(argv):
     if consume_arg(argv, ["-h", "--help"]):
         usage(sys.stdout)
+        if CLIData.unknown_argument_callback is not None:
+            if len(signature(CLIData.unknown_argument_callback).parameters) == 1:
+                CLIData.unknown_argument_callback("-h")  # type: ignore[call-arg]
+            elif len(signature(CLIData.unknown_argument_callback).parameters) == 2:
+                CLIData.unknown_argument_callback(arg, argv[i + 1:])  # type: ignore[call-arg]
+            else:
+                Logger.error(f"unsupported amount of parameters for the unknown_argument callback")
         sys.exit(0)
     if consume_arg(argv, "--verbose"):
         Logger.verbose = True
     if consume_arg(argv, "--clangd"):
         generate_clangd_commands()
+        sys.exit(0)
     if consume_arg(argv, "--force"):
         # dynamic languages have their positives :D
         # probably bad way to do this, but it works :/
         SourceFile.was_modified = lambda *args, **kwargs: True  # type: ignore[method-assign]
     if consume_arg(argv, "--clean"):
+        from .build import Functions
+        Functions.execute()
+        
         Logger.info(f"cleaning project")
 
         for executable in Register().executables:

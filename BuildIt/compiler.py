@@ -137,7 +137,18 @@ class Compiler:
                 if precompiled_header.source.has_suffix(".h"):
                     command_c.append("-include")
                     command_c.append(f"{precompiled_header.source}")
-
+            if hasattr(other, "attached_precompiled_headers"):
+                for header_soure in other.attached_precompiled_headers:
+                    command_cxx.append("-include")
+                    command_cxx.append(f"{header_soure}")
+    
+                    if header_soure.has_suffix(".h"):
+                        command_c.append("-include")
+                        command_c.append(f"{header_soure}")
+                    
+        if hasattr(other, "is_forced_cxx") and other.is_forced_cxx:
+            command_c = command_cxx
+        
         return command_c, command_cxx
 
     @classmethod
@@ -190,8 +201,19 @@ class Compiler:
                 command_cxx.append(f"{precompiled_header.source}.pch")
 
                 if precompiled_header.source.has_suffix(".h"):
-                    command_c.append("-include")
-                    command_c.append(f"{precompiled_header.source}")
+                    command_c.append("-include-pch")
+                    command_c.append(f"{precompiled_header.source}.pch")
+            if hasattr(other, "attached_precompiled_headers"):
+                for header_soure in other.attached_precompiled_headers:
+                    command_cxx.append("-include-pch")
+                    command_cxx.append(f"{header_soure}.pch")
+    
+                    if header_soure.has_suffix(".h"):
+                        command_c.append("-include-pch")
+                        command_c.append(f"{header_soure}.pch")
+                    
+        if hasattr(other, "is_forced_cxx") and other.is_forced_cxx:
+            command_c = command_cxx
 
         return command_c, command_cxx
 

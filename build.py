@@ -53,6 +53,7 @@ def glfw_posix_gnu_clang() -> None:
         include_directories=[],
         depends_on=[]
     )
+    Compiler.add_include_directory("./vendor/glfw/include")
 
 
 @buildspec
@@ -90,6 +91,7 @@ def glfw_windows_gnu_clang() -> None:
         include_directories=[],
         depends_on=[]
     )
+    Compiler.add_include_directory("./vendor/glfw/include")
 
 
 @buildspec
@@ -103,6 +105,7 @@ def glad_windows_posix_gnu_clang() -> None:
         ],
         include_directories=[],
     )
+    Compiler.add_include_directory("./vendor/glad/include")
 
 
 @buildspec
@@ -116,6 +119,7 @@ def stb_windows_posix_gnu_clang() -> None:
         ],
         include_directories=[],
     )
+    Compiler.add_include_directory("./vendor/stb/include")
 
 
 @buildspec
@@ -141,6 +145,7 @@ def imgui_windows_posix_gnu_clang() -> None:
             "glad"
         ]
     )
+    Compiler.add_include_directory("./vendor/imgui")
     
     
 @buildspec
@@ -203,6 +208,291 @@ def freetype_windows_posix_gnu_clang() -> None:
         depends_on=[],
         include_directories=[],
     )
+    Compiler.add_include_directory("./vendor/freetype/include")
+
+
+@buildspec
+def shaderc_windows_posix_gnu_clang() -> None:
+    if 1:
+        StaticLibrary(
+            name="shaderc",
+            out_filepath="./libraries/",
+            sources=[],
+            depends_on=[],
+            extra_build_flags=[],
+            extra_defines=[],
+            include_directories=[],
+        )
+        return
+    StaticLibrary(
+        name="shaderc",
+        out_filepath="./libraries/",
+        sources=[
+            "./vendor/shaderc/libshaderc/src/shaderc.cc",
+            "./vendor/shaderc/libshaderc_util/src/compiler.cc",
+            "./vendor/shaderc/libshaderc_util/src/spirv_tools_wrapper.cc",
+            "./vendor/shaderc/libshaderc_util/src/version_profile.cc",
+            "./vendor/shaderc/libshaderc_util/src/resources.cc",
+            "./vendor/shaderc/libshaderc_util/src/message.cc",
+            "./vendor/shaderc/libshaderc_util/src/shader_stage.cc",
+            "./vendor/shaderc/third_party/spirv-tools/source/spirv_optimizer_options.cpp", 
+            "./vendor/shaderc/third_party/spirv-tools/source/spirv_validator_options.cpp", 
+            "./vendor/shaderc/third_party/spirv-tools/source/util/bit_vector.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/util/parse_number.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/util/string_utils.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/assembly_grammar.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/binary.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/diagnostic.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/disassemble.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/enum_string_mapping.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/ext_inst.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/extensions.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/libspirv.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/name_mapper.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opcode.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/operand.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/parsed_operand.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/print.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/software_version.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/spirv_endian.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/spirv_fuzzer_options.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/spirv_optimizer_options.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/spirv_reducer_options.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/spirv_target_env.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/spirv_validator_options.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/table.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/text.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/text_handler.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_adjacency.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_annotation.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_arithmetics.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_atomics.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_barriers.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_bitwise.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_builtins.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_capability.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_cfg.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_composites.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_constants.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_conversion.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_debug.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_decorations.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_derivatives.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_extensions.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_execution_limitations.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_function.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_id.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_image.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_interfaces.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_instruction.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_layout.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_literals.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_logicals.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_memory.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_memory_semantics.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_mesh_shading.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_misc.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_mode_setting.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_non_uniform.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_primitives.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_ray_query.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_ray_tracing.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_ray_tracing_reorder.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_scopes.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_small_type_uses.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validate_type.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/basic_block.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/construct.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/function.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/instruction.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/val/validation_state.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/fix_func_call_arguments.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/aggressive_dead_code_elim_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/amd_ext_to_khr.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/analyze_live_input_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/basic_block.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/block_merge_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/block_merge_util.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/build_module.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/ccp_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/cfg_cleanup_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/cfg.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/code_sink.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/combine_access_chains.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/compact_ids_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/composite.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/const_folding_rules.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/constants.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/control_dependence.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/convert_to_sampled_image_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/convert_to_half_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/copy_prop_arrays.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/dataflow.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/dead_branch_elim_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/dead_insert_elim_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/dead_variable_elimination.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/decoration_manager.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/debug_info_manager.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/def_use_manager.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/desc_sroa.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/desc_sroa_util.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/dominator_analysis.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/dominator_tree.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/eliminate_dead_constant_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/eliminate_dead_functions_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/eliminate_dead_functions_util.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/eliminate_dead_io_components_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/eliminate_dead_members_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/eliminate_dead_output_stores_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/feature_manager.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/fix_storage_class.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/flatten_decoration_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/fold.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/folding_rules.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/fold_spec_constant_op_and_composite_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/freeze_spec_constant_value_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/function.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/graphics_robust_access_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/if_conversion.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/inline_exhaustive_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/inline_opaque_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/inline_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/inst_debug_printf_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/instruction.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/instruction_list.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/instrument_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/interface_var_sroa.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/invocation_interlock_placement_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/interp_fixup_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/opextinst_forward_ref_fixup_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/ir_context.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/ir_loader.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/licm_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/liveness.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/local_access_chain_convert_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/local_redundancy_elimination.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/local_single_block_elim_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/local_single_store_elim_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/loop_dependence.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/loop_dependence_helpers.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/loop_descriptor.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/loop_fission.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/loop_fusion.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/loop_fusion_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/loop_peeling.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/loop_utils.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/loop_unroller.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/loop_unswitch_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/mem_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/merge_return_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/modify_maximal_reconvergence.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/module.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/optimizer.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/pass_manager.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/private_to_local_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/propagator.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/reduce_load_size.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/redundancy_elimination.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/register_pressure.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/relax_float_ops_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/remove_dontinline_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/remove_duplicates_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/remove_unused_interface_variables_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/replace_desc_array_access_using_var_index.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/replace_invalid_opc.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/scalar_analysis.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/scalar_analysis_simplification.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/scalar_replacement_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/set_spec_constant_default_value_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/simplification_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/spread_volatile_semantics.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/ssa_rewrite_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/strength_reduction_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/strip_debug_info_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/strip_nonsemantic_info_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/struct_cfg_analysis.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/switch_descriptorset_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/trim_capabilities_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/type_manager.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/types.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/unify_const_pass.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/upgrade_memory_model.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/value_number_table.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/vector_dce.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/workaround1209.cpp",
+            "./vendor/shaderc/third_party/spirv-tools/source/opt/wrap_opkill.cpp",
+            "./vendor/shaderc/third_party/glslang/SPIRV/GlslangToSpv.cpp",
+            "./vendor/shaderc/third_party/glslang/SPIRV/InReadableOrder.cpp",
+            "./vendor/shaderc/third_party/glslang/SPIRV/Logger.cpp",
+            "./vendor/shaderc/third_party/glslang/SPIRV/SpvBuilder.cpp",
+            "./vendor/shaderc/third_party/glslang/SPIRV/SpvPostProcess.cpp",
+            "./vendor/shaderc/third_party/glslang/SPIRV/doc.cpp",
+            "./vendor/shaderc/third_party/glslang/SPIRV/SpvTools.cpp",
+            "./vendor/shaderc/third_party/glslang/SPIRV/disassemble.cpp",
+            "./vendor/shaderc/third_party/glslang/SPIRV/SPVRemapper.cpp",
+            "./vendor/shaderc/third_party/glslang/SPIRV/doc.cpp",
+            "./vendor/shaderc/third_party/glslang/SPIRV/CInterface/spirv_c_interface.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/HLSL/hlslAttributes.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/HLSL/hlslParseHelper.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/HLSL/hlslScanContext.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/HLSL/hlslOpMap.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/HLSL/hlslTokenStream.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/HLSL/hlslGrammar.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/HLSL/hlslParseables.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/GenericCodeGen/Link.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/GenericCodeGen/CodeGen.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/glslang_tab.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/attribute.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/Constant.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/iomapper.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/InfoSink.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/Initialize.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/IntermTraverse.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/Intermediate.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/ParseContextBase.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/ParseHelper.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/PoolAlloc.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/RemoveTree.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/Scan.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/ShaderLang.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/SymbolTable.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/Versions.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/intermOut.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/limits.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/linkValidate.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/parseConst.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/reflection.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/preprocessor/Pp.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp",
+            "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/propagateNoContraction.cpp",
+        ],
+        extra_build_flags=[
+        ],
+        extra_defines=[
+            ("ENABLE_HLSL",),
+        ],
+        depends_on=[
+        ],
+        include_directories=[],
+    ).attach_precompiled_headers(
+        "./vendor/shaderc/third_party/spirv-tools/source/pch_source.h", 
+        "./vendor/shaderc/third_party/spirv-tools/source/opt/pch_source_opt.h", 
+        "./vendor/shaderc/third_party/spirv-tools/source/reduce/pch_source_reduce.h", 
+        "./vendor/shaderc/third_party/glslang/glslang/HLSL/pch.h", 
+        "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/pch.h", 
+    ).force_language_cxx()
+    Compiler.add_include_directory("./vendor/shaderc/third_party/spirv-tools/")
+    Compiler.add_include_directory("./vendor/shaderc/libshaderc_util/include/")
+    Compiler.add_include_directory("./vendor/shaderc/third_party/spirv-headers/include/")
+    Compiler.add_include_directory("./vendor/shaderc/third_party/spirv-tools/include/")
+    Compiler.add_include_directory("./vendor/shaderc/third_party/glslang/")
+    Compiler.add_include_directory("./vendor/shaderc/third_party/spirv-headers/include/binary")
 
 
 @buildspec
@@ -242,10 +532,11 @@ def car_engine_windows_posix_gnu_clang() -> None:
             ("GLFW_INCLUDE_NONE",),
         ],
         depends_on=[
-            "ImGui", "glad", "stb", "glfw", "freetype"
+            "ImGui", "glad", "stb", "glfw", "freetype", "shaderc"
         ],
         include_directories=[],
     )
+    Compiler.add_include_directory("./Car/include/")
 
 
 @buildspec(BuildSpecFlags.CORE | BuildSpecFlags.POSIX | BuildSpecFlags.WINDOWS, __name__ == "__main__")
@@ -260,15 +551,8 @@ def core_win_posix() -> None:
     Compiler.add_define("_DEBUG", "1")
     Compiler.add_define("CR_DEBUG")
 
-    Compiler.add_include_directory("./Car/include/")
-    Compiler.add_include_directory("./vendor/stb/include/")
-    Compiler.add_include_directory("./vendor/glad/include/")
-    Compiler.add_include_directory("./vendor/glfw/include/")
-    Compiler.add_include_directory("./vendor/imgui/")
     Compiler.add_include_directory("./vendor/glm/")
     Compiler.add_include_directory("./vendor/debugbreak/")
-    Compiler.add_include_directory("./vendor/freetype/include")
-    Compiler.add_include_directory("./vendor/fmt/inlcude")
 
     Executable(
         name="sandbox.out",
@@ -294,18 +578,179 @@ def core_win_posix() -> None:
 
 @unknown_argument
 def unknown_arg(arg: str) -> bool:
-    if arg == "--deps":
-        print("getting dependencies")
+    SPIRV_TOOLS_DIR = "./vendor/shaderc/third_party/spirv-tools"
+    GRAMMAR_PROCESSING_SCRIPT = f"{SPIRV_TOOLS_DIR}/utils/generate_grammar_tables.py"
+    XML_REGISTRY_PROCESSING_SCRIPT = f"{SPIRV_TOOLS_DIR}/utils/generate_registry_tables.py"
+    LANG_HEADER_PROCESSING_SCRIPT = f"{SPIRV_TOOLS_DIR}/utils/generate_language_headers.py"
+    SPIRV_TOOLS_BUILD_VERSION_INC_GENERATOR = f"{SPIRV_TOOLS_DIR}/utils/update_build_version.py"
+    
+    SPIRV_HEADER_INCLUDE_DIR = "./vendor/shaderc/third_party/spirv-headers/include"
+    DEBUGINFO_GRAMMAR_JSON_FILE = f"{SPIRV_HEADER_INCLUDE_DIR}/spirv/unified1/extinst.debuginfo.grammar.json"
+    CLDEBUGINFO100_GRAMMAR_JSON_FILE = f"{SPIRV_HEADER_INCLUDE_DIR}/spirv/unified1/extinst.opencl.debuginfo.100.grammar.json"
+    VKDEBUGINFO100_GRAMMAR_JSON_FILE = f"{SPIRV_HEADER_INCLUDE_DIR}/spirv/unified1/extinst.nonsemantic.shader.debuginfo.100.grammar.json"
+        
+    CONFIG_VERSION = "unified1"
+    SPIRV_TOOLS_BINARY_DIR = f"{SPIRV_HEADER_INCLUDE_DIR}/binary"
+    GRAMMAR_JSON_FILE = f"{SPIRV_HEADER_INCLUDE_DIR}/spirv/{CONFIG_VERSION}/spirv.core.grammar.json"
+    GRAMMAR_INSTS_INC_FILE = f"{SPIRV_TOOLS_BINARY_DIR}/core.insts-{CONFIG_VERSION}.inc"
+    GRAMMAR_KINDS_INC_FILE = f"{SPIRV_TOOLS_BINARY_DIR}/operand.kinds-{CONFIG_VERSION}.inc"
 
-        returncode = subprocess.run(["git", "submodule", "init"]).returncode
-        if returncode != 0:
+    GRAMMAR_EXTENSION_ENUM_INC_FILE = f"{SPIRV_TOOLS_BINARY_DIR}/extension_enum.inc"
+    GRAMMAR_ENUM_STRING_MAPPING_INC_FILE = f"{SPIRV_TOOLS_BINARY_DIR}/enum_string_mapping.inc"
+
+    if arg == "--help" or arg == "-h":
+        print("Car build script:")
+        print("    --deps fetchs all of the dependencies and it initializes them")
+    elif arg == "--deps":
+        if exec_cmd("git", "submodule", "init"):
             print("failed to initialize git submodules")
             exit(1)
-        returncode = subprocess.run(["git", "submodule", "update"]).returncode
-        if returncode != 0:
+        if exec_cmd("git", "submodule", "update"):
             print("failed to update git submodules")
             exit(1)
-        return True
+            
+        if exec_cmd("utils/git-sync-deps", is_python=True, cwd="./vendor/shaderc"):
+            print("failed to fetch shaderc deps")
+            exit(1)
+        if exec_cmd("utils/git-sync-deps", is_python=True, cwd="./vendor/shaderc/third_party/spirv-tools"):
+            print("failed to fetch spirv-tools deps")
+            exit(1)
+            
+        # spvtools_core_tables("unified1")
+        if exec_cmd(
+            GRAMMAR_PROCESSING_SCRIPT,
+            f"--spirv-core-grammar={GRAMMAR_JSON_FILE}", 
+            f"--extinst-debuginfo-grammar={DEBUGINFO_GRAMMAR_JSON_FILE}", 
+            f"--extinst-cldebuginfo100-grammar={CLDEBUGINFO100_GRAMMAR_JSON_FILE}", 
+            f"--core-insts-output={GRAMMAR_INSTS_INC_FILE}", 
+            f"--operand-kinds-output={GRAMMAR_KINDS_INC_FILE}", 
+            "--output-language=c++",
+            is_python=True
+        ):
+            print("failed to generate spirv-tools core tables")
+            exit(1)
+        
+        # spvtools_enum_string_mapping("unified1")
+        if exec_cmd(
+            GRAMMAR_PROCESSING_SCRIPT,
+            f"--spirv-core-grammar={GRAMMAR_JSON_FILE}", 
+            f"--extinst-debuginfo-grammar={DEBUGINFO_GRAMMAR_JSON_FILE}", 
+            f"--extinst-cldebuginfo100-grammar={CLDEBUGINFO100_GRAMMAR_JSON_FILE}", 
+            f"--extension-enum-output={GRAMMAR_EXTENSION_ENUM_INC_FILE}", 
+            f"--enum-string-mapping-output={GRAMMAR_ENUM_STRING_MAPPING_INC_FILE}", 
+            "--output-language=c++",
+            is_python=True
+        ):
+            print("failed to generate enum string mapping for spirv-tools")
+            exit(1)
+        
+        # spvtools_opencl_tables("unified1")
+        if exec_cmd(
+            GRAMMAR_PROCESSING_SCRIPT,
+            f"--extinst-opencl-grammar={SPIRV_HEADER_INCLUDE_DIR}/spirv/{CONFIG_VERSION}/extinst.opencl.std.100.grammar.json",
+            f"--opencl-insts-output={SPIRV_TOOLS_BINARY_DIR}/opencl.std.insts.inc",
+            is_python=True
+        ):
+            print("failed to generate opencl table for spirv-tools")
+            exit(1)
+        
+        # spvtools_glsl_tables("unified1")
+        if exec_cmd(
+            GRAMMAR_PROCESSING_SCRIPT,
+            f"--extinst-glsl-grammar={SPIRV_HEADER_INCLUDE_DIR}/spirv/{CONFIG_VERSION}/extinst.glsl.std.450.grammar.json",
+            f"--glsl-insts-output={SPIRV_TOOLS_BINARY_DIR}/glsl.std.450.insts.inc",
+            "--output-language=c++",
+            is_python=True
+        ):
+            print("failed to generate glsl table for spirv-tools")
+            exit(1)
+        
+        def spvtools_vendor_tables(vendor_table: str, short_name: str, operand_kind_prefix: str) -> ExecResult:
+            return exec_cmd(
+                GRAMMAR_PROCESSING_SCRIPT,
+                f"--extinst-vendor-grammar={SPIRV_HEADER_INCLUDE_DIR}/spirv/unified1/extinst.{vendor_table}.grammar.json",
+                f"--vendor-insts-output={SPIRV_TOOLS_BINARY_DIR}/{vendor_table}.insts.inc",
+                f"--vendor-operand-kind-prefix={operand_kind_prefix}",
+                is_python=True
+            )
+            
+        if spvtools_vendor_tables("spv-amd-shader-explicit-vertex-parameter", "spv-amd-sevp", ""):
+            print("spvtools_vendor_tables(\"spv-amd-shader-explicit-vertex-parameter\", \"spv-amd-sevp\", \"\") failed")
+            exit(1)
+        if spvtools_vendor_tables("spv-amd-shader-trinary-minmax", "spv-amd-stm", ""):
+            print("spvtools_vendor_tables(\"spv-amd-shader-trinary-minmax\", \"spv-amd-stm\", \"\") failed")
+            exit(1)
+        if spvtools_vendor_tables("spv-amd-gcn-shader", "spv-amd-gs", ""):
+            print("spvtools_vendor_tables(\"spv-amd-gcn-shader\", \"spv-amd-gs\", \"\") failed")
+            exit(1)
+        if spvtools_vendor_tables("spv-amd-shader-ballot", "spv-amd-sb", ""):
+            print("spvtools_vendor_tables(\"spv-amd-shader-ballot\", \"spv-amd-sb\", \"\") failed")
+            exit(1)
+        if spvtools_vendor_tables("debuginfo", "debuginfo", ""):
+            print("spvtools_vendor_tables(\"debuginfo\", \"debuginfo\", \"\") failed")
+            exit(1)
+        if spvtools_vendor_tables("opencl.debuginfo.100", "cldi100", "CLDEBUG100_"):
+            print("spvtools_vendor_tables(\"opencl.debuginfo.100\", \"cldi100\", \"CLDEBUG100_\") failed")
+            exit(1)
+        if spvtools_vendor_tables("nonsemantic.shader.debuginfo.100", "shdi100", "SHDEBUG100_"):
+            print("spvtools_vendor_tables(\"nonsemantic.shader.debuginfo.100\", \"shdi100\", \"SHDEBUG100_\") failed")
+            exit(1)
+        if spvtools_vendor_tables("nonsemantic.clspvreflection", "clspvreflection", ""):
+            print("spvtools_vendor_tables(\"nonsemantic.clspvreflection\", \"clspvreflection\", \"\") failed")
+            exit(1)
+        if spvtools_vendor_tables("nonsemantic.vkspreflection", "vkspreflection", ""):
+            print("spvtools_vendor_tables(\"nonsemantic.vkspreflection\", \"vkspreflection\", \"\") failed")
+            exit(1)
+        
+            
+        # spvtools_extinst_lang_headers("DebugInfo" ${DEBUGINFO_GRAMMAR_JSON_FILE})
+        if exec_cmd(
+            LANG_HEADER_PROCESSING_SCRIPT,
+            f"--extinst-grammar={DEBUGINFO_GRAMMAR_JSON_FILE}", 
+            f"--extinst-output-path={SPIRV_TOOLS_BINARY_DIR}/DebugInfo.h", 
+            is_python=True
+        ):
+            print("failed to generate DebugInfo.h for spirv-tools")
+            exit(1)
+            
+        # spvtools_extinst_lang_headers("OpenCLDebugInfo100" ${CLDEBUGINFO100_GRAMMAR_JSON_FILE})
+        if exec_cmd(
+            LANG_HEADER_PROCESSING_SCRIPT,
+            f"--extinst-grammar={CLDEBUGINFO100_GRAMMAR_JSON_FILE}", 
+            f"--extinst-output-path={SPIRV_TOOLS_BINARY_DIR}/OpenCLDebugInfo100.h", 
+            is_python=True
+        ):
+            print("failed to generate OpenCLDebugInfo100.h for spirv-tools")
+            exit(1)
+        # spvtools_extinst_lang_headers("NonSemanticShaderDebugInfo100" ${VKDEBUGINFO100_GRAMMAR_JSON_FILE})
+        if exec_cmd(
+            LANG_HEADER_PROCESSING_SCRIPT,
+            f"--extinst-grammar={VKDEBUGINFO100_GRAMMAR_JSON_FILE}", 
+            f"--extinst-output-path={SPIRV_TOOLS_BINARY_DIR}/NonSemanticShaderDebugInfo100.h", 
+            is_python=True
+        ):
+            print("failed to generate NonSemanticShaderDebugInfo100.h for spirv-tools")
+            exit(1)
+            
+        if exec_cmd(
+            XML_REGISTRY_PROCESSING_SCRIPT,
+            f"--xml={SPIRV_HEADER_INCLUDE_DIR}/spirv/spir-v.xml",
+            f"--generator-output={SPIRV_TOOLS_BINARY_DIR}/generators.inc",
+            is_python=True
+        ):
+            print("failed to generate generators.inc")
+            exit(1)
+            
+        if exec_cmd(
+            SPIRV_TOOLS_BUILD_VERSION_INC_GENERATOR,
+            f"{SPIRV_TOOLS_DIR}/CHANGES",
+            f"{SPIRV_TOOLS_BINARY_DIR}/build-version.inc",
+            is_python=True
+        ):
+            print("failed to generate build-version.inc")
+            exit(1)
+
+        exit(0)
 
     return False
 

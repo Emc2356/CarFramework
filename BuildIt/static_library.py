@@ -5,7 +5,8 @@ from .register import Register
 
 class StaticLibrary:
     __slots__ = (
-        "name", "out_filepath", "sources", "extra_build_flags", "extra_defines", "depends_on", "include_directories"
+        "name", "out_filepath", "sources", "extra_build_flags", "extra_defines", "depends_on", "include_directories",
+        "attached_precompiled_headers", "is_forced_cxx"
     )
 
     def __init__(self, name, out_filepath, sources,
@@ -26,5 +27,16 @@ class StaticLibrary:
         self.extra_defines = extra_defines
         self.depends_on = depends_on
         self.include_directories = include_directories
+        self.attached_precompiled_headers = []
+        self.is_forced_cxx = False
 
         Register.submit(self)
+    
+    def force_language_cxx(self):
+        self.is_forced_cxx = True
+        return self 
+    
+    def attach_precompiled_headers(self, *paths):
+        self.attached_precompiled_headers.extend(SourceFile.from_list(paths))
+        
+        return self

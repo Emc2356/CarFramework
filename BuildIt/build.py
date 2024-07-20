@@ -1,5 +1,7 @@
 from typing import Callable, Any
 
+from BuildIt.precompiled_header import PreCompiledHeader
+
 from .compiler import Compiler, Toolchain
 from .static_library import StaticLibrary
 from .register import Register
@@ -269,8 +271,11 @@ def build_clang() -> None:
     changed_static_libraries: bool = False
     changed_executables: bool = False
 
-    if len(Register().precompiled_headers) > 0:
-        for header in Register().precompiled_headers:
+    all_precompiled_headers = Register().precompiled_headers
+    all_static_libraries = Register().static_libraries
+
+    if len(all_precompiled_headers) > 0 or any(len(lib.attached_precompiled_headers) > 0 for lib in all_static_libraries):
+        for header in all_precompiled_headers:
             c_build_command, cxx_build_command = Compiler.construct_build_command(header, True)
 
             if header.source.has_suffix(".hpp"):
@@ -293,9 +298,35 @@ def build_clang() -> None:
                 LogFile.update(header.source)
             else:
                 Logger.info(f"`{header.source}` already up to date")
+        for static_library in all_static_libraries:
+            c_build_command, cxx_build_command = Compiler.construct_build_command(static_library, True)
+            
+            for header_file in static_library.attached_precompiled_headers:
+                if static_library.is_forced_cxx:
+                    build_command = cxx_build_command
+                elif header_file.has_suffix(".hpp"):
+                    build_command = cxx_build_command
+                elif header_file.has_suffix(".h"):
+                    build_command = c_build_command
+                else:
+                    Logger.warn(
+                        f"unrecognized file extension `{header_file.path.suffix}` for {header_file}, assuming C++")
+                    build_command = cxx_build_command
+
+                if header_file.was_modified() or not Path(str(header_file) + ".pch").exists():
+                    CommandQueue.add(
+                        build_command + [str(header_file), "-o", f"{str(header_file)}.pch"],
+                        f"compiling {header_file}",
+                        f"failed to compile {header_file}"
+                    )
+                    changed_precompiled_headers = True
     
-    if len(Register().static_libraries) > 0:
-        for library in Register().static_libraries:
+                    LogFile.update(header_file)
+                else:
+                    Logger.info(f"`{header_file}` already up to date")
+    
+    if len(all_static_libraries) > 0:
+        for library in all_static_libraries:
             c_build_command, cxx_build_command = Compiler.construct_build_command(library)
 
             object_files_in_static_library: list[Path] = []
@@ -383,7 +414,7 @@ def build_clang() -> None:
             command: list[str] = [Compiler.linker] + Compiler.link_flags + executable.extra_link_flags
 
             static_library_directories: set = set()
-            for static_library in Register().static_libraries:
+            for static_library in all_static_libraries:
                 static_library_directories.add(static_library.out_filepath)
 
             for directory in static_library_directories:
