@@ -30,6 +30,7 @@
     }
 
 #define CR_VERIFY(x, message) CR_ASSERT(x, message)
+#define CR_VERIFYN(x, message) CR_ASSERT(!(x), message)
 #else 
 #define CR_CORE_TRACE(...)
 #define CR_CORE_DEBUG(...)
@@ -50,5 +51,6 @@
 #define CR_DEBUGBREAK()
 #define CR_ASSERT(x, message)
 #define CR_VERIFY(x, message) x
+#define CR_VERIFYN(x, message) x
 #endif
 

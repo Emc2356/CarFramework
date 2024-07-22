@@ -9,5 +9,4 @@
 // of pure Rendering API calls so it can work
 // with multiple Rendering APIs
 
-
 ImGuiKey ImGui_ImplCar_KeyToImGuiKey(int key);

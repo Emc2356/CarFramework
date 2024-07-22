@@ -120,6 +120,7 @@ def handle_argv(argv):
                     number = int(arg[2:])
                     if number <= 0:
                         raise ValueError
+                    # CommandQueue.size = number
                     CommandQueue.size = number
                 except ValueError:
                     usage(sys.stderr)

@@ -1,6 +1,8 @@
 #include "Car/ext/ImGui/imgui_impl_car.hpp"
+#include "Car/Core/Core.hpp"
 
 #include "Car/Constants/KeyCodes.hpp"
+#include "Car/Renderer/VertexBuffer.hpp"
 
 
 ImGuiKey ImGui_ImplCar_KeyToImGuiKey(int key) {

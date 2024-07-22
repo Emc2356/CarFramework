@@ -29,13 +29,13 @@ class StaticLibrary:
         self.include_directories = include_directories
         self.attached_precompiled_headers = []
         self.is_forced_cxx = False
-
+        
         Register.submit(self)
     
     def force_language_cxx(self):
         self.is_forced_cxx = True
         return self 
-    
+        
     def attach_precompiled_headers(self, *paths):
         self.attached_precompiled_headers.extend(SourceFile.from_list(paths))
         

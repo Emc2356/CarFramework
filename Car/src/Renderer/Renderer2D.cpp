@@ -20,6 +20,7 @@ struct Renderer2DData {
     Car::Ref<Car::IndexBuffer> texturesIB;
     Car::Ref<Car::VertexBuffer> texturesVB;
     Car::Ref<Car::VertexArray> texturesVA;
+    Car::Ref<Car::Texture2D> whiteTexture;
 
     uint32_t texturesMaxBatchSize;
     uint32_t texturesCurrentBatchSize;
@@ -84,6 +85,9 @@ namespace Car {
             sData->texturesIB,
             sData->texturesShader
         );
+        
+        uint32_t whiteTextureData = 0xFFFFFFFF;
+        sData->whiteTexture = Texture2D::Create(1, 1, (uint8_t*)&whiteTextureData);
     }
     
     void Renderer2D::Shutdown() {
@@ -190,6 +194,17 @@ namespace Car {
         }
         
         Renderer2D::DrawSubTextureFromID(texture, source, {pos.x, pos.y, source.w - source.x, source.h - source.w}, textureID, tint);
+    }
+    
+    void Renderer2D::DrawRect(const Rect& rect, const glm::vec3& color) {
+        int8_t textureID = getTextureID(sData->whiteTexture);
+        
+        if (textureID == -1) {
+            CR_CORE_ERROR("Car::Renderer2D::DrawRect too many textures sent, maximum as 16, call Car::Renderer2D::FlushTextures if you plan on using more than 16 textures");
+            return;
+        }
+        
+        Renderer2D::DrawTextureFromID(rect, textureID, color);
     }
     
     void Renderer2D::DrawText(const Ref<Font>& font, const std::string& text, const glm::ivec2& pos, const glm::vec3& color) {

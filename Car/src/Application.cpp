@@ -61,13 +61,16 @@ namespace Car {
             for (Layer* layer : mLayerStack) {
                 layer->onUpdate((double)dt);
             }
-            
+
             Renderer::BeginRecording();
+            Car::Renderer2D::Begin();
             onRender();
             for (Layer* layer : mLayerStack) {
                 layer->onRender();
             }
-            
+            Car::Renderer2D::End();
+            Renderer::EndRecording();
+
             if (sSpec.useImGui) {
                 mImGuiLayer.begin();
                 for (Layer* layer : mLayerStack) {
@@ -76,8 +79,7 @@ namespace Car {
                 onImGuiRender((double)dt);
                 mImGuiLayer.end();
             }
-            Renderer::EndRecording();
-
+            
             mWindow->onUpdate();
         }
         if (sSpec.useImGui) {

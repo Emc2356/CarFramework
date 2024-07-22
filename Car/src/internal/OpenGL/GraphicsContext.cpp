@@ -5,6 +5,8 @@
 #include <GLFW/glfw3.h>
 #include <glad/gl.h>
 
+
+#if defined(CR_DEBUG)
 void APIENTRY crGlDebugCallback(GLenum source, GLenum type, GLuint id,
                                 GLenum severity, GLsizei length,
                                 const GLchar *message, const void *userParam) {
@@ -60,6 +62,7 @@ void APIENTRY crGlDebugCallback(GLenum source, GLenum type, GLuint id,
     CR_CORE_ERROR("{0}: {1} of {2} severity, raised from {3}: {4}",
                  id, _type, _severity, _source, message);
 }
+#endif // defined(CR_DEBUG)
 
 
 namespace Car {
@@ -84,6 +87,7 @@ namespace Car {
 	}
 	
 	OpenGLGraphicsContext::~OpenGLGraphicsContext() {
+	   gladLoaderUnloadGL();
 	   CR_CORE_DEBUG("OpenGL Context shutdown");
 	}
 

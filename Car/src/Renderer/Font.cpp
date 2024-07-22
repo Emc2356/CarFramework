@@ -19,7 +19,7 @@ namespace Car {
     Font::Font(const std::string& path, uint32_t height, const std::string& charsToLoad) {
         mHeight = height;
         if (!sFreeTypeInitialized) {
-            CR_VERIFY(!FT_Init_FreeType(&sFt), "ERROR::FREETYPE: Could not init FreeType Library");
+            CR_VERIFYN(FT_Init_FreeType(&sFt), "ERROR::FREETYPE: Could not init FreeType Library");
             sFreeTypeInitialized = true;
         }
 
@@ -28,7 +28,7 @@ namespace Car {
         }
         
         FT_Face face;
-        CR_VERIFY(!FT_New_Face(sFt, path.c_str(), 0, &face), "ERROR::FREETYPE: Failed to load font");
+        CR_VERIFYN(FT_New_Face(sFt, path.c_str(), 0, &face), "ERROR::FREETYPE: Failed to load font");
         
         FT_Set_Pixel_Sizes(face, 0, height);
 
@@ -39,7 +39,7 @@ namespace Car {
         // first pass to figure out the texture's width
         for (uint32_t i = 0; i < charsToLoad.size(); i++) {
             char chr = charsToLoad[i];
-            CR_VERIFY(!FT_Load_Char(face, chr, FT_LOAD_RENDER), "ERROR::FREETYTPE: Failed to load Glyph");
+            CR_VERIFYN(FT_Load_Char(face, chr, FT_LOAD_RENDER), "ERROR::FREETYTPE: Failed to load Glyp");
             
             textureWidth += face->glyph->bitmap.width;
             textureHeight = MAX(textureHeight, face->glyph->bitmap.rows);
@@ -53,7 +53,7 @@ namespace Car {
         uint32_t curAdvance = 0;
         for (uint32_t i = 0; i < charsToLoad.size(); i++) {
             const char chr = charsToLoad[i];
-            CR_VERIFY(!FT_Load_Char(face, chr, FT_LOAD_RENDER), "ERROR::FREETYTPE: Failed to load Glyph");
+            CR_VERIFYN(FT_Load_Char(face, chr, FT_LOAD_RENDER), "ERROR::FREETYTPE: Failed to load Glyp");
             
             uint32_t ystart = highestYBearing - face->glyph->bitmap_top;
             
@@ -86,8 +86,6 @@ namespace Car {
         );
         
         free(pixelBuffer);
-        
-        UNUSED(mCharacters);
     }
     
     glm::ivec2 Font::measureText(const std::string& text) {

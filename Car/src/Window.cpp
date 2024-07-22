@@ -144,6 +144,7 @@ namespace Car {
 
     Window::~Window() {
         glfwDestroyWindow(mHandle);
+        glfwTerminate();
         mHandle = nullptr;
         CR_CORE_DEBUG("Window shutdown");
     }
