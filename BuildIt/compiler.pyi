@@ -3,6 +3,8 @@ from typing import Union, ClassVar
 from pathlib import Path
 import enum
 
+import os
+
 from .static_library import StaticLibrary
 from .executable import Executable
 from .precompiled_header import PreCompiledHeader
@@ -13,6 +15,17 @@ class Toolchain(enum.IntEnum):
     GNU: Toolchain
     CLANG: Toolchain
     MSVC: Toolchain
+    
+
+def set_toolchain(toolchain: Toolchain) -> None: ...
+def set_cxx_standard(standard: int) -> None: ...
+def set_c_standard(standard: int) -> None: ...
+def add_define(name: str, value: str | None=None) -> None: ...
+def add_include_directory(path: str) -> None: ...
+def add_build_flags(*flags) -> None: ...
+def add_link_flags(*flags) -> None: ...
+def is_release() -> bool: ...
+def force_release() -> None: ...
 
 
 class Compiler:
@@ -27,21 +40,8 @@ class Compiler:
     link_flags: ClassVar[list[str]]
     defines: ClassVar[dict[str, str | None]]
     include_directories: ClassVar[list[str]]
+    is_release: ClassVar[bool]
 
-    @classmethod
-    def set_toolchain(cls, toolchain: Toolchain) -> None: ...
-    @classmethod
-    def set_cxx_standard(cls, standard: int) -> None: ...
-    @classmethod
-    def set_c_standard(cls, standard: int) -> None: ...
-    @classmethod
-    def add_define(cls, name: str, value: str | None=None) -> None: ...
-    @classmethod
-    def add_include_directory(cls, path: str) -> None: ...
-    @classmethod
-    def add_build_flags(cls, *args) -> None: ...
-    @classmethod
-    def add_link_flags(cls, *args) -> None: ...
     @classmethod
     def construct_build_command_gnu(
         cls,
@@ -60,3 +60,17 @@ class Compiler:
         other: Union[StaticLibrary, Executable, PreCompiledHeader],
         ignore_pch: bool=False
     ) -> tuple[list[str], list[str]]: ...
+
+
+__all__ = [
+    "Toolchain",
+    "set_toolchain",
+    "set_cxx_standard",
+    "set_c_standard",
+    "add_define",
+    "add_include_directory",
+    "add_build_flags",
+    "add_link_flags",
+    "is_release",
+    "force_release"
+]

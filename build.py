@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
-from BuildIt import *
+import BuildIt
+from BuildIt import buildspec, BuildSpecFlags, ExecResult
 from pathlib import Path
-import subprocess
-import sys
 
 
 compile_shaderc: bool = False
@@ -11,7 +10,7 @@ compile_shaderc: bool = False
 
 @buildspec
 def pch_windows_posix_gnu_clang() -> None:
-    PreCompiledHeader(
+    BuildIt.PreCompiledHeader(
         source="./Car/include/Car/Core/crpch.hpp",
         extra_build_flags=[],
         extra_defines=[]
@@ -20,7 +19,7 @@ def pch_windows_posix_gnu_clang() -> None:
 
 @buildspec
 def glfw_posix_gnu_clang() -> None:
-    StaticLibrary(
+    BuildIt.StaticLibrary(
         name="glfw",
         out_filepath="./libraries/",
         sources=[
@@ -56,12 +55,12 @@ def glfw_posix_gnu_clang() -> None:
         include_directories=[],
         depends_on=[]
     )
-    Compiler.add_include_directory("./vendor/glfw/include")
+    BuildIt.add_include_directory("./vendor/glfw/include")
 
 
 @buildspec
 def glfw_windows_gnu_clang() -> None:
-    StaticLibrary(
+    BuildIt.StaticLibrary(
         name="glfw",
         out_filepath="./libraries/",
         sources=[
@@ -94,12 +93,12 @@ def glfw_windows_gnu_clang() -> None:
         include_directories=[],
         depends_on=[]
     )
-    Compiler.add_include_directory("./vendor/glfw/include")
+    BuildIt.add_include_directory("./vendor/glfw/include")
 
 
 @buildspec
 def glad_windows_posix_gnu_clang() -> None:
-    StaticLibrary(
+    BuildIt.StaticLibrary(
         name="glad",
         out_filepath="./libraries/",
         sources=[
@@ -108,26 +107,25 @@ def glad_windows_posix_gnu_clang() -> None:
         ],
         include_directories=[],
     )
-    Compiler.add_include_directory("./vendor/glad/include")
+    BuildIt.add_include_directory("./vendor/glad/include")
 
 
 @buildspec
 def stb_windows_posix_gnu_clang() -> None:
-    StaticLibrary(
+    BuildIt.StaticLibrary(
         name="stb",
         out_filepath="./libraries/",
         sources=[
-            "./vendor/stb/src/stb_image.c",
-            "./vendor/stb/src/stb_truetype.c"
+            "./vendor/stb/src/stb_image.c"
         ],
         include_directories=[],
     )
-    Compiler.add_include_directory("./vendor/stb/include")
+    BuildIt.add_include_directory("./vendor/stb/include")
 
 
 @buildspec
 def imgui_windows_posix_gnu_clang() -> None:
-    StaticLibrary(
+    BuildIt.StaticLibrary(
         name="ImGui",
         out_filepath="./libraries/",
         sources=[
@@ -148,13 +146,13 @@ def imgui_windows_posix_gnu_clang() -> None:
             "glad"
         ]
     )
-    Compiler.add_include_directory("./vendor/imgui")
-    
-    
+    BuildIt.add_include_directory("./vendor/imgui")
+
+
 @buildspec
 def freetype_windows_posix_gnu_clang() -> None:
     # https://github.com/freetype/freetype/blob/master/docs/INSTALL.ANY
-    StaticLibrary(
+    BuildIt.StaticLibrary(
         name="freetype",
         out_filepath="./libraries/",
         sources=[
@@ -211,13 +209,13 @@ def freetype_windows_posix_gnu_clang() -> None:
         depends_on=[],
         include_directories=[],
     )
-    Compiler.add_include_directory("./vendor/freetype/include")
+    BuildIt.add_include_directory("./vendor/freetype/include")
 
 
 @buildspec
 def shaderc_windows_posix_gnu_clang() -> None:
     if not compile_shaderc:
-        shaderc = StaticLibrary(
+        shaderc = BuildIt.StaticLibrary(
             name="shaderc",
             out_filepath="./libraries/",
             sources=[
@@ -231,7 +229,7 @@ def shaderc_windows_posix_gnu_clang() -> None:
         )
 
         return
-    StaticLibrary(
+    BuildIt.StaticLibrary(
         name="shaderc",
         out_filepath="./libraries/",
         sources=[
@@ -485,23 +483,23 @@ def shaderc_windows_posix_gnu_clang() -> None:
         ],
         include_directories=[],
     ).attach_precompiled_headers(
-        "./vendor/shaderc/third_party/spirv-tools/source/pch_source.h", 
-        "./vendor/shaderc/third_party/spirv-tools/source/opt/pch_source_opt.h", 
-        "./vendor/shaderc/third_party/spirv-tools/source/reduce/pch_source_reduce.h", 
-        "./vendor/shaderc/third_party/glslang/glslang/HLSL/pch.h", 
-        "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/pch.h", 
+        "./vendor/shaderc/third_party/spirv-tools/source/pch_source.h",
+        "./vendor/shaderc/third_party/spirv-tools/source/opt/pch_source_opt.h",
+        "./vendor/shaderc/third_party/spirv-tools/source/reduce/pch_source_reduce.h",
+        "./vendor/shaderc/third_party/glslang/glslang/HLSL/pch.h",
+        "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/pch.h",
     ).force_language_cxx()
-    Compiler.add_include_directory("./vendor/shaderc/third_party/spirv-tools/")
-    Compiler.add_include_directory("./vendor/shaderc/libshaderc_util/include/")
-    Compiler.add_include_directory("./vendor/shaderc/third_party/spirv-headers/include/")
-    Compiler.add_include_directory("./vendor/shaderc/third_party/spirv-tools/include/")
-    Compiler.add_include_directory("./vendor/shaderc/third_party/glslang/")
-    Compiler.add_include_directory("./vendor/shaderc/third_party/spirv-headers/include/binary")
+    BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-tools/")
+    BuildIt.add_include_directory("./vendor/shaderc/libshaderc_util/include/")
+    BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-headers/include/")
+    BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-tools/include/")
+    BuildIt.add_include_directory("./vendor/shaderc/third_party/glslang/")
+    BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-headers/include/binary")
 
 
 @buildspec
 def car_engine_windows_posix_gnu_clang() -> None:
-    StaticLibrary(
+    BuildIt.StaticLibrary(
         name="Car",
         out_filepath="./libraries/",
         sources=[
@@ -540,26 +538,22 @@ def car_engine_windows_posix_gnu_clang() -> None:
         ],
         include_directories=[],
     )
-    Compiler.add_include_directory("./Car/include/")
+    BuildIt.add_include_directory("./Car/include/")
 
 
 @buildspec(BuildSpecFlags.CORE | BuildSpecFlags.POSIX | BuildSpecFlags.WINDOWS, __name__ == "__main__")
 def core_win_posix() -> None:
-    Compiler.set_toolchain(Toolchain.CLANG)
-    Compiler.set_c_standard(99)
-    Compiler.set_cxx_standard(17)
+    BuildIt.set_toolchain(BuildIt.Toolchain.CLANG)
+    BuildIt.set_c_standard(99)
+    BuildIt.set_cxx_standard(17)
 
-    # Compiler.add_build_flags("-O3")
-    
-    Compiler.add_build_flags("-ggdb")
-    Compiler.add_define("DEBUG")
-    Compiler.add_define("_DEBUG", "1")
-    Compiler.add_define("CR_DEBUG")
+    if not BuildIt.is_release():
+        BuildIt.add_define("CR_DEBUG")
 
-    Compiler.add_include_directory("./vendor/glm/")
-    Compiler.add_include_directory("./vendor/debugbreak/")
+    BuildIt.add_include_directory("./vendor/glm/")
+    BuildIt.add_include_directory("./vendor/debugbreak/")
 
-    Executable(
+    BuildIt.Executable(
         name="sandbox.out",
         sources=[
             "SandBox/src/main.cpp",
@@ -581,19 +575,19 @@ def core_win_posix() -> None:
     )
 
 
-@unknown_argument
+@BuildIt.unknown_argument
 def unknown_arg(arg: str) -> bool:
     SPIRV_TOOLS_DIR = "./vendor/shaderc/third_party/spirv-tools"
     GRAMMAR_PROCESSING_SCRIPT = f"{SPIRV_TOOLS_DIR}/utils/generate_grammar_tables.py"
     XML_REGISTRY_PROCESSING_SCRIPT = f"{SPIRV_TOOLS_DIR}/utils/generate_registry_tables.py"
     LANG_HEADER_PROCESSING_SCRIPT = f"{SPIRV_TOOLS_DIR}/utils/generate_language_headers.py"
     SPIRV_TOOLS_BUILD_VERSION_INC_GENERATOR = f"{SPIRV_TOOLS_DIR}/utils/update_build_version.py"
-    
+
     SPIRV_HEADER_INCLUDE_DIR = "./vendor/shaderc/third_party/spirv-headers/include"
     DEBUGINFO_GRAMMAR_JSON_FILE = f"{SPIRV_HEADER_INCLUDE_DIR}/spirv/unified1/extinst.debuginfo.grammar.json"
     CLDEBUGINFO100_GRAMMAR_JSON_FILE = f"{SPIRV_HEADER_INCLUDE_DIR}/spirv/unified1/extinst.opencl.debuginfo.100.grammar.json"
     VKDEBUGINFO100_GRAMMAR_JSON_FILE = f"{SPIRV_HEADER_INCLUDE_DIR}/spirv/unified1/extinst.nonsemantic.shader.debuginfo.100.grammar.json"
-        
+
     CONFIG_VERSION = "unified1"
     SPIRV_TOOLS_BINARY_DIR = f"{SPIRV_HEADER_INCLUDE_DIR}/binary"
     GRAMMAR_JSON_FILE = f"{SPIRV_HEADER_INCLUDE_DIR}/spirv/{CONFIG_VERSION}/spirv.core.grammar.json"
@@ -612,50 +606,50 @@ def unknown_arg(arg: str) -> bool:
         compile_shaderc = True
         return True
     elif arg == "--deps":
-        if exec_cmd("git", "submodule", "init"):
+        if BuildIt.exec_cmd("git", "submodule", "init"):
             print("failed to initialize git submodules")
             exit(1)
-        if exec_cmd("git", "submodule", "update"):
+        if BuildIt.exec_cmd("git", "submodule", "update"):
             print("failed to update git submodules")
             exit(1)
-            
-        if exec_cmd("utils/git-sync-deps", is_python=True, cwd="./vendor/shaderc"):
+
+        if BuildIt.exec_cmd("utils/git-sync-deps", is_python=True, cwd="./vendor/shaderc"):
             print("failed to fetch shaderc deps")
             exit(1)
-        if exec_cmd("utils/git-sync-deps", is_python=True, cwd="./vendor/shaderc/third_party/spirv-tools"):
+        if BuildIt.exec_cmd("utils/git-sync-deps", is_python=True, cwd="./vendor/shaderc/third_party/spirv-tools"):
             print("failed to fetch spirv-tools deps")
             exit(1)
-            
+
         # spvtools_core_tables("unified1")
-        if exec_cmd(
+        if BuildIt.exec_cmd(
             GRAMMAR_PROCESSING_SCRIPT,
-            f"--spirv-core-grammar={GRAMMAR_JSON_FILE}", 
-            f"--extinst-debuginfo-grammar={DEBUGINFO_GRAMMAR_JSON_FILE}", 
-            f"--extinst-cldebuginfo100-grammar={CLDEBUGINFO100_GRAMMAR_JSON_FILE}", 
-            f"--core-insts-output={GRAMMAR_INSTS_INC_FILE}", 
-            f"--operand-kinds-output={GRAMMAR_KINDS_INC_FILE}", 
+            f"--spirv-core-grammar={GRAMMAR_JSON_FILE}",
+            f"--extinst-debuginfo-grammar={DEBUGINFO_GRAMMAR_JSON_FILE}",
+            f"--extinst-cldebuginfo100-grammar={CLDEBUGINFO100_GRAMMAR_JSON_FILE}",
+            f"--core-insts-output={GRAMMAR_INSTS_INC_FILE}",
+            f"--operand-kinds-output={GRAMMAR_KINDS_INC_FILE}",
             "--output-language=c++",
             is_python=True
         ):
             print("failed to generate spirv-tools core tables")
             exit(1)
-        
+
         # spvtools_enum_string_mapping("unified1")
-        if exec_cmd(
+        if BuildIt.exec_cmd(
             GRAMMAR_PROCESSING_SCRIPT,
-            f"--spirv-core-grammar={GRAMMAR_JSON_FILE}", 
-            f"--extinst-debuginfo-grammar={DEBUGINFO_GRAMMAR_JSON_FILE}", 
-            f"--extinst-cldebuginfo100-grammar={CLDEBUGINFO100_GRAMMAR_JSON_FILE}", 
-            f"--extension-enum-output={GRAMMAR_EXTENSION_ENUM_INC_FILE}", 
-            f"--enum-string-mapping-output={GRAMMAR_ENUM_STRING_MAPPING_INC_FILE}", 
+            f"--spirv-core-grammar={GRAMMAR_JSON_FILE}",
+            f"--extinst-debuginfo-grammar={DEBUGINFO_GRAMMAR_JSON_FILE}",
+            f"--extinst-cldebuginfo100-grammar={CLDEBUGINFO100_GRAMMAR_JSON_FILE}",
+            f"--extension-enum-output={GRAMMAR_EXTENSION_ENUM_INC_FILE}",
+            f"--enum-string-mapping-output={GRAMMAR_ENUM_STRING_MAPPING_INC_FILE}",
             "--output-language=c++",
             is_python=True
         ):
             print("failed to generate enum string mapping for spirv-tools")
             exit(1)
-        
+
         # spvtools_opencl_tables("unified1")
-        if exec_cmd(
+        if BuildIt.exec_cmd(
             GRAMMAR_PROCESSING_SCRIPT,
             f"--extinst-opencl-grammar={SPIRV_HEADER_INCLUDE_DIR}/spirv/{CONFIG_VERSION}/extinst.opencl.std.100.grammar.json",
             f"--opencl-insts-output={SPIRV_TOOLS_BINARY_DIR}/opencl.std.insts.inc",
@@ -663,9 +657,9 @@ def unknown_arg(arg: str) -> bool:
         ):
             print("failed to generate opencl table for spirv-tools")
             exit(1)
-        
+
         # spvtools_glsl_tables("unified1")
-        if exec_cmd(
+        if BuildIt.exec_cmd(
             GRAMMAR_PROCESSING_SCRIPT,
             f"--extinst-glsl-grammar={SPIRV_HEADER_INCLUDE_DIR}/spirv/{CONFIG_VERSION}/extinst.glsl.std.450.grammar.json",
             f"--glsl-insts-output={SPIRV_TOOLS_BINARY_DIR}/glsl.std.450.insts.inc",
@@ -674,16 +668,16 @@ def unknown_arg(arg: str) -> bool:
         ):
             print("failed to generate glsl table for spirv-tools")
             exit(1)
-        
+
         def spvtools_vendor_tables(vendor_table: str, short_name: str, operand_kind_prefix: str) -> ExecResult:
-            return exec_cmd(
+            return BuildIt.exec_cmd(
                 GRAMMAR_PROCESSING_SCRIPT,
                 f"--extinst-vendor-grammar={SPIRV_HEADER_INCLUDE_DIR}/spirv/unified1/extinst.{vendor_table}.grammar.json",
                 f"--vendor-insts-output={SPIRV_TOOLS_BINARY_DIR}/{vendor_table}.insts.inc",
                 f"--vendor-operand-kind-prefix={operand_kind_prefix}",
                 is_python=True
             )
-            
+
         if spvtools_vendor_tables("spv-amd-shader-explicit-vertex-parameter", "spv-amd-sevp", ""):
             print("spvtools_vendor_tables(\"spv-amd-shader-explicit-vertex-parameter\", \"spv-amd-sevp\", \"\") failed")
             exit(1)
@@ -711,38 +705,38 @@ def unknown_arg(arg: str) -> bool:
         if spvtools_vendor_tables("nonsemantic.vkspreflection", "vkspreflection", ""):
             print("spvtools_vendor_tables(\"nonsemantic.vkspreflection\", \"vkspreflection\", \"\") failed")
             exit(1)
-        
-            
+
+
         # spvtools_extinst_lang_headers("DebugInfo" ${DEBUGINFO_GRAMMAR_JSON_FILE})
-        if exec_cmd(
+        if BuildIt.exec_cmd(
             LANG_HEADER_PROCESSING_SCRIPT,
-            f"--extinst-grammar={DEBUGINFO_GRAMMAR_JSON_FILE}", 
-            f"--extinst-output-path={SPIRV_TOOLS_BINARY_DIR}/DebugInfo.h", 
+            f"--extinst-grammar={DEBUGINFO_GRAMMAR_JSON_FILE}",
+            f"--extinst-output-path={SPIRV_TOOLS_BINARY_DIR}/DebugInfo.h",
             is_python=True
         ):
             print("failed to generate DebugInfo.h for spirv-tools")
             exit(1)
-            
+
         # spvtools_extinst_lang_headers("OpenCLDebugInfo100" ${CLDEBUGINFO100_GRAMMAR_JSON_FILE})
-        if exec_cmd(
+        if BuildIt.exec_cmd(
             LANG_HEADER_PROCESSING_SCRIPT,
-            f"--extinst-grammar={CLDEBUGINFO100_GRAMMAR_JSON_FILE}", 
-            f"--extinst-output-path={SPIRV_TOOLS_BINARY_DIR}/OpenCLDebugInfo100.h", 
+            f"--extinst-grammar={CLDEBUGINFO100_GRAMMAR_JSON_FILE}",
+            f"--extinst-output-path={SPIRV_TOOLS_BINARY_DIR}/OpenCLDebugInfo100.h",
             is_python=True
         ):
             print("failed to generate OpenCLDebugInfo100.h for spirv-tools")
             exit(1)
         # spvtools_extinst_lang_headers("NonSemanticShaderDebugInfo100" ${VKDEBUGINFO100_GRAMMAR_JSON_FILE})
-        if exec_cmd(
+        if BuildIt.exec_cmd(
             LANG_HEADER_PROCESSING_SCRIPT,
-            f"--extinst-grammar={VKDEBUGINFO100_GRAMMAR_JSON_FILE}", 
-            f"--extinst-output-path={SPIRV_TOOLS_BINARY_DIR}/NonSemanticShaderDebugInfo100.h", 
+            f"--extinst-grammar={VKDEBUGINFO100_GRAMMAR_JSON_FILE}",
+            f"--extinst-output-path={SPIRV_TOOLS_BINARY_DIR}/NonSemanticShaderDebugInfo100.h",
             is_python=True
         ):
             print("failed to generate NonSemanticShaderDebugInfo100.h for spirv-tools")
             exit(1)
-            
-        if exec_cmd(
+
+        if BuildIt.exec_cmd(
             XML_REGISTRY_PROCESSING_SCRIPT,
             f"--xml={SPIRV_HEADER_INCLUDE_DIR}/spirv/spir-v.xml",
             f"--generator-output={SPIRV_TOOLS_BINARY_DIR}/generators.inc",
@@ -750,8 +744,8 @@ def unknown_arg(arg: str) -> bool:
         ):
             print("failed to generate generators.inc")
             exit(1)
-            
-        if exec_cmd(
+
+        if BuildIt.exec_cmd(
             SPIRV_TOOLS_BUILD_VERSION_INC_GENERATOR,
             f"{SPIRV_TOOLS_DIR}/CHANGES",
             f"{SPIRV_TOOLS_BINARY_DIR}/build-version.inc",
@@ -766,5 +760,5 @@ def unknown_arg(arg: str) -> bool:
 
 
 if __name__ == "__main__":
-    handle_argv(sys.argv[1:])
-    build()
+    BuildIt.handle_argv()
+    BuildIt.build()

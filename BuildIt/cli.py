@@ -6,6 +6,7 @@ import shutil
 
 from .logger import Logger
 from .command_queue import CommandQueue
+from .compiler import Compiler
 from .source_file import SourceFile
 from .register import Register
 from .clangd import generate_clangd_commands
@@ -21,6 +22,7 @@ def usage(out: TextIO) -> None:
     print(
         "    -j<number> specify the amount of commands it can run simultaneously, if no number is then it will be set to use 75% of your cores",
         file=out)
+    print("    --release uses optimization flags for the compiler that will be used", file=out)
     print("    --clangd generates the compile_commands.json file for clangd extension", file=out)
     print("    --force force rebuilds everything", file=out)
     print("    --clean cleans everything produced by this script, default is false", file=out)
@@ -51,7 +53,9 @@ def unknown_argument(func):
     return func
 
 
-def handle_argv(argv):
+def handle_argv(argv = None):
+    if argv is None:
+        argv = sys.argv[1:]
     if consume_arg(argv, ["-h", "--help"]):
         usage(sys.stdout)
         if CLIData.unknown_argument_callback is not None:
@@ -71,10 +75,12 @@ def handle_argv(argv):
         # dynamic languages have their positives :D
         # probably bad way to do this, but it works :/
         SourceFile.was_modified = lambda *args, **kwargs: True  # type: ignore[method-assign]
+    if consume_arg(argv, "--release"):
+        Compiler.is_release = True
     if consume_arg(argv, "--clean"):
         from .build import Functions
         Functions.execute()
-        
+
         Logger.info(f"cleaning project")
 
         for executable in Register().executables:

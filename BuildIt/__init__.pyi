@@ -1,4 +1,15 @@
-from .compiler import Compiler, Toolchain
+from .compiler import (
+    Toolchain,
+    set_toolchain,
+    set_cxx_standard,
+    set_c_standard,
+    add_define,
+    add_include_directory,
+    add_build_flags,
+    add_link_flags,
+    is_release,
+    force_release
+)
 from .executable import Executable
 from .static_library import StaticLibrary
 from .precompiled_header import PreCompiledHeader
@@ -10,16 +21,24 @@ from .exec_cmd import exec_cmd, ExecResult
 
 
 __all__ = [
-    "Compiler",
     "Toolchain",
+    "set_toolchain",
+    "set_cxx_standard",
+    "set_c_standard",
+    "add_define",
+    "add_include_directory",
+    "add_build_flags",
+    "add_link_flags",
+    "is_release",
+    "force_release",
     "Executable",
     "StaticLibrary",
     "PreCompiledHeader",
-    "exec_cmd",
-    "ExecResult",
     "build",
-    "BuildSpecFlags",
     "buildspec",
+    "BuildSpecFlags",
     "handle_argv",
     "unknown_argument",
+    "exec_cmd",
+    "ExecResult"
 ]

@@ -13,6 +13,7 @@ from .build_spec_flags import BuildSpecFlags
 from pathlib import Path
 from collections import defaultdict, deque
 
+import json
 import time
 import sys
 
@@ -68,6 +69,26 @@ class Functions:
                     (flags & BuildSpecFlags.CLANG and is_clang) or
                     (flags & BuildSpecFlags.MSVC and is_msvc)):
                 func()
+
+
+def get_compile_commands() -> dict[str, list[str]]:
+    commands_file = Compiler.build_directory / "compile_commands.json"
+    commands_file.touch(exist_ok=True)
+    
+    with open(commands_file, "r") as f:
+        content = f.read()
+        if content == "":
+            return {}
+        return json.loads(content)
+        
+        
+def save_compile_commands(data: dict) -> None:
+    commands_file = Compiler.build_directory / "compile_commands.json"
+    commands_file.touch(exist_ok=True)
+    
+    with open(commands_file, "w") as f:
+        f.truncate(0)
+        f.write(json.dumps(data))
 
 
 def sort_static_libraries() -> list[StaticLibrary]:
@@ -225,7 +246,7 @@ def build_gnu() -> None:
                 create_execute_command(
                     ["ar", "rcs", "-o", str(library.out_filepath / f"lib{library.name}.a")] + list(
                         str(path) for path in object_files_in_static_library),
-                    f"creating static library {library.out_filepath / f"lib{library.name}.a"}",
+                    f"linking static library {library.out_filepath / f"lib{library.name}.a"}",
                     f"failed to create static library {library.out_filepath / f"lib{library.name}.a"}"
                 )
 
@@ -307,6 +328,8 @@ def build_gnu() -> None:
 
 
 def build_clang() -> None:
+    compile_commands = get_compile_commands()
+    
     changed_precompiled_headers: bool = False
     changed_static_libraries: bool = False
     changed_executables: bool = False
@@ -327,15 +350,16 @@ def build_clang() -> None:
                     f"unrecognized file extension `{header.source.path.suffix}` for {header.source}, assuming C++")
                 build_command = cxx_build_command
 
-            if header.source.was_modified() or not Path(str(header.source) + ".pch").exists():
+            command = build_command + ["-Xclang", "-emit-pch", str(header.source), "-o", f"{str(header.source)}.pch"]
+            if header.source.was_modified() or not Path(str(header.source) + ".pch").exists() or (compile_commands.get(str(header.source), None) is None or compile_commands[str(header.source)] != command):
                 create_execute_command(
-                    build_command + [str(header.source), "-o", f"{str(header.source)}.pch"],
+                    command,
                     f"compiling {header.source}",
                     f"failed to compile {header.source}"
                 )
                 changed_precompiled_headers = True
-
                 LogFile.update(header.source)
+                compile_commands[str(header.source)] = command
             else:
                 Logger.info(f"{header.source} already up to date")
 
@@ -344,7 +368,7 @@ def build_clang() -> None:
             
             for header_file in static_library.attached_precompiled_headers:
                 if static_library.is_forced_cxx:
-                    build_command = cxx_build_command
+                    build_command = cxx_build_command + ["-x", "c++-header"]
                 elif header_file.has_suffix(".hpp"):
                     build_command = cxx_build_command
                 elif header_file.has_suffix(".h"):
@@ -354,15 +378,16 @@ def build_clang() -> None:
                         f"unrecognized file extension `{header_file.path.suffix}` for {header_file}, assuming C++")
                     build_command = cxx_build_command
 
-                if header_file.was_modified() or not Path(str(header_file) + ".pch").exists():
+                command = build_command + ["-Xclang", "-emit-pch", str(header_file), "-o", f"{str(header_file)}.pch"]
+                if header_file.was_modified() or not Path(str(header_file) + ".pch").exists() or (compile_commands.get(str(header_file.path), None) is None or compile_commands[str(header_file.path)] != command):
                     create_execute_command(
-                        build_command + [str(header_file), "-o", f"{str(header_file)}.pch"],
+                        command,
                         f"compiling {header_file}",
                         f"failed to compile {header_file}"
                     )
                     changed_precompiled_headers = True
-    
                     LogFile.update(header_file)
+                    compile_commands[str(header_file.path)] = command
                 else:
                     Logger.info(f"{header_file} already up to date")
         
@@ -390,9 +415,10 @@ def build_clang() -> None:
                 object_file.parent.mkdir(parents=True, exist_ok=True)
 
                 # check if the object file is up-to-date
-                if not source_file.object_file_upto_date() or changed_precompiled_headers:
+                command = build_command + ["-o", str(object_file), str(source_file)]
+                if not source_file.object_file_upto_date() or (compile_commands.get(str(source_file.path), None) is None or compile_commands[str(source_file.path)] != command):
                     create_execute_command(
-                        build_command + ["-o", str(object_file), str(source_file)],
+                        command,
                         f"compiling {source_file}",
                         f"failed to compile {source_file}"
                     )
@@ -401,6 +427,7 @@ def build_clang() -> None:
                     LogFile.update(str(source_file))
                     changed_static_libraries = True
                     needs_rebuilding = True
+                    compile_commands[str(source_file.path)] = command
                 else:
                     Logger.info(f"{source_file} already up to date")
 
@@ -413,7 +440,7 @@ def build_clang() -> None:
                 create_execute_command(
                     ["ar", "rcs", "-o", str(library.out_filepath / f"lib{library.name}.a")] + list(
                         str(path) for path in object_files_in_static_library),
-                    f"creating static library {library.out_filepath / f"lib{library.name}.a"}",
+                    f"linking static library {library.out_filepath / f"lib{library.name}.a"}",
                     f"failed to create static library {library.out_filepath / f"lib{library.name}.a"}"
                 )
 
@@ -435,15 +462,17 @@ def build_clang() -> None:
 
                 object_file.parent.mkdir(parents=True, exist_ok=True)
 
-                if not source_file.object_file_upto_date():
+                command = build_command + ["-o", str(object_file), str(source_file)]
+                if not source_file.object_file_upto_date() or (compile_commands.get(str(source_file.path), None) is None or compile_commands[str(source_file.path)] != command):
                     create_execute_command(
-                        build_command + ["-o", str(object_file), str(source_file)],
+                        command,
                         f"compiling {source_file}",
                         f"failed to compile {source_file}"
                     )
 
                     LogFile.update(source_file)
                     changed_executables = True
+                    compile_commands[str(source_file.path)] = command
                 else:
                     Logger.info(f"{source_file} already up to date")
 
@@ -492,6 +521,8 @@ def build_clang() -> None:
         Logger.info(f"compilation took {minutes}m {seconds}s")
     else:
         Logger.info(f"compilation took {seconds}s")
+        
+    save_compile_commands(compile_commands)
 
 
 def build() -> None:
