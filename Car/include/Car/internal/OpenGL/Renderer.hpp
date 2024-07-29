@@ -5,7 +5,6 @@
 #include "Car/Renderer/Texture2D.hpp"
 #include "Car/Renderer/VertexArray.hpp"
 
-
 namespace Car {
     class OpenGLRenderer : public Renderer {
     protected:
@@ -19,9 +18,9 @@ namespace Car {
         virtual void DisableDepthTestImpl() override;
         virtual void DrawTrianglesImpl(const Ref<VertexArray> va) override;
         virtual void DrawTrianglesImpl(const Ref<VertexArray> va, uint32_t triangleCount) override;
-        
+
         // OpenGL doesnt have that concept
         virtual void BeginRecordingImpl() override {}
         virtual void EndRecordingImpl() override {}
     };
-}
+} // namespace Car

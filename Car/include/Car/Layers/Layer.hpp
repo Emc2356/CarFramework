@@ -7,11 +7,10 @@
 #include "Car/Events/MouseEvent.hpp"
 #include "Car/Events/WindowEvent.hpp"
 
-
 namespace Car {
     class Layer {
     public:
-        Layer(const std::string& debugName="Layer");
+        Layer(const std::string& debugName = "Layer");
         virtual ~Layer();
 
         virtual void onAttach() {}
@@ -19,7 +18,7 @@ namespace Car {
         virtual void onUpdate(double deltaTime) { UNUSED(deltaTime); }
         virtual void onRender() {}
         virtual void onImGuiRender(double deltaTime) { UNUSED(deltaTime); }
-        
+
         virtual bool onMouseButtonPressedEvent(MouseButtonPressedEvent&) { return false; }
         virtual bool onMouseButtonReleasedEvent(MouseButtonReleasedEvent&) { return false; }
         virtual bool onMouseMovedEvent(MouseMovedEvent&) { return false; }
@@ -36,7 +35,8 @@ namespace Car {
 
         // internal function
         bool onEvent(Car::Event& event);
+
     protected:
         std::string mDebugName;
     };
-}
+} // namespace Car

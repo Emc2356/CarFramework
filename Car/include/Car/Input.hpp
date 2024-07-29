@@ -3,7 +3,6 @@
 #include "Car/Core/Core.hpp"
 #include <glm/glm.hpp>
 
-
 namespace Car::Input {
     bool IsKeyPressed(uint32_t keycode);
     bool IsMouseButtonPressed(int button);
@@ -13,4 +12,4 @@ namespace Car::Input {
     int32_t MouseY();
     void MousePos(int32_t* mX, int32_t* mY);
     glm::ivec2 MousePos();
-}
+} // namespace Car::Input

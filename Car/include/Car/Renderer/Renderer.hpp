@@ -15,7 +15,10 @@ namespace Car {
         static void ClearColor(float mono, float a) { sInstance->ClearColorImpl(mono, mono, mono, a); }
         static void ClearColor(float mono) { sInstance->ClearColorImpl(mono, mono, mono, 1.0f); }
         // 0xRRGGBBAA
-        static void ClearColor(uint32_t hex) { sInstance->ClearColorImpl(float((hex >> 24) & 0xFF) / 255, float((hex >> 16) & 0xFF) / 255, float((hex >> 8) & 0xFF) / 255, float(hex & 0xFF) / 255); }
+        static void ClearColor(uint32_t hex) {
+            sInstance->ClearColorImpl(float((hex >> 24) & 0xFF) / 255, float((hex >> 16) & 0xFF) / 255,
+                                      float((hex >> 8) & 0xFF) / 255, float(hex & 0xFF) / 255);
+        }
 
         static void Clear() { sInstance->ClearImpl(); }
 
@@ -25,10 +28,13 @@ namespace Car {
         static void DisableDepthTest() { sInstance->DisableDepthTestImpl(); }
 
         static void DrawTriangles(const Ref<VertexArray> va) { sInstance->DrawTrianglesImpl(va); }
-        static void DrawTriangles(const Ref<VertexArray> va, uint32_t triangleCount) { sInstance->DrawTrianglesImpl(va, triangleCount); }
-        
+        static void DrawTriangles(const Ref<VertexArray> va, uint32_t triangleCount) {
+            sInstance->DrawTrianglesImpl(va, triangleCount);
+        }
+
         static void BeginRecording() { sInstance->BeginRecordingImpl(); }
         static void EndRecording() { sInstance->EndRecordingImpl(); }
+
     protected:
         virtual void InitImpl() = 0;
         virtual void ShutdownImpl() = 0;
@@ -42,7 +48,8 @@ namespace Car {
         virtual void DrawTrianglesImpl(const Ref<VertexArray> va, uint32_t triangleCount) = 0;
         virtual void BeginRecordingImpl() = 0;
         virtual void EndRecordingImpl() = 0;
+
     private:
         static Car::Renderer* sInstance;
     };
-}
+} // namespace Car

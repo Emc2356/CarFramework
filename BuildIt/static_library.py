@@ -31,6 +31,16 @@ class StaticLibrary:
         self.is_forced_cxx = False
         
         Register.submit(self)
+        
+    def add_sources(self, *sources):
+        self.sources.extend(SourceFile.from_list(sources))
+        
+        return self
+        
+    def add_define(self, name, value=None): 
+        self.extra_defines.append((name, value))
+        
+        return self
     
     def force_language_cxx(self):
         self.is_forced_cxx = True

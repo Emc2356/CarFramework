@@ -2,7 +2,6 @@
 
 #include "Car/Core/Core.hpp"
 
-
 namespace Car {
     class Shader {
     public:
@@ -18,4 +17,4 @@ namespace Car {
         // implementation detail
         static Ref<Shader> CreateImpl(const std::string& vertexBinary, const std::string& fragmeantBinary);
     };
-}
+} // namespace Car

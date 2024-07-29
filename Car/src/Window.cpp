@@ -6,7 +6,6 @@
 
 #include <GLFW/glfw3.h>
 
-
 namespace Car {
     static bool sIsGLFWInitialized = false;
 
@@ -21,27 +20,28 @@ namespace Car {
         if (!sIsGLFWInitialized) {
             CR_VERIFY(glfwInit(), "Failed to initialize GLFW");
 
-            #if defined(CR_DEBUG)
-                glfwSetErrorCallback([](int error, const char* description) {
-                    CR_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
-                });
-            #endif
+#if defined(CR_DEBUG)
+            glfwSetErrorCallback(
+                [](int error, const char* description) { CR_CORE_ERROR("GLFW Error ({0}): {1}", error, description); });
+#endif
 
-            #if defined(CR_OPENGL)
-                // opengl 4.6 was released in 2017, at this point **most**
-                // graphics drivers support opengl 4.6 
-                glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-                glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-                glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-            #else
-            #error not implemented yet
-            #endif /*defined(CR_OPENGL)*/
+#if defined(CR_OPENGL)
+            // opengl 4.6 was released in 2017, at this point **most**
+            // graphics drivers support opengl 4.6
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#elif defined(CR_VULKAN)
+            glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+#else
+#error not implemented yet
+#endif /*defined(CR_OPENGL)*/
 
             glfwWindowHint(GLFW_RESIZABLE, spec.resizable ? GLFW_TRUE : GLFW_FALSE);
-            
+
             sIsGLFWInitialized = true;
         }
-        
+
         mHandle = glfwCreateWindow(spec.width, spec.height, spec.title.c_str(), nullptr, nullptr);
 
         if (!mHandle) {
@@ -49,22 +49,24 @@ namespace Car {
             throw std::runtime_error("Car: Failed to create GLFW window");
         }
 
-        mGraphicsContext = GraphicsContext::Create(mHandle);
-        
-        mGraphicsContext->init();
-
         setVSync(mSpec.vsync);
+
+        mGraphicsContext = GraphicsContext::Create(mHandle);
+    }
+
+    void Window::init() {
+        mGraphicsContext->init();
 
         // Event Handling
         glfwSetWindowUserPointer(mHandle, &mSpec);
-        
+
         glfwSetWindowSizeCallback(mHandle, [](GLFWwindow* window, int width, int height) {
             Window::Specification& spec = *static_cast<Window::Specification*>(glfwGetWindowUserPointer(window));
             spec.width = width;
             spec.height = height;
-            
+
             GraphicsContext::Get()->resize(width, height);
-            
+
             WindowResizeEvent event(width, height);
 
             spec.eventCallback(event);
@@ -82,22 +84,22 @@ namespace Car {
             Window::Specification& spec = *static_cast<Window::Specification*>(glfwGetWindowUserPointer(window));
 
             switch (action) {
-                case GLFW_PRESS: {
-                    KeyPressedEvent event(key, 0);
-                    spec.eventCallback(event);
-                    break;
-                }
-                case GLFW_RELEASE: {
-                    KeyReleasedEvent event(key);
-                    spec.eventCallback(event);
-                    break;
-                }
-                case GLFW_REPEAT: {
-                    KeyPressedEvent event(key, 1);
-                    spec.eventCallback(event);
-                    break;
-                }
-            }        
+            case GLFW_PRESS: {
+                KeyPressedEvent event(key, 0);
+                spec.eventCallback(event);
+                break;
+            }
+            case GLFW_RELEASE: {
+                KeyReleasedEvent event(key);
+                spec.eventCallback(event);
+                break;
+            }
+            case GLFW_REPEAT: {
+                KeyPressedEvent event(key, 1);
+                spec.eventCallback(event);
+                break;
+            }
+            }
         });
 
         glfwSetCharCallback(mHandle, [](GLFWwindow* window, uint32_t keycode) {
@@ -112,16 +114,16 @@ namespace Car {
             Window::Specification& spec = *static_cast<Window::Specification*>(glfwGetWindowUserPointer(window));
 
             switch (action) {
-                case GLFW_PRESS: {
-                    MouseButtonPressedEvent event(button);
-                    spec.eventCallback(event);
-                    break;
-                }
-                case GLFW_RELEASE: {
-                    MouseButtonReleasedEvent event(button);
-                    spec.eventCallback(event);
-                    break;
-                }
+            case GLFW_PRESS: {
+                MouseButtonPressedEvent event(button);
+                spec.eventCallback(event);
+                break;
+            }
+            case GLFW_RELEASE: {
+                MouseButtonReleasedEvent event(button);
+                spec.eventCallback(event);
+                break;
+            }
             }
         });
 
@@ -138,8 +140,8 @@ namespace Car {
             MouseMovedEvent event(xPos, yPos);
             spec.eventCallback(event);
         });
-        
-        CR_CORE_DEBUG("Window created");
+
+        CR_CORE_DEBUG("Window initialized");
     }
 
     Window::~Window() {
@@ -148,8 +150,27 @@ namespace Car {
         mHandle = nullptr;
         CR_CORE_DEBUG("Window shutdown");
     }
-    
-    void Window::setVSync(bool vsync) {
-        glfwSwapInterval(mSpec.vsync = vsync);
+
+    std::vector<const char*> Window::getRequiredInstanceExtensions() const {
+        uint32_t glfwExtensionCount = 0;
+        const char** glfwExtensions;
+
+        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+        std::vector<const char*> ret(glfwExtensionCount);
+
+        for (uint32_t i = 0; i < glfwExtensionCount; i++) {
+            ret[i] = glfwExtensions[i];
+        }
+
+        return ret;
     }
-}
+
+    void Window::setVSync(bool vsync) {
+#if defined(CR_OPENGL)
+        glfwSwapInterval(mSpec.vsync = vsync);
+#elif defined(CR_VULKAN)
+        UNUSED(vsync);
+#endif
+    }
+} // namespace Car

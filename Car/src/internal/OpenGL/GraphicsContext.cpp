@@ -5,13 +5,11 @@
 #include <GLFW/glfw3.h>
 #include <glad/gl.h>
 
-
 #if defined(CR_DEBUG)
-void APIENTRY crGlDebugCallback(GLenum source, GLenum type, GLuint id,
-                                GLenum severity, GLsizei length,
-                                const GLchar *message, const void *userParam) {
-    (void) length;
-    (void) userParam;
+void APIENTRY crGlDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
+                                const GLchar* message, const void* userParam) {
+    (void)length;
+    (void)userParam;
     char* _source;
     char* _type;
     char* _severity;
@@ -41,69 +39,89 @@ void APIENTRY crGlDebugCallback(GLenum source, GLenum type, GLuint id,
     }
 
     switch (type) {
-    case GL_DEBUG_TYPE_ERROR:               _type = (char*)"ERROR"; break;
-    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: _type = (char*)"DEPRECATED BEHAVIOR"; break;
-    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  _type = (char*)"UDEFINED BEHAVIOR"; break;
-    case GL_DEBUG_TYPE_PORTABILITY:         _type = (char*)"PORTABILITY"; break;
-    case GL_DEBUG_TYPE_PERFORMANCE:         _type = (char*)"PERFORMANCE"; break;
-    case GL_DEBUG_TYPE_OTHER:               _type = (char*)"OTHER"; break;
-    case GL_DEBUG_TYPE_MARKER:              _type = (char*)"MARKER"; break;
-    default:                                _type = (char*)"UNKNOWN"; break;
+    case GL_DEBUG_TYPE_ERROR:
+        _type = (char*)"ERROR";
+        break;
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+        _type = (char*)"DEPRECATED BEHAVIOR";
+        break;
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+        _type = (char*)"UDEFINED BEHAVIOR";
+        break;
+    case GL_DEBUG_TYPE_PORTABILITY:
+        _type = (char*)"PORTABILITY";
+        break;
+    case GL_DEBUG_TYPE_PERFORMANCE:
+        _type = (char*)"PERFORMANCE";
+        break;
+    case GL_DEBUG_TYPE_OTHER:
+        _type = (char*)"OTHER";
+        break;
+    case GL_DEBUG_TYPE_MARKER:
+        _type = (char*)"MARKER";
+        break;
+    default:
+        _type = (char*)"UNKNOWN";
+        break;
     }
 
     switch (severity) {
-        case GL_DEBUG_SEVERITY_HIGH:         _severity = (char*)"HIGH"; break;
-        case GL_DEBUG_SEVERITY_MEDIUM:       _severity = (char*)"MEDIUM"; break;
-        case GL_DEBUG_SEVERITY_LOW:          _severity = (char*)"LOW"; break;
-        case GL_DEBUG_SEVERITY_NOTIFICATION: _severity = (char*)"NOTIFICATION"; break;
-        default:                             _severity = (char*)"UNKNOWN"; break;
+    case GL_DEBUG_SEVERITY_HIGH:
+        _severity = (char*)"HIGH";
+        break;
+    case GL_DEBUG_SEVERITY_MEDIUM:
+        _severity = (char*)"MEDIUM";
+        break;
+    case GL_DEBUG_SEVERITY_LOW:
+        _severity = (char*)"LOW";
+        break;
+    case GL_DEBUG_SEVERITY_NOTIFICATION:
+        _severity = (char*)"NOTIFICATION";
+        break;
+    default:
+        _severity = (char*)"UNKNOWN";
+        break;
     }
 
-    CR_CORE_ERROR("{0}: {1} of {2} severity, raised from {3}: {4}",
-                 id, _type, _severity, _source, message);
+    CR_CORE_ERROR("{0}: {1} of {2} severity, raised from {3}: {4}", id, _type, _severity, _source, message);
 }
 #endif // defined(CR_DEBUG)
 
-
 namespace Car {
     OpenGLGraphicsContext::OpenGLGraphicsContext(GLFWwindow* windowHandle) : mWindowHandle(windowHandle) {
-           CR_ASSERT(windowHandle, "Interal Error: null window handle sent to gl graphics context");
-	}
-	
+        CR_ASSERT(windowHandle, "Interal Error: null window handle sent to gl graphics context");
+    }
+
     void OpenGLGraphicsContext::init() {
-		glfwMakeContextCurrent(mWindowHandle);
-		// not 100% sure if i will keep using GLFW so i use the glad
-		// built-in loader 
+        glfwMakeContextCurrent(mWindowHandle);
+        // not 100% sure if i will keep using GLFW so i use the glad
+        // built-in loader
         if (!gladLoaderLoadGL()) {
             throw std::runtime_error("Car: Failed to initialize glad");
         }
-		CR_CORE_DEBUG("OpenGL Context Initialized");
+        CR_CORE_DEBUG("OpenGL Context Initialized");
 
-		#if defined(CR_DEBUG)
-        	glEnable(GL_DEBUG_OUTPUT);
-        	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        	glDebugMessageCallback(crGlDebugCallback, 0);
-		#endif
-	}
-	
-	OpenGLGraphicsContext::~OpenGLGraphicsContext() {
-	   gladLoaderUnloadGL();
-	   CR_CORE_DEBUG("OpenGL Context shutdown");
-	}
+#if defined(CR_DEBUG)
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageCallback(crGlDebugCallback, 0);
+#endif
+    }
 
-	void OpenGLGraphicsContext::swapBuffers() {
-		glfwSwapBuffers(mWindowHandle);
-	}
+    OpenGLGraphicsContext::~OpenGLGraphicsContext() {
+        gladLoaderUnloadGL();
+        CR_CORE_DEBUG("OpenGL Context shutdown");
+    }
 
-	void OpenGLGraphicsContext::resize(uint32_t width, uint32_t height) {
-	   glViewport(0, 0, width, height);
-	}
-	
-	Ref<GraphicsContext> GraphicsContext::Create(GLFWwindow* windowHandle) {
+    void OpenGLGraphicsContext::swapBuffers() { glfwSwapBuffers(mWindowHandle); }
+
+    void OpenGLGraphicsContext::resize(uint32_t width, uint32_t height) { glViewport(0, 0, width, height); }
+
+    Ref<GraphicsContext> GraphicsContext::Create(GLFWwindow* windowHandle) {
         Ref<GraphicsContext> context = createRef<OpenGLGraphicsContext>(windowHandle);
-        
+
         GraphicsContext::Set(context);
-        
-        return context; 
-	}
-}
+
+        return context;
+    }
+} // namespace Car

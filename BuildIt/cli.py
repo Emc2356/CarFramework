@@ -23,9 +23,9 @@ def usage(out: TextIO) -> None:
         "    -j<number> specify the amount of commands it can run simultaneously, if no number is then it will be set to use 75% of your cores",
         file=out)
     print("    --release uses optimization flags for the compiler that will be used", file=out)
-    print("    --clangd generates the compile_commands.json file for clangd extension", file=out)
+    print("    --clangd generates the compile_commands.json file for clangd lsp", file=out)
     print("    --force force rebuilds everything", file=out)
-    print("    --clean cleans everything produced by this script, default is false", file=out)
+    print("    --clean cleans everything produced by this script", file=out)
 
 
 def consume_arg(argv: list[str], argument: str | list[str]) -> bool:

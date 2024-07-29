@@ -2,63 +2,59 @@
 
 #include "Car/Events/Event.hpp"
 
-
 namespace Car {
-	class KeyEvent : public Event {
-	public:
-		inline uint32_t getKeyCode() const { return mKeyCode; }
+    class KeyEvent : public Event {
+    public:
+        inline uint32_t getKeyCode() const { return mKeyCode; }
 
-		CR_EVENT_CLASS_CATEGORY(Car::Event::Category::Keyboard | Car::Event::Category::Input);
-	protected:
-		KeyEvent(int keycode)
-			: mKeyCode(keycode) {}
+        CR_EVENT_CLASS_CATEGORY(Car::Event::Category::Keyboard | Car::Event::Category::Input);
 
-		uint32_t mKeyCode;
-	};
+    protected:
+        KeyEvent(int keycode) : mKeyCode(keycode) {}
 
-	class KeyPressedEvent : public KeyEvent {
-	public:
-		KeyPressedEvent(int keycode, int repeatCount)
-			: KeyEvent(keycode), mRepeatCount(repeatCount) {}
+        uint32_t mKeyCode;
+    };
 
-		inline uint32_t getRepeatCount() const { return mRepeatCount; }
+    class KeyPressedEvent : public KeyEvent {
+    public:
+        KeyPressedEvent(int keycode, int repeatCount) : KeyEvent(keycode), mRepeatCount(repeatCount) {}
 
-		std::string toString() const override {
-			std::stringstream ss;
-			ss << "KeyPressedEvent: " << mKeyCode << " (" << mRepeatCount << " repeats)";
-			return ss.str();
-		}
+        inline uint32_t getRepeatCount() const { return mRepeatCount; }
 
-		CR_EVENT_CLASS_TYPE(KeyPressed)
-	private:
-		uint32_t mRepeatCount;
-	};
+        std::string toString() const override {
+            std::stringstream ss;
+            ss << "KeyPressedEvent: " << mKeyCode << " (" << mRepeatCount << " repeats)";
+            return ss.str();
+        }
 
-	class KeyReleasedEvent : public KeyEvent {
-	public:
-		KeyReleasedEvent(uint32_t keycode)
-			: KeyEvent(keycode) {}
+        CR_EVENT_CLASS_TYPE(KeyPressed)
+    private:
+        uint32_t mRepeatCount;
+    };
 
-		std::string toString() const override {
-			std::stringstream ss;
-			ss << "KeyReleasedEvent: " << mKeyCode;
-			return ss.str();
-		}
+    class KeyReleasedEvent : public KeyEvent {
+    public:
+        KeyReleasedEvent(uint32_t keycode) : KeyEvent(keycode) {}
 
-		CR_EVENT_CLASS_TYPE(KeyReleased)
-	};
+        std::string toString() const override {
+            std::stringstream ss;
+            ss << "KeyReleasedEvent: " << mKeyCode;
+            return ss.str();
+        }
 
-	class KeyTypedEvent : public KeyEvent {
-	public:
-		KeyTypedEvent(uint32_t keycode)
-			: KeyEvent(keycode) {}
+        CR_EVENT_CLASS_TYPE(KeyReleased)
+    };
 
-		std::string toString() const override {
-			std::stringstream ss;
-			ss << "KeyTypedEvent: " << mKeyCode;
-			return ss.str();
-		}
+    class KeyTypedEvent : public KeyEvent {
+    public:
+        KeyTypedEvent(uint32_t keycode) : KeyEvent(keycode) {}
 
-		CR_EVENT_CLASS_TYPE(KeyTyped)
-	};
-}
+        std::string toString() const override {
+            std::stringstream ss;
+            ss << "KeyTypedEvent: " << mKeyCode;
+            return ss.str();
+        }
+
+        CR_EVENT_CLASS_TYPE(KeyTyped)
+    };
+} // namespace Car

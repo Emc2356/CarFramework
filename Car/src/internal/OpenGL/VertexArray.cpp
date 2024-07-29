@@ -5,7 +5,6 @@
 #include <glad/gl.h>
 #include <memory>
 
-
 namespace Car {
     OpenGLVertexArray::OpenGLVertexArray(Ref<VertexBuffer> vb, Ref<IndexBuffer> ib, Ref<Shader> shader) {
         glGenVertexArrays(1, &mID);
@@ -15,9 +14,7 @@ namespace Car {
         mShader = shader;
     }
 
-    OpenGLVertexArray::~OpenGLVertexArray() {
-        glDeleteVertexArrays(1, &mID);
-    }
+    OpenGLVertexArray::~OpenGLVertexArray() { glDeleteVertexArrays(1, &mID); }
 
     void OpenGLVertexArray::bind() const {
         glBindVertexArray(mID);
@@ -27,8 +24,7 @@ namespace Car {
         mShader->bind();
     }
 
-
     Ref<VertexArray> VertexArray::Create(Ref<VertexBuffer> vb, Ref<IndexBuffer> ib, Ref<Shader> shader) {
         return createRef<OpenGLVertexArray>(vb, ib, shader);
     }
-}
+} // namespace Car

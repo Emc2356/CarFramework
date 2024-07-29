@@ -5,6 +5,11 @@ from BuildIt import buildspec, BuildSpecFlags, ExecResult
 from pathlib import Path
 
 
+OPENGL = 1
+VULKAN = 2
+rendering_api = OPENGL
+
+
 compile_shaderc: bool = False
 
 
@@ -134,6 +139,7 @@ def imgui_windows_posix_gnu_clang() -> None:
             "./Car/src/ext/ImGui/imgui_impl_car.cpp",
             "./vendor/imgui/backends/imgui_impl_glfw.cpp",
             "./vendor/imgui/backends/imgui_impl_opengl3.cpp",
+            "./vendor/imgui/backends/imgui_impl_vulkan.cpp",
             "./vendor/imgui/imgui_tables.cpp",
             "./vendor/imgui/imgui_widgets.cpp",
             "./vendor/imgui/imgui.cpp",
@@ -499,7 +505,7 @@ def shaderc_windows_posix_gnu_clang() -> None:
 
 @buildspec
 def car_engine_windows_posix_gnu_clang() -> None:
-    BuildIt.StaticLibrary(
+    carlib = BuildIt.StaticLibrary(
         name="Car",
         out_filepath="./libraries/",
         sources=[
@@ -518,6 +524,18 @@ def car_engine_windows_posix_gnu_clang() -> None:
             "./Car/src/Renderer/Renderer2D.cpp",
             "./Car/src/Renderer/Font.cpp",
             "./Car/src/Renderer/GraphicsContext.cpp",
+        ],
+        extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
+        extra_defines=[
+            ("GLFW_INCLUDE_NONE",),
+        ],
+        depends_on=[
+            "ImGui", "glad", "stb", "glfw", "freetype", "shaderc"
+        ],
+        include_directories=[],
+    )
+    if rendering_api == OPENGL:
+        carlib.add_sources(
             "./Car/src/internal/OpenGL/Renderer.cpp",
             "./Car/src/internal/OpenGL/GraphicsContext.cpp",
             "./Car/src/internal/OpenGL/Shader.cpp",
@@ -527,17 +545,21 @@ def car_engine_windows_posix_gnu_clang() -> None:
             "./Car/src/internal/OpenGL/VertexArray.cpp",
             "./Car/src/internal/OpenGL/UniformBuffer.cpp",
             "./Car/src/internal/OpenGL/Texture2D.cpp",
-        ],
-        extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
-        extra_defines=[
-            ("CR_OPENGL",),
-            ("GLFW_INCLUDE_NONE",),
-        ],
-        depends_on=[
-            "ImGui", "glad", "stb", "glfw", "freetype", "shaderc"
-        ],
-        include_directories=[],
-    )
+        )
+        carlib.add_define("CR_OPENGL")
+    elif rendering_api == VULKAN:
+        carlib.add_sources(
+            "./Car/src/internal/Vulkan/Renderer.cpp",
+            "./Car/src/internal/Vulkan/GraphicsContext.cpp",
+            "./Car/src/internal/Vulkan/Shader.cpp",
+            "./Car/src/internal/Vulkan/IndexBuffer.cpp",
+            "./Car/src/internal/Vulkan/VertexBuffer.cpp",
+            "./Car/src/internal/Vulkan/SSBO.cpp",
+            "./Car/src/internal/Vulkan/VertexArray.cpp",
+            "./Car/src/internal/Vulkan/UniformBuffer.cpp",
+            "./Car/src/internal/Vulkan/Texture2D.cpp",
+        )
+        carlib.add_define("CR_VULKAN")
     BuildIt.add_include_directory("./Car/include/")
 
 
@@ -546,6 +568,7 @@ def core_win_posix() -> None:
     BuildIt.set_toolchain(BuildIt.Toolchain.CLANG)
     BuildIt.set_c_standard(99)
     BuildIt.set_cxx_standard(17)
+    # BuildIt.rebuild_if_includes_changed()
 
     if not BuildIt.is_release():
         BuildIt.add_define("CR_DEBUG")
@@ -566,7 +589,6 @@ def core_win_posix() -> None:
         extra_link_flags=[],
         include_directories=[],
         libraries=[
-            "GL",
             "fmt"
         ],
         extra_defines=[
@@ -577,6 +599,8 @@ def core_win_posix() -> None:
 
 @BuildIt.unknown_argument
 def unknown_arg(arg: str) -> bool:
+    global rendering_api
+    
     SPIRV_TOOLS_DIR = "./vendor/shaderc/third_party/spirv-tools"
     GRAMMAR_PROCESSING_SCRIPT = f"{SPIRV_TOOLS_DIR}/utils/generate_grammar_tables.py"
     XML_REGISTRY_PROCESSING_SCRIPT = f"{SPIRV_TOOLS_DIR}/utils/generate_registry_tables.py"
@@ -601,9 +625,27 @@ def unknown_arg(arg: str) -> bool:
         print("Car build script:")
         print("    --deps fetchs all of the dependencies and it initializes them")
         print("    --shaderc compiles the shaderc library into a staticly linked library")
+        print("    --opengl, -ogl to use OpenGL rendering backend (default)")
+        print("    --vulkan, -vk to use Vulkan rendering backend")
+        print("    --format formats the code (required clang-format)")
+    elif arg == "--format":
+        files = list(str(path) for path in Path("./Car").glob("**/*.cpp"))
+        files += list(str(path) for path in Path("./Car").glob("**/*.hpp"))
+        files += list(str(path) for path in Path("./SandBox").glob("**/*.hpp"))
+        files += list(str(path) for path in Path("./SandBox").glob("**/*.cpp"))
+        files += list(str(path) for path in Path("./examples").glob("**/*.hpp"))
+        files += list(str(path) for path in Path("./examples").glob("**/*.cpp"))
+        
+        exit(BuildIt.exec_cmd("clang-format", "-i", *files, "--verbose").returncode)
     elif arg == "--shaderc":
         global compile_shaderc
         compile_shaderc = True
+        return True
+    elif arg == "-ogl" or arg == "--opengl":
+        rendering_api = OPENGL
+        return True
+    elif arg == "-vk" or arg == "--vulkan":
+        rendering_api = VULKAN
         return True
     elif arg == "--deps":
         if BuildIt.exec_cmd("git", "submodule", "init"):
@@ -759,6 +801,15 @@ def unknown_arg(arg: str) -> bool:
     return False
 
 
+def compile_shaders() -> None:
+    if BuildIt.exec_cmd("glslc", "-fshader-stage=frag", "resources/shaders/temp/glsl/fragmeant.glsl", "-o", "resources/shaders/temp/spv/fragmeant.spv").returncode:
+            exit(1)
+    if BuildIt.exec_cmd("glslc", "-fshader-stage=vert", "resources/shaders/temp/glsl/vertex.glsl", "-o", "resources/shaders/temp/spv/vertex.spv").returncode:
+            exit(1)
+
+
+
 if __name__ == "__main__":
+    compile_shaders()
     BuildIt.handle_argv()
     BuildIt.build()

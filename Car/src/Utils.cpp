@@ -1,6 +1,5 @@
 #include "Car/Utils.hpp"
 
-
 namespace Car {
     std::string readFile(const std::string& path) {
         std::ifstream file(path);
@@ -27,4 +26,4 @@ namespace Car {
         file.read(&buffer[0], size);
         return buffer;
     }
-}
+} // namespace Car

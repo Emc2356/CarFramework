@@ -2,7 +2,6 @@
 
 #include <algorithm>
 
-
 namespace Car {
     LayerStack::LayerStack() : mLayerInsertIndex(0) {}
 
@@ -14,19 +13,17 @@ namespace Car {
 
     void LayerStack::pushLayer(Layer* layer) {
         mLayers.emplace(mLayers.begin() + mLayerInsertIndex, layer);
-		mLayerInsertIndex++;
+        mLayerInsertIndex++;
     }
 
-    void LayerStack::pushOverlay(Layer* overlay) {
-        mLayers.emplace_back(overlay);
-    }
+    void LayerStack::pushOverlay(Layer* overlay) { mLayers.emplace_back(overlay); }
 
     void LayerStack::popLayer(Layer* layer) {
-		auto it = std::find(mLayers.begin(), mLayers.end(), layer);
-		if (it != mLayers.end()) {
-			mLayers.erase(it);
-			mLayerInsertIndex--;
-		}
+        auto it = std::find(mLayers.begin(), mLayers.end(), layer);
+        if (it != mLayers.end()) {
+            mLayers.erase(it);
+            mLayerInsertIndex--;
+        }
     }
 
     void LayerStack::popOverlay(Layer* overlay) {
@@ -35,4 +32,4 @@ namespace Car {
             mLayers.erase(it);
         }
     }
-}
+} // namespace Car

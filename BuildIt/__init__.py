@@ -13,7 +13,11 @@ from .compiler import (
 from .executable import Executable
 from .static_library import StaticLibrary
 from .precompiled_header import PreCompiledHeader
-from .build import build
+from .build import (
+    build,
+    find_if_file_changed_from_include_recursivly, 
+    rebuild_if_includes_changed
+)
 from .decorators import buildspec
 from .build_spec_flags import BuildSpecFlags
 from .cli import handle_argv, unknown_argument
@@ -34,6 +38,8 @@ __all__ = [
     "Executable",
     "StaticLibrary",
     "PreCompiledHeader",
+    "find_if_file_changed_from_include_recursivly",
+    "rebuild_if_includes_changed",
     "build",
     "buildspec",
     "BuildSpecFlags",

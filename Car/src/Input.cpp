@@ -3,7 +3,6 @@
 
 #include <GLFW/glfw3.h>
 
-
 namespace Car::Input {
     bool IsKeyPressed(uint32_t keycode) {
         GLFWwindow* window = Application::Get()->getWindow()->getWindowHandle();
@@ -41,7 +40,7 @@ namespace Car::Input {
         return (int32_t)mXd;
     }
 
-    void MouseY(int32_t* mY)  {
+    void MouseY(int32_t* mY) {
         GLFWwindow* window = Application::Get()->getWindow()->getWindowHandle();
 
         double mXd, mYd;
@@ -53,7 +52,7 @@ namespace Car::Input {
         UNUSED(mXd);
     }
 
-    int32_t MouseY()  {
+    int32_t MouseY() {
         GLFWwindow* window = Application::Get()->getWindow()->getWindowHandle();
 
         double mXd, mYd;
@@ -63,7 +62,7 @@ namespace Car::Input {
         return (int32_t)mYd;
     }
 
-    void MousePos(int32_t* mX, int32_t* mY)  {
+    void MousePos(int32_t* mX, int32_t* mY) {
         GLFWwindow* window = Application::Get()->getWindow()->getWindowHandle();
 
         double mXd, mYd;
@@ -74,7 +73,7 @@ namespace Car::Input {
         *mY = (int32_t)mYd;
     }
 
-    glm::ivec2 MousePos()  {
+    glm::ivec2 MousePos() {
         GLFWwindow* window = Application::Get()->getWindow()->getWindowHandle();
 
         double mXd, mYd;
@@ -83,4 +82,4 @@ namespace Car::Input {
 
         return {(int32_t)mXd, (int32_t)mYd};
     }
-}
+} // namespace Car::Input

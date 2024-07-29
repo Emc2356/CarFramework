@@ -1,6 +1,7 @@
 from typing import Callable, Any
 
 from BuildIt.precompiled_header import PreCompiledHeader
+from BuildIt.source_file import SourceFile
 
 from .compiler import Compiler, Toolchain
 from .static_library import StaticLibrary
@@ -8,6 +9,7 @@ from .register import Register
 from .command_queue import CommandQueue, create_execute_command, create_gather_cmd
 from .logger import Logger
 from .log_file import LogFile
+from .source_file import SourceFile
 from .build_spec_flags import BuildSpecFlags
 
 from pathlib import Path
@@ -71,8 +73,69 @@ class Functions:
                 func()
 
 
+class LocalOptions:
+    rebuild_if_includes_changed: bool = False
+
+
+def rebuild_if_includes_changed() -> None:
+    LocalOptions.rebuild_if_includes_changed = True
+
+
+def find_if_file_changed_from_include_recursivly(path: Path | str, depth=150, is_gathering: bool=False) -> bool:
+    if not LocalOptions.rebuild_if_includes_changed:
+        return False
+    if depth == 0:
+        return False
+    
+    Functions.execute()
+    includes: list[str] = []
+    
+    with open(path, "r") as f:
+        in_comment = False
+        for line in f.readlines():
+            line = line.strip()
+            # easy comment
+            if line.startswith("//"):
+                continue
+            if "/*" in line:
+                in_comment = True
+            if "*/" in line:
+                in_comment = False
+            if in_comment or not "include" in line:
+                continue
+            if line.endswith("*/") or not line.startswith("#"):
+                continue
+            line = line[1:].strip()
+            if line.startswith("include"):
+                include = line[8:].strip()[1:-1]
+                for include_dir in Compiler.include_directories:
+                    if (Path(include_dir) / include).exists():
+                        if SourceFile(Path(include_dir) / include).was_modified():
+                            if is_gathering:
+                                LogFile.update(SourceFile(Path(include_dir) / include))
+                            if not is_gathering: 
+                                return True
+                        includes.append(str(Path(include_dir) / include))
+                        break
+                else:
+                    continue
+    
+    if len(includes) == 0:
+        return False
+    
+    for include in includes:
+        if find_if_file_changed_from_include_recursivly(include, depth-1, is_gathering):
+            if is_gathering:
+                LogFile.update(include)
+            if not is_gathering: 
+                return True
+    
+    return False
+
+
 def get_compile_commands() -> dict[str, list[str]]:
     commands_file = Compiler.build_directory / "compile_commands.json"
+    commands_file.parent.mkdir(parents=True, exist_ok=True)
     commands_file.touch(exist_ok=True)
     
     with open(commands_file, "r") as f:
@@ -316,6 +379,24 @@ def build_gnu() -> None:
 
         create_gather_cmd()
         
+    if len(all_precompiled_headers) > 0 or any(len(lib.attached_precompiled_headers) > 0 for lib in all_static_libraries):
+        for header in all_precompiled_headers:
+            find_if_file_changed_from_include_recursivly(header.source.path, is_gathering=True)
+
+        for static_library in all_static_libraries:
+            for header_file in static_library.attached_precompiled_headers:
+                find_if_file_changed_from_include_recursivly(header_file.path, is_gathering=True)
+    
+    if len(all_static_libraries) > 0:
+        for library in all_static_libraries:
+            for source_file in library.sources:
+                find_if_file_changed_from_include_recursivly(source_file.path, is_gathering=True)
+
+    if len(Register().executables) > 0:
+        for executable in Register().executables:
+            for source_file in executable.sources:
+                find_if_file_changed_from_include_recursivly(source_file.path, is_gathering=True)
+    
     start_time = time.time()
     CommandQueue.execute()
     total_time = time.time() - start_time
@@ -351,7 +432,7 @@ def build_clang() -> None:
                 build_command = cxx_build_command
 
             command = build_command + ["-Xclang", "-emit-pch", str(header.source), "-o", f"{str(header.source)}.pch"]
-            if header.source.was_modified() or not Path(str(header.source) + ".pch").exists() or (compile_commands.get(str(header.source), None) is None or compile_commands[str(header.source)] != command):
+            if header.source.was_modified() or not Path(str(header.source) + ".pch").exists() or (compile_commands.get(str(header.source), None) is None or compile_commands[str(header.source)] != command) or find_if_file_changed_from_include_recursivly(header.source.path):
                 create_execute_command(
                     command,
                     f"compiling {header.source}",
@@ -379,7 +460,7 @@ def build_clang() -> None:
                     build_command = cxx_build_command
 
                 command = build_command + ["-Xclang", "-emit-pch", str(header_file), "-o", f"{str(header_file)}.pch"]
-                if header_file.was_modified() or not Path(str(header_file) + ".pch").exists() or (compile_commands.get(str(header_file.path), None) is None or compile_commands[str(header_file.path)] != command):
+                if header_file.was_modified() or not Path(str(header_file) + ".pch").exists() or (compile_commands.get(str(header_file.path), None) is None or compile_commands[str(header_file.path)] != command) or find_if_file_changed_from_include_recursivly(header_file.path):
                     create_execute_command(
                         command,
                         f"compiling {header_file}",
@@ -416,7 +497,7 @@ def build_clang() -> None:
 
                 # check if the object file is up-to-date
                 command = build_command + ["-o", str(object_file), str(source_file)]
-                if not source_file.object_file_upto_date() or (compile_commands.get(str(source_file.path), None) is None or compile_commands[str(source_file.path)] != command):
+                if not source_file.object_file_upto_date() or (compile_commands.get(str(source_file.path), None) is None or compile_commands[str(source_file.path)] != command) or find_if_file_changed_from_include_recursivly(source_file.path):
                     create_execute_command(
                         command,
                         f"compiling {source_file}",
@@ -463,7 +544,7 @@ def build_clang() -> None:
                 object_file.parent.mkdir(parents=True, exist_ok=True)
 
                 command = build_command + ["-o", str(object_file), str(source_file)]
-                if not source_file.object_file_upto_date() or (compile_commands.get(str(source_file.path), None) is None or compile_commands[str(source_file.path)] != command):
+                if not source_file.object_file_upto_date() or (compile_commands.get(str(source_file.path), None) is None or compile_commands[str(source_file.path)] != command) or find_if_file_changed_from_include_recursivly(source_file.path):
                     create_execute_command(
                         command,
                         f"compiling {source_file}",
@@ -511,7 +592,27 @@ def build_clang() -> None:
                 )
 
         create_gather_cmd()
-        
+    
+    if len(all_precompiled_headers) > 0 or any(len(lib.attached_precompiled_headers) > 0 for lib in all_static_libraries):
+        for header in all_precompiled_headers:
+            find_if_file_changed_from_include_recursivly(header.source.path, is_gathering=True)
+
+        for static_library in all_static_libraries:
+            for header_file in static_library.attached_precompiled_headers:
+                find_if_file_changed_from_include_recursivly(header_file.path, is_gathering=True)
+    
+    if len(all_static_libraries) > 0:
+        for library in all_static_libraries:
+            for source_file in library.sources:
+                find_if_file_changed_from_include_recursivly(source_file.path, is_gathering=True)
+
+    if len(Register().executables) > 0:
+        for executable in Register().executables:
+            for source_file in executable.sources:
+                find_if_file_changed_from_include_recursivly(source_file.path, is_gathering=True)
+                    
+
+    
     start_time = time.time()
     CommandQueue.execute()
     total_time = time.time() - start_time

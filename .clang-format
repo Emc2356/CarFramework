@@ -1,0 +1,37 @@
+# BasedOnStyle: LLVM
+AllowShortLoopsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
+ColumnLimit: 120
+DerivePointerAlignment: false
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterClass: false
+    AfterControlStatement: false
+    AfterEnum: false
+    AfterFunction: false
+    AfterNamespace: false
+    AfterObjCDeclaration: false
+    AfterStruct: false
+    AfterUnion: false
+    BeforeCatch: false
+    BeforeElse: false
+    IndentBraces: false
+
+Language: Cpp
+PointerAlignment: Left
+ReflowComments: true
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SortIncludes: false
+AllowShortFunctionsOnASingleLine: true
+# public private etc
+AccessModifierOffset: -4
+Cpp11BracedListStyle: true
+
+NamespaceIndentation: All
+
+AlwaysBreakAfterReturnType: None

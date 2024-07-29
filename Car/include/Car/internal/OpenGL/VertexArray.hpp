@@ -2,7 +2,6 @@
 
 #include "Car/Renderer/VertexArray.hpp"
 
-
 namespace Car {
     class OpenGLVertexArray : public VertexArray {
     public:
@@ -16,13 +15,14 @@ namespace Car {
         virtual Ref<VertexBuffer> getVertexBuffer() const override { return mVb; }
         virtual Ref<IndexBuffer> getIndexBuffer() const override { return mIb; }
         virtual Ref<Shader> getShader() const override { return mShader; }
-        
+
         virtual void bind() const override;
+
     private:
         Ref<VertexBuffer> mVb;
         Ref<IndexBuffer> mIb;
         Ref<Shader> mShader;
-        
+
         uint32_t mID;
     };
-}
+} // namespace Car

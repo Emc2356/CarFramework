@@ -3,7 +3,6 @@
 #include "Car/Core/Core.hpp"
 #include "Car/Renderer/Buffer.hpp"
 
-
 namespace Car {
     class IndexBuffer {
     public:
@@ -23,4 +22,4 @@ namespace Car {
         static Ref<IndexBuffer> Create(void* data, uint32_t count, Buffer::Usage usage, Buffer::Type type);
         static Ref<IndexBuffer> Create(uint32_t count, Buffer::Usage usage, Buffer::Type type);
     };
-}
+} // namespace Car

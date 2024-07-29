@@ -4,43 +4,35 @@
 #include "Car/Renderer/Renderer.hpp"
 #include "Car/Time.hpp"
 
-
 namespace Car {
     Application* sInstance = nullptr;
     static Application::Specification sSpec;
-    
-    void Application::SetSpecification(const Application::Specification& spec) {
-        sSpec = spec;
-    }
+
+    void Application::SetSpecification(const Application::Specification& spec) { sSpec = spec; }
 
     Application::Application() {
         CR_ASSERT(sInstance == nullptr, "Application already exists");
         CR_CORE_DEBUG("Application created");
         sInstance = this;
 
-        Window::Specification windowSpec = {
-            sSpec.width,
-            sSpec.height,
-            sSpec.title,
-            sSpec.vsync,
-            sSpec.resizable,
-            CR_BIND_FN1(Car::Application::onEvent)
-        };
-        
+        Window::Specification windowSpec = {sSpec.width, sSpec.height,    sSpec.title,
+                                            sSpec.vsync, sSpec.resizable, CR_BIND_FN1(Car::Application::onEvent)};
+
         mWindow = createRef<Car::Window>(windowSpec);
+        mWindow->init();
 
         Renderer::Init();
-        Renderer2D::Init();
-        ResourceManager::Init();
+        // Renderer2D::Init();
+        // ResourceManager::Init();
     }
 
     Application::~Application() {
-        for (auto it = mLayerStack.end(); it!= mLayerStack.begin(); ) {
+        for (auto it = mLayerStack.end(); it != mLayerStack.begin();) {
             (*--it)->onDetach();
             CR_CORE_DEBUG("Layer destroyed");
         }
-        ResourceManager::Shutdown();
-        Renderer2D::Shutdown();
+        // ResourceManager::Shutdown();
+        // Renderer2D::Shutdown();
         Renderer::Shutdown();
         CR_CORE_DEBUG("Application shutdown");
     }
@@ -63,12 +55,12 @@ namespace Car {
             }
 
             Renderer::BeginRecording();
-            Car::Renderer2D::Begin();
+            // Car::Renderer2D::Begin();
             onRender();
             for (Layer* layer : mLayerStack) {
                 layer->onRender();
             }
-            Car::Renderer2D::End();
+            // Car::Renderer2D::End();
             Renderer::EndRecording();
 
             if (sSpec.useImGui) {
@@ -79,7 +71,7 @@ namespace Car {
                 onImGuiRender((double)dt);
                 mImGuiLayer.end();
             }
-            
+
             mWindow->onUpdate();
         }
         if (sSpec.useImGui) {
@@ -101,16 +93,16 @@ namespace Car {
         dispatcher.dispatch<WindowResizeEvent>(CR_BIND_FN1(Car::Application::onWindowResizeEvent));
         dispatcher.dispatch<WindowFocusEvent>(CR_BIND_FN1(Car::Application::onWindowFocusEvent));
         dispatcher.dispatch<WindowLostFocusEvent>(CR_BIND_FN1(Car::Application::onWindowLostFocusEvent));
-        
+
         if (event.isHandled()) {
             return;
         }
-        
+
         if (mImGuiLayer.onEvent(event)) {
             return;
         }
-        
-        for (auto it = mLayerStack.end(); it!= mLayerStack.begin(); ) {
+
+        for (auto it = mLayerStack.end(); it != mLayerStack.begin();) {
             (*--it)->onEvent(event);
             if (event.isHandled())
                 break;
@@ -149,7 +141,10 @@ namespace Car {
     bool Application::onKeyReleasedEvent(KeyReleasedEvent&) { return false; }
     bool Application::onKeyTypedEvent(KeyTypedEvent&) { return false; }
     bool Application::onWindowResizeEvent(WindowResizeEvent&) { return false; }
-    bool Application::onWindowCloseEvent(WindowCloseEvent&) { isRunning = false; return true; }
     bool Application::onWindowFocusEvent(WindowFocusEvent&) { return false; }
     bool Application::onWindowLostFocusEvent(WindowLostFocusEvent&) { return false; }
-}
+    bool Application::onWindowCloseEvent(WindowCloseEvent&) {
+        isRunning = false;
+        return true;
+    }
+} // namespace Car

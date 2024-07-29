@@ -2,7 +2,6 @@
 
 #include "Car/Renderer/Shader.hpp"
 
-
 namespace Car {
     class OpenGLShader : public Shader {
     public:
@@ -12,7 +11,8 @@ namespace Car {
 
         virtual void bind() const override;
         virtual void unbind() const override;
+
     private:
         uint32_t mID;
     };
-}
+} // namespace Car

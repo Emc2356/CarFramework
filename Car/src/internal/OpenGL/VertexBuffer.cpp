@@ -4,13 +4,12 @@
 
 #include <glad/gl.h>
 
-
 namespace Car {
     static uint32_t BufferLayoutDataTypeToOpenGLBaseType(BufferLayout::DataType type) {
         switch (type) {
         case BufferLayout::DataType::Float:
         case BufferLayout::DataType::Float2:
-        case BufferLayout::DataType::Float3: 
+        case BufferLayout::DataType::Float3:
         case BufferLayout::DataType::Float4:
         case BufferLayout::DataType::Mat3:
         case BufferLayout::DataType::Mat4:
@@ -32,37 +31,37 @@ namespace Car {
         }
     }
 
-    OpenGLVertexBuffer::OpenGLVertexBuffer(void* data, uint32_t size, Buffer::Usage usage) {
+    OpenGLVertexBuffer::OpenGLVertexBuffer(void* data, uint32_t size, BufferLayout layout, Buffer::Usage usage) {
         switch (usage) {
-        case Buffer::Usage::StaticDraw: { mOpenGLUsage = GL_STATIC_DRAW; break; }
-        case Buffer::Usage::DynamicDraw: {mOpenGLUsage = GL_DYNAMIC_DRAW; break; }
-        default: {  CR_CORE_ERROR("Unrecognized Usage for VertexBuffer: {}", static_cast<uint32_t>(usage)); CR_DEBUGBREAK(); }
+        case Buffer::Usage::StaticDraw: {
+            mOpenGLUsage = GL_STATIC_DRAW;
+            break;
+        }
+        case Buffer::Usage::DynamicDraw: {
+            mOpenGLUsage = GL_DYNAMIC_DRAW;
+            break;
+        }
+        default: {
+            CR_CORE_ERROR("Unrecognized Usage for VertexBuffer: {}", static_cast<uint32_t>(usage));
+            CR_DEBUGBREAK();
+        }
         }
 
         glGenBuffers(1, &mID);
         glBindBuffer(GL_ARRAY_BUFFER, mID);
         glBufferData(GL_ARRAY_BUFFER, size, data, mOpenGLUsage);
-
+        
+        mLayout = layout;
         mUsage = usage;
         mSize = size;
         mUsage = usage;
     }
 
-    void OpenGLVertexBuffer::setLayout(const BufferLayout& layout) {
-        mLayout = layout;
-    }
+    OpenGLVertexBuffer::~OpenGLVertexBuffer() { glDeleteBuffers(1, &mID); }
 
-    OpenGLVertexBuffer::~OpenGLVertexBuffer() {
-        glDeleteBuffers(1, &mID);
-    }
+    void OpenGLVertexBuffer::bind() const { glBindBuffer(GL_ARRAY_BUFFER, mID); }
 
-    void OpenGLVertexBuffer::bind() const {
-        glBindBuffer(GL_ARRAY_BUFFER, mID);
-    }
-
-    void OpenGLVertexBuffer::unbind() const {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-    }
+    void OpenGLVertexBuffer::unbind() const { glBindBuffer(GL_ARRAY_BUFFER, 0); }
 
     void OpenGLVertexBuffer::applyLayout() const {
         const std::vector<BufferLayout::Element>& elements = mLayout.getElements();
@@ -70,14 +69,9 @@ namespace Car {
             const BufferLayout::Element& element = elements[i];
 
             glEnableVertexAttribArray(i);
-			glVertexAttribPointer(
-                i,
-				element.getComponentCount(),
-				BufferLayoutDataTypeToOpenGLBaseType(element.type),
-				element.normalized ? GL_TRUE : GL_FALSE,
-				mLayout.getStride(),
-				(const void*)(uint64_t)element.offset
-            );
+            glVertexAttribPointer(i, element.getComponentCount(), BufferLayoutDataTypeToOpenGLBaseType(element.type),
+                                  element.normalized ? GL_TRUE : GL_FALSE, mLayout.getStride(),
+                                  (const void*)(uint64_t)element.offset);
         }
     }
 
@@ -91,30 +85,30 @@ namespace Car {
             if (offset == 0) {
                 glBufferData(GL_ARRAY_BUFFER, size, nullptr, mOpenGLUsage);
                 mSize = size;
-            // here we need to save the data from 0 to offset
+                // here we need to save the data from 0 to offset
             } else {
                 // read the buffer
                 void* mapped = glMapBufferRange(GL_ARRAY_BUFFER, 0, offset, GL_MAP_READ_BIT);
-                
+
                 CR_ASSERT(mapped, "Failed to map buffer, OpenGL");
 
                 void* temp = malloc(offset + size);
                 // save up to offset
                 memcpy(temp, mapped, offset);
                 memcpy((uint8_t*)mapped + offset, data, size);
-                
+
                 glUnmapBuffer(GL_ARRAY_BUFFER);
 
                 glBufferData(GL_ARRAY_BUFFER, size + offset, mapped, mOpenGLUsage);
-                
+
                 free(temp);
-                
+
                 mSize = size + offset;
             }
         }
     }
 
-    Ref<VertexBuffer> VertexBuffer::Create(void* data, uint32_t size, Buffer::Usage usage) {
-        return createRef<OpenGLVertexBuffer>(data, size, usage);
+    Ref<VertexBuffer> VertexBuffer::Create(void* data, uint32_t size, BufferLayout layout, Buffer::Usage usage) {
+        return createRef<OpenGLVertexBuffer>(data, size, layout, usage);
     }
-}
+} // namespace Car

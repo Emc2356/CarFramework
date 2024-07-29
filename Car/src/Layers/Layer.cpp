@@ -1,8 +1,7 @@
 #include "Car/Layers/Layer.hpp"
 
-
 namespace Car {
-    Layer::Layer(const std::string &name) : mDebugName(name) {}
+    Layer::Layer(const std::string& name) : mDebugName(name) {}
 
     Layer::~Layer() {}
 
@@ -19,7 +18,7 @@ namespace Car {
         dispatcher.dispatch<WindowResizeEvent>(CR_BIND_FN1(Car::Layer::onWindowResizeEvent));
         dispatcher.dispatch<WindowFocusEvent>(CR_BIND_FN1(Car::Layer::onWindowFocusEvent));
         dispatcher.dispatch<WindowLostFocusEvent>(CR_BIND_FN1(Car::Layer::onWindowLostFocusEvent));
-        
+
         return event.isHandled();
     }
-}
+} // namespace Car
