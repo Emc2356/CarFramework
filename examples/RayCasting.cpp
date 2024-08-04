@@ -33,7 +33,7 @@ public:
         if (ImGui::SliderInt("Wall count", &mWallCount, 1, 50)) {
             resetWalls();
         }
-        
+
         ImGui::SliderFloat("Max distance", &mMaxDistance, 1, 5000);
 
         ImGui::End();
@@ -56,14 +56,14 @@ public:
 
         glm::ivec2 mousePos_ = Car::Input::MousePos();
         glm::vec2 mousePos = {mousePos_.x, mousePos_.y};
-        
+
         for (float i = 0; i < 360.0f; i += 1.0f) {
-            glm::vec2 ray = glm::vec2(glm::cos(glm::radians(i)), glm::sin(glm::radians(i)));
+            glm::vec2 ray(glm::cos(glm::radians(i)), glm::sin(glm::radians(i)));
 
             float x3 = mousePos.x;
             float y3 = mousePos.y;
-            float x4 = x3 + ray.x * mMaxDistance;
-            float y4 = y3 + ray.y * mMaxDistance;
+            float x4 = x3 + ray.x;
+            float y4 = y3 + ray.y;
             float record = FLT_MAX;
             glm::vec2 closePoint;
             for (const auto& wall : mWalls) {

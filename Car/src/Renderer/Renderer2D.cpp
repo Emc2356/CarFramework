@@ -26,6 +26,19 @@ struct Renderer2DData {
     std::vector<Car::Ref<Car::Texture2D>> textureTextures;
 };
 
+#define _CR_R2_REQ_INIT_OR_RET(__ret_v)                                                                                \
+    CR_IF (sData == nullptr) {                                                                                         \
+        CR_CORE_ERROR("Car::Renderer2D is noy initialized");                                                           \
+        CR_DEBUGBREAK();                                                                                               \
+        return __ret_v;                                                                                                \
+    }
+#define _CR_R2_REQ_INIT_OR_RET_VOID()                                                                                  \
+    CR_IF (sData == nullptr) {                                                                                         \
+        CR_CORE_ERROR("Car::Renderer2D is noy initialized");                                                           \
+        CR_DEBUGBREAK();                                                                                               \
+        return;                                                                                                        \
+    }
+
 namespace Car {
     static Renderer2DData* sData = nullptr;
 
@@ -35,7 +48,8 @@ namespace Car {
         sData->texturesShader = Shader::Create("builtin/Renderer2D.vert", "builtin/Renderer2D.frag");
         sData->texturesUBO = UniformBuffer::Create(sizeof(glm::mat4), 0, Buffer::Usage::DynamicDraw);
 
-        // TODO: change the batch size so the index buffer can use uint32_t
+        // TODO: change the batch size so the index buffer can use uint16_t
+        // TODO: investigate of uint16_t is better
         sData->texturesMaxBatchSize = 20000;
         // sData->texturesMaxBatchSize = 10800;
         sData->texturesCurrentBatchSize = 0;
@@ -70,20 +84,30 @@ namespace Car {
     }
 
     void Renderer2D::Shutdown() {
+        _CR_R2_REQ_INIT_OR_RET_VOID();
+
         free(sData->texturesVertexBufferData);
         free(sData->texturesIndexBufferData);
         delete sData;
     }
 
     void Renderer2D::Begin() {
+        _CR_R2_REQ_INIT_OR_RET_VOID();
+
         if (sData->texturesCurrentBatchSize > 0) {
             CR_CORE_ERROR("Called Car::Renderer2D::Begin() without closing the last begin");
         }
     }
 
-    void Renderer2D::End() { Renderer2D::FlushTextures(); }
+    void Renderer2D::End() {
+        _CR_R2_REQ_INIT_OR_RET_VOID();
+
+        Renderer2D::FlushTextures();
+    }
 
     void Renderer2D::FlushTextures() {
+        _CR_R2_REQ_INIT_OR_RET_VOID();
+
         // no work to be done, early return
         if (sData->texturesCurrentBatchSize == 0) {
             return;
@@ -112,6 +136,8 @@ namespace Car {
 
     // TODO: This is weirdly slow
     int8_t Renderer2D::getTextureID(const Ref<Texture2D>& texture) {
+        _CR_R2_REQ_INIT_OR_RET(-1);
+
         for (size_t i = 0; i < sData->textureTextures.size(); i++) {
             // small trick to save some performace here and there for the vtable
             // lookup
@@ -129,6 +155,8 @@ namespace Car {
     }
 
     void Renderer2D::DrawTexture(const Ref<Texture2D>& texture, const Rect& dest, const glm::vec3& tint) {
+        _CR_R2_REQ_INIT_OR_RET_VOID();
+
         int8_t textureID = getTextureID(texture);
 
         if (textureID == -1) {
@@ -142,6 +170,8 @@ namespace Car {
     }
 
     void Renderer2D::DrawTexture(const Ref<Texture2D>& texture, const glm::vec2& pos, const glm::vec3& tint) {
+        _CR_R2_REQ_INIT_OR_RET_VOID();
+
         int8_t textureID = getTextureID(texture);
 
         if (textureID == -1) {
@@ -157,6 +187,8 @@ namespace Car {
 
     void Renderer2D::DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest,
                                     const glm::vec3& tint) {
+        _CR_R2_REQ_INIT_OR_RET_VOID();
+
         int8_t textureID = getTextureID(texture);
 
         if (textureID == -1) {
@@ -166,11 +198,13 @@ namespace Car {
             return;
         }
 
-        Renderer2D::DrawSubTextureFromID(texture, source, dest, textureID, tint);
+        Renderer2D::DrawSubTextureFromID(texture->getWidth(), texture->getHeight(), source, dest, textureID, tint);
     }
 
     void Renderer2D::DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const glm::vec2& pos,
                                     const glm::vec3& tint) {
+        _CR_R2_REQ_INIT_OR_RET_VOID();
+
         int8_t textureID = getTextureID(texture);
 
         if (textureID == -1) {
@@ -180,17 +214,19 @@ namespace Car {
             return;
         }
 
-        Renderer2D::DrawSubTextureFromID(texture, source, {pos.x, pos.y, source.w - source.x, source.h - source.w},
-                                         textureID, tint);
+        Renderer2D::DrawSubTextureFromID(texture->getWidth(), texture->getHeight(), source,
+                                         {pos.x, pos.y, source.w - source.x, source.h - source.w}, textureID, tint);
     }
 
     void Renderer2D::DrawRect(const Rect& rect, const glm::vec3& color) {
-        int8_t textureID = sData->whiteTextureID;
+        _CR_R2_REQ_INIT_OR_RET_VOID();
 
-        Renderer2D::DrawTextureFromID(rect, textureID, color);
+        Renderer2D::DrawTextureFromID(rect, sData->whiteTextureID, color);
     }
 
     void Renderer2D::DrawLine(glm::vec2 start_, glm::vec2 end_, const glm::vec3& color, float lineWidth) {
+        _CR_R2_REQ_INIT_OR_RET_VOID();
+
         int8_t textureID = sData->whiteTextureID;
 
         glm::ivec2 start = start_;
@@ -269,6 +305,8 @@ namespace Car {
     }
 
     void Renderer2D::DrawPoint(const glm::vec2& pos, const glm::ivec3& color) {
+        _CR_R2_REQ_INIT_OR_RET_VOID();
+
         // TODO: It draws a rectangle right now :/
         int8_t textureID = sData->whiteTextureID;
         uint32_t i = sData->texturesCurrentBatchSize * 32;
@@ -316,6 +354,8 @@ namespace Car {
 
     void Renderer2D::DrawText(const Ref<Font>& font, const std::string& text, const glm::vec2& pos,
                               const glm::vec3& color) {
+        _CR_R2_REQ_INIT_OR_RET_VOID();
+
         Ref<Texture2D> texture = font->getTexture();
 
         int8_t textureID = getTextureID(texture);
@@ -328,6 +368,9 @@ namespace Car {
         }
 
         float fontHeight = font->mHeight;
+
+        const uint32_t textureWidth = texture->getWidth();
+        const uint32_t textureHeight = texture->getHeight();
 
         float x = pos.x;
         float y = pos.y;
@@ -344,19 +387,18 @@ namespace Car {
 
             const Font::Character& character = font->mCharacters[chr];
 
-            Renderer2D::DrawSubTextureFromID(texture, character.rect, {x, y, character.rect.w, fontHeight}, textureID,
-                                             color);
+            Renderer2D::DrawSubTextureFromID(textureWidth, textureHeight, character.rect,
+                                             {x, y, character.rect.w, fontHeight}, textureID, color);
 
             x += character.advance;
         }
     }
 
-    void Renderer2D::DrawSubTextureFromID(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest,
-                                          int8_t textureID, const glm::vec3& tint) {
-        uint32_t i = sData->texturesCurrentBatchSize * 32;
+    void Renderer2D::DrawSubTextureFromID(const uint32_t textureWidth, const uint32_t textureHeight, const Rect& source,
+                                          const Rect& dest, int8_t textureID, const glm::vec3& tint) {
+        _CR_R2_REQ_INIT_OR_RET_VOID();
 
-        float textureWidth = static_cast<float>(texture->getWidth());
-        float textureHeight = static_cast<float>(texture->getHeight());
+        uint32_t i = sData->texturesCurrentBatchSize * 32;
 
         sData->texturesVertexBufferData[i++] = dest.x;
         sData->texturesVertexBufferData[i++] = dest.y;
@@ -414,6 +456,8 @@ namespace Car {
     }
 
     void Renderer2D::DrawTextureFromID(const Rect& dest, int8_t textureID, const glm::vec3& tint) {
+        _CR_R2_REQ_INIT_OR_RET_VOID();
+
         uint32_t i = sData->texturesCurrentBatchSize * 32;
 
         sData->texturesVertexBufferData[i++] = dest.x;

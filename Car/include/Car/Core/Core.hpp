@@ -57,6 +57,12 @@
 #endif
 #endif /* CR_FORCE_INLINE not defined */
 
+#ifdef CR_DEBUG
+#define CR_IF(expr) if (expr)
+#else
+#define CR_IF(expr) if (0)
+#endif
+
 #include "Car/Core/Ref.hpp"
 #include "Car/Core/Log.hpp"
 

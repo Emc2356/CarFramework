@@ -31,8 +31,8 @@ namespace Car {
         // getTextureID returns -1 if there are already too many textures and it
         // invalidates the current batch
         static int8_t getTextureID(const Ref<Texture2D>& texture);
-        static void DrawSubTextureFromID(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest,
-                                         int8_t textureID, const glm::vec3& tint = glm::vec3(1.0f));
+        static void DrawSubTextureFromID(const uint32_t textureWidth, const uint32_t textureHeight, const Rect& source,
+                                         const Rect& dest, int8_t textureID, const glm::vec3& tint = glm::vec3(1.0f));
         static void DrawTextureFromID(const Rect& dest, int8_t textureID, const glm::vec3& tint = glm::vec3(1.0f));
         // automatically called by End and by DrawTexture as needed
         static void FlushTextures();

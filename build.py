@@ -425,7 +425,7 @@ def unknown_arg(arg: str) -> bool:
         files += list(str(path) for path in Path("./SandBox").glob("**/*.cpp"))
         files += list(str(path) for path in Path("./examples").glob("**/*.hpp"))
         files += list(str(path) for path in Path("./examples").glob("**/*.cpp"))
-        files += ["./Car/include/Car/Car"]
+        files += ["./Car/include/Car/Car.hpp"]
         
         exit(BuildIt.exec_cmd("clang-format", "-i", *files, "--verbose").returncode)
     elif arg == "-ogl" or arg == "--opengl":

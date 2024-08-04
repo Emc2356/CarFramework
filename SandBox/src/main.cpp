@@ -9,7 +9,6 @@ public:
         Car::Renderer::EnableBlending();
         Car::Renderer::ClearColor(0.1f);
 
-        mTexture = Car::ResourceManager::LoadTexture2D("pg_np.png");
         mFont = Car::ResourceManager::LoadFont("zed-mono-regular.ttf", 50);
     }
 
@@ -46,8 +45,7 @@ public:
         // Car::Renderer2D::DrawTexture(mTexture, Car::Input::MousePos());
         // Car::Renderer2D::DrawTexture(mTexture, {256, 256});
 
-        // Car::Renderer2D::DrawText(mFont, "{Hello World!~\n{From too much work\nScore: {1.4}", {50, 50}, {.7, .7,
-        // .7});
+        Car::Renderer2D::DrawText(mFont, "{Hello World!~\n{From too much work\nScore: {1.4}", {50, 50}, glm::vec3(.7f));
     }
 
 private:

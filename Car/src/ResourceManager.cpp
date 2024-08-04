@@ -13,13 +13,13 @@ struct ResourceManagerData {
 };
 
 #define CR_RM_NEED_INITIALIZATION_RET_SPECIAL(ret)                                                                     \
-    if (sData == nullptr) {                                                                                            \
+    CR_IF (sData == nullptr) {                                                                                         \
         CR_CORE_ERROR("ResourceManager Not Initialized");                                                              \
         CR_DEBUGBREAK();                                                                                               \
         return ret;                                                                                                    \
     }
 #define CR_RM_NEED_INITIALIZATION_RET_VOID()                                                                           \
-    if (sData == nullptr) {                                                                                            \
+    CR_IF (sData == nullptr) {                                                                                         \
         CR_CORE_ERROR("ResourceManager Not Initialized");                                                              \
         CR_DEBUGBREAK();                                                                                               \
         return;                                                                                                        \
@@ -29,7 +29,7 @@ namespace Car::ResourceManager {
     static ResourceManagerData* sData = nullptr;
 
     void Init() {
-        if (sData != nullptr) {
+        CR_IF (sData != nullptr) {
             CR_CORE_ERROR("ResourceManager already initialized");
             return;
         }

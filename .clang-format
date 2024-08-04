@@ -35,3 +35,4 @@ Cpp11BracedListStyle: true
 NamespaceIndentation: All
 
 AlwaysBreakAfterReturnType: None
+IfMacros: [CR_IF]
