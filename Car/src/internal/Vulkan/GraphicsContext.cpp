@@ -7,7 +7,6 @@
 // include glad before glfw so `VK_VERSION_1_0` is defined
 #include <glad/vulkan.h>
 #include <GLFW/glfw3.h>
-#include <vulkan/vulkan_core.h>
 
 const std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
 #if defined(CR_DEBUG)
@@ -61,6 +60,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL crVkDebugCallback(VkDebugUtilsMessageSever
     return VK_FALSE;
 }
 
+// used to populate the struct for the actual debug messager and this also get passed in the instance create info so we
+// get debug info about VkCreateInstance and VkDestroyInstance functions
 void crPopulateDebugMessagerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* createInfo, void* userData) {
     createInfo->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     createInfo->messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
@@ -106,8 +107,7 @@ bool crCheckValidationLayerSupport() {
 }
 
 namespace Car {
-    CrQueueFamilyIndices VulkanGraphicsContext::findQueueFamilies(VkPhysicalDevice device,
-                                                                  VkQueueFlagBits requestedFlags) {
+    CrQueueFamilyIndices VulkanGraphicsContext::findQueueFamilies(VkPhysicalDevice device) {
         CrQueueFamilyIndices indices;
 
         uint32_t queueFamilyCount = 0;
@@ -119,13 +119,16 @@ namespace Car {
         for (uint32_t i = 0; i < queueFamilyCount; i++) {
             const VkQueueFamilyProperties& queueFamily = queueFamilies[i];
 
-            if (queueFamily.queueFlags & requestedFlags) {
+            if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 indices.graphicsFamily = i;
             }
             VkBool32 presentSupport = false;
             vkGetPhysicalDeviceSurfaceSupportKHR(device, i, mSurface, &presentSupport);
             if (presentSupport) {
                 indices.presentFamily = i;
+            }
+            if (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT) {
+                indices.transferFamily = i;
             }
 
             if (indices.isComplete()) {
@@ -139,7 +142,7 @@ namespace Car {
     VulkanGraphicsContext::VulkanGraphicsContext(GLFWwindow* windowHandle) : mWindowHandle(windowHandle) {
         CR_ASSERT(windowHandle, "Interal Error: null window handle sent to vulkan graphics context");
     }
-        
+
     void VulkanGraphicsContext::init() {
         if (!gladLoaderLoadVulkan(nullptr, nullptr, nullptr)) {
             throw std::runtime_error("Car: Failed to initialize glad");
@@ -157,6 +160,7 @@ namespace Car {
         createCommandPool();
         createCommandBuffers();
         createSyncObjects();
+        createDescriptorPool();
 
         CR_CORE_DEBUG("Vulkan Context Initialized");
     }
@@ -178,7 +182,7 @@ namespace Car {
     }
 
     bool VulkanGraphicsContext::isDeviceSuitable(VkPhysicalDevice device) {
-        CrQueueFamilyIndices indices = findQueueFamilies(device, VK_QUEUE_GRAPHICS_BIT);
+        CrQueueFamilyIndices indices = findQueueFamilies(device);
 
         bool extensionsSupported = checkDeviceExtensionSupport(device);
 
@@ -366,7 +370,7 @@ namespace Car {
         CR_CORE_DEBUG("GPU: {0}", crGetPhysicalDeviceName(physicalDevice));
 
         mPhysicalDevice = physicalDevice;
-        
+
         if (!gladLoaderLoadVulkan(mInstance, mPhysicalDevice, nullptr)) {
             throw std::runtime_error("Car: Failed to initialize glad");
         }
@@ -374,9 +378,10 @@ namespace Car {
 
     void VulkanGraphicsContext::createLogicalDevice() {
         CR_CORE_DEBUG("Creating logical device");
-        CrQueueFamilyIndices indices = findQueueFamilies(mPhysicalDevice, VK_QUEUE_GRAPHICS_BIT);
+        CrQueueFamilyIndices indices = findQueueFamilies(mPhysicalDevice);
 
-        std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+        std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value(),
+                                                  indices.transferFamily.value()};
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
         float queuePriority = 1.0f;
@@ -415,6 +420,7 @@ namespace Car {
 
         vkGetDeviceQueue(mDevice, indices.graphicsFamily.value(), 0, &mGraphicsQueue);
         vkGetDeviceQueue(mDevice, indices.presentFamily.value(), 0, &mPresentQueue);
+        vkGetDeviceQueue(mDevice, indices.transferFamily.value(), 0, &mTransferQueue);
 
         if (!gladLoaderLoadVulkan(mInstance, mPhysicalDevice, mDevice)) {
             throw std::runtime_error("Car: Failed to initialize glad");
@@ -447,12 +453,17 @@ namespace Car {
         createInfo.imageArrayLayers = 1;
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-        CrQueueFamilyIndices indices = findQueueFamilies(mPhysicalDevice, VK_QUEUE_GRAPHICS_BIT);
-        uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+        CrQueueFamilyIndices indices = findQueueFamilies(mPhysicalDevice);
+        uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value(),
+                                         indices.transferFamily.value()};
 
-        if (indices.graphicsFamily != indices.presentFamily) {
+        // indices.graphicsFamily != indices.transferFamily
+        // indices.graphicsFamily != indices.presentFamily
+        // indices.transferFamily != indices.presentFamily
+        if (indices.graphicsFamily != indices.transferFamily || indices.graphicsFamily != indices.presentFamily ||
+            indices.transferFamily != indices.presentFamily) {
             createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-            createInfo.queueFamilyIndexCount = 2;
+            createInfo.queueFamilyIndexCount = 3;
             createInfo.pQueueFamilyIndices = queueFamilyIndices;
         } else {
             createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -509,7 +520,7 @@ namespace Car {
             }
         }
     }
-    
+
     void VulkanGraphicsContext::createRenderPass() {
         VkAttachmentDescription colorAttachment{};
         colorAttachment.format = mSwapChainImageFormat;
@@ -520,16 +531,16 @@ namespace Car {
         colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        
+
         VkAttachmentReference colorAttachmentRef{};
         colorAttachmentRef.attachment = 0;
         colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        
+
         VkSubpassDescription subpass{};
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass.colorAttachmentCount = 1;
         subpass.pColorAttachments = &colorAttachmentRef;
-        
+
         VkSubpassDependency dependency{};
         dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
         dependency.dstSubpass = 0;
@@ -537,7 +548,7 @@ namespace Car {
         dependency.srcAccessMask = 0;
         dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        
+
         VkRenderPassCreateInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         renderPassInfo.attachmentCount = 1;
@@ -546,22 +557,20 @@ namespace Car {
         renderPassInfo.pSubpasses = &subpass;
         renderPassInfo.dependencyCount = 1;
         renderPassInfo.pDependencies = &dependency;
-        
+
         if (vkCreateRenderPass(mDevice, &renderPassInfo, nullptr, &mRenderPass) != VK_SUCCESS) {
             throw std::runtime_error("failed to create render pass!");
         }
     }
-    
+
     void VulkanGraphicsContext::createFramebuffers() {
         CR_CORE_DEBUG("Creating vulkan framebuffers");
-        
+
         mSwapChainFramebuffers.resize(mSwapChainImageViews.size());
-        
+
         for (size_t i = 0; i < mSwapChainImageViews.size(); i++) {
-            VkImageView attachments[] = {
-                mSwapChainImageViews[i]
-            };
-        
+            VkImageView attachments[] = {mSwapChainImageViews[i]};
+
             VkFramebufferCreateInfo framebufferInfo{};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferInfo.renderPass = mRenderPass;
@@ -570,7 +579,7 @@ namespace Car {
             framebufferInfo.width = mSwapChainExtent.width;
             framebufferInfo.height = mSwapChainExtent.height;
             framebufferInfo.layers = 1;
-        
+
             if (vkCreateFramebuffer(mDevice, &framebufferInfo, nullptr, &mSwapChainFramebuffers[i]) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create framebuffer!");
             }
@@ -579,44 +588,70 @@ namespace Car {
 
     void VulkanGraphicsContext::createCommandPool() {
         CR_CORE_DEBUG("Creating vulkan command pools");
-        
-        CrQueueFamilyIndices queueFamilyIndices = findQueueFamilies(mPhysicalDevice, VK_QUEUE_GRAPHICS_BIT);
-        
-        VkCommandPoolCreateInfo poolInfo{};
-        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-        
-        if (vkCreateCommandPool(mDevice, &poolInfo, nullptr, &mCommandPool) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create command pool!");
+
+        CrQueueFamilyIndices queueFamilyIndices = findQueueFamilies(mPhysicalDevice);
+
+        VkCommandPoolCreateInfo renderPoolInfo{};
+        renderPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        renderPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        renderPoolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+
+        VkCommandPoolCreateInfo transferPoolInfo{};
+        transferPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        transferPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        transferPoolInfo.queueFamilyIndex = queueFamilyIndices.transferFamily.value();
+
+        if (vkCreateCommandPool(mDevice, &renderPoolInfo, nullptr, &mRenderCommandPool) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create render command pool!");
+        }
+
+        if (vkCreateCommandPool(mDevice, &transferPoolInfo, nullptr, &mTransferCommandPool) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create render command pool!");
         }
     }
-    
+
     void VulkanGraphicsContext::createCommandBuffers() {
         CR_CORE_DEBUG("Creating vulkan command buffers");
-        
-        VkCommandBufferAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.commandPool = mCommandPool;
-        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandBufferCount = CR_MAX_FRAMES_IN_FLIGHT;
-        
-        if (vkAllocateCommandBuffers(mDevice, &allocInfo, mCommandBuffers.data()) != VK_SUCCESS) {
-            throw std::runtime_error("failed to allocate command buffers!");
+
+        VkCommandBufferAllocateInfo renderAllocInfo{};
+        renderAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        renderAllocInfo.commandPool = mRenderCommandPool;
+        renderAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        renderAllocInfo.commandBufferCount = mMaxFramesInFlight;
+
+        VkCommandBufferAllocateInfo transferAllocInfo{};
+        transferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        transferAllocInfo.commandPool = mRenderCommandPool;
+        transferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        transferAllocInfo.commandBufferCount = mMaxFramesInFlight;
+
+        mRenderCommandBuffers.resize(mMaxFramesInFlight);
+        mTransferCommandBuffers.resize(mMaxFramesInFlight);
+
+        if (vkAllocateCommandBuffers(mDevice, &renderAllocInfo, mRenderCommandBuffers.data()) != VK_SUCCESS) {
+            throw std::runtime_error("failed to allocate render command buffers!");
+        }
+
+        if (vkAllocateCommandBuffers(mDevice, &transferAllocInfo, mTransferCommandBuffers.data()) != VK_SUCCESS) {
+            throw std::runtime_error("failed to allocate transfer command buffers!");
         }
     }
-    
+
     void VulkanGraphicsContext::createSyncObjects() {
         CR_CORE_DEBUG("Creating vulkan sync objects");
-        
+
         VkSemaphoreCreateInfo semaphoreInfo{};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        
+
         VkFenceCreateInfo fenceInfo{};
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-        
-        for (size_t i = 0; i < CR_MAX_FRAMES_IN_FLIGHT; i++) {
+
+        mImageAvailableSemaphores.resize(mMaxFramesInFlight);
+        mRenderFinishedSemaphores.resize(mMaxFramesInFlight);
+        mInFlightFences.resize(mMaxFramesInFlight);
+
+        for (size_t i = 0; i < mMaxFramesInFlight; i++) {
             if (vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mImageAvailableSemaphores[i]) != VK_SUCCESS ||
                 vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mRenderFinishedSemaphores[i]) != VK_SUCCESS ||
                 vkCreateFence(mDevice, &fenceInfo, nullptr, &mInFlightFences[i]) != VK_SUCCESS) {
@@ -624,20 +659,39 @@ namespace Car {
             }
         }
     }
-    
+
+    void VulkanGraphicsContext::createDescriptorPool() {
+        VkDescriptorPoolSize poolSize{};
+        poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        poolSize.descriptorCount = mMaxFramesInFlight;
+
+        VkDescriptorPoolCreateInfo poolInfo{};
+        poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        poolInfo.poolSizeCount = 1;
+        poolInfo.pPoolSizes = &poolSize;
+        poolInfo.maxSets = mMaxFramesInFlight;
+
+        if (vkCreateDescriptorPool(mDevice, &poolInfo, nullptr, &mDescriptorPool) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create descriptor pool!");
+        }
+    }
+
     VulkanGraphicsContext::~VulkanGraphicsContext() {
         vkDeviceWaitIdle(mDevice);
-            
-        for (size_t i = 0; i < CR_MAX_FRAMES_IN_FLIGHT; i++) {
+
+        vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
+
+        for (size_t i = 0; i < mMaxFramesInFlight; i++) {
             vkDestroySemaphore(mDevice, mRenderFinishedSemaphores[i], nullptr);
             vkDestroySemaphore(mDevice, mImageAvailableSemaphores[i], nullptr);
             vkDestroyFence(mDevice, mInFlightFences[i], nullptr);
         }
-        
+
         vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
-        
-        vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
-        
+
+        vkDestroyCommandPool(mDevice, mRenderCommandPool, nullptr);
+        vkDestroyCommandPool(mDevice, mTransferCommandPool, nullptr);
+
         cleanupSwapChain();
 
         vkDestroyDevice(mDevice, nullptr);
@@ -653,28 +707,30 @@ namespace Car {
         gladLoaderUnloadVulkan();
         CR_CORE_DEBUG("Vulkan Context shutdown");
     }
-    
+
     uint32_t VulkanGraphicsContext::aquireNextImageIndex() {
-        VkResult result = vkAcquireNextImageKHR(mDevice, mSwapChain, UINT64_MAX, getCurrentImageAvailableSemaphore(), VK_NULL_HANDLE, &mImageIndex);
-        
+        VkResult result = vkAcquireNextImageKHR(mDevice, mSwapChain, UINT64_MAX, getCurrentImageAvailableSemaphore(),
+                                                VK_NULL_HANDLE, &mImageIndex);
+
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
             // dont really know what i think about this.
             // Recreating a semaphore so it can be not signlated is kind of sketchy.
             vkDestroySemaphore(mDevice, getCurrentImageAvailableSemaphore(), nullptr);
-            
+
             VkSemaphoreCreateInfo semaphoreInfo{};
             semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-            
-            if (vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mImageAvailableSemaphores[mCurrentFrame]) != VK_SUCCESS) {
+
+            if (vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mImageAvailableSemaphores[mCurrentFrame]) !=
+                VK_SUCCESS) {
                 throw std::runtime_error("failed to create semaphore!");
             }
-                
+
             recreateSwapchain();
             return aquireNextImageIndex();
         } else if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to acquire swap chain image!");
         }
-        
+
         return mImageIndex;
     }
 
@@ -689,7 +745,7 @@ namespace Car {
         submitInfo.pWaitDstStageMask = waitStages;
 
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &mCommandBuffers[mCurrentFrame];
+        submitInfo.pCommandBuffers = &mRenderCommandBuffers[mCurrentFrame];
 
         VkSemaphore signalSemaphores[] = {mRenderFinishedSemaphores[mCurrentFrame]};
         submitInfo.signalSemaphoreCount = 1;
@@ -712,37 +768,111 @@ namespace Car {
         presentInfo.pImageIndices = &mImageIndex;
 
         vkQueuePresentKHR(mPresentQueue, &presentInfo);
-        
-        mCurrentFrame = (mCurrentFrame + 1) % CR_MAX_FRAMES_IN_FLIGHT;
+
+        mCurrentFrame = (mCurrentFrame + 1) % mMaxFramesInFlight;
     }
-    
+
     void VulkanGraphicsContext::cleanupSwapChain() {
         for (size_t i = 0; i < mSwapChainFramebuffers.size(); i++) {
             vkDestroyFramebuffer(mDevice, mSwapChainFramebuffers[i], nullptr);
         }
-    
+
         for (size_t i = 0; i < mSwapChainImageViews.size(); i++) {
             vkDestroyImageView(mDevice, mSwapChainImageViews[i], nullptr);
         }
-    
+
         vkDestroySwapchainKHR(mDevice, mSwapChain, nullptr);
     }
-    
+
     void VulkanGraphicsContext::recreateSwapchain() {
         vkDeviceWaitIdle(mDevice);
 
         cleanupSwapChain();
-        
+
         createSwapChain();
         createImageViews();
         createFramebuffers();
     }
 
-    void VulkanGraphicsContext::resize(uint32_t width, uint32_t height) {
-        UNUSED(width);
-        UNUSED(height);
-        
-        recreateSwapchain();
+    void VulkanGraphicsContext::resize(uint32_t, uint32_t) { recreateSwapchain(); }
+
+    uint32_t VulkanGraphicsContext::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+        VkPhysicalDeviceMemoryProperties memProperties;
+        vkGetPhysicalDeviceMemoryProperties(mPhysicalDevice, &memProperties);
+
+        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+                return i;
+            }
+        }
+
+        throw std::runtime_error("failed to find suitable memory type!");
+    }
+
+    // TODO: https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+    // or my own heap implementation maybe
+    void VulkanGraphicsContext::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
+                                             VkMemoryPropertyFlags properties, VkBuffer* buffer,
+                                             VkDeviceMemory* bufferMemory) {
+        VkBufferCreateInfo bufferInfo{};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.size = size;
+        bufferInfo.usage = usage;
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        if (vkCreateBuffer(mDevice, &bufferInfo, nullptr, buffer) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create a buffer!");
+        }
+
+        VkMemoryRequirements memRequirements;
+        vkGetBufferMemoryRequirements(mDevice, *buffer, &memRequirements);
+
+        VkMemoryAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+        // TODO: A custom heap implementation
+        if (vkAllocateMemory(mDevice, &allocInfo, nullptr, bufferMemory) != VK_SUCCESS) {
+            throw std::runtime_error("failed to allocate buffer memory!");
+        }
+    }
+
+    // TODO: We have command buffers allocated already so we dont need to craete them on the fly
+    void VulkanGraphicsContext::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size,
+                                           VkDeviceSize srcOffset /*=0*/, VkDeviceSize dstOffset /*=0*/) {
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandPool = mTransferCommandPool;
+        allocInfo.commandBufferCount = 1;
+
+        VkCommandBuffer commandBuffer;
+        vkAllocateCommandBuffers(mDevice, &allocInfo, &commandBuffer);
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+        vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+        VkBufferCopy copyRegion{};
+        copyRegion.size = size;
+        copyRegion.srcOffset = srcOffset;
+        copyRegion.dstOffset = dstOffset;
+        vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+        vkEndCommandBuffer(commandBuffer);
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        vkQueueSubmit(mTransferQueue, 1, &submitInfo, VK_NULL_HANDLE);
+        vkQueueWaitIdle(mTransferQueue);
+
+        vkFreeCommandBuffers(mDevice, mTransferCommandPool, 1, &commandBuffer);
     }
 
     Ref<GraphicsContext> GraphicsContext::Create(GLFWwindow* windowHandle) {

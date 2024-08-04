@@ -3,7 +3,6 @@
 #include "Car/Core/Core.hpp"
 #include "Car/Geometry/Rect.hpp"
 #include "Car/Renderer/Texture2D.hpp"
-#include <glm/glm.hpp>
 
 #ifndef CR_DEFAULT_CHARS
 #define CR_DEFAULT_CHARS                                                                                               \

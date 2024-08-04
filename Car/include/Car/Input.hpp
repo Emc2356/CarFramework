@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Car/Core/Core.hpp"
-#include <glm/glm.hpp>
 
 namespace Car::Input {
     bool IsKeyPressed(uint32_t keycode);

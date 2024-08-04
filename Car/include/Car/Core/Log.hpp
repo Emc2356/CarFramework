@@ -13,6 +13,7 @@
 #define CR_CORE_CRITICAL(...) fmt::print("[CAR] (CRITICAL): {0}\n", fmt::format(__VA_ARGS__))
 // internal debuging :/
 #define CR_CORE_TRACE_LINE() fmt::print("[CAR] (TRACE): {0}:{1}\n", __FILE__, __LINE__)
+#define CR_CORE_DEBUG_VAR(var) fmt::print("[CAR] (DEBUG): " #var "={}\n", var)
 
 #define CR_APP_TRACE(...) fmt::print("[APPLICATION] (TRACE): {0}\n", fmt::format(__VA_ARGS__))
 #define CR_APP_DEBUG(...) fmt::print("[APPLICATION] (DEBUG): {0}\n", fmt::format(__VA_ARGS__))
@@ -38,8 +39,9 @@
 #define CR_CORE_WARN(...)
 #define CR_CORE_ERROR(...)
 #define CR_CORE_CRITICAL(...)
-// not defined as this shouldnt exist unless you aer debuging
+// not defined as this shouldnt exist unless you are debuging
 // #define CR_CORE_TRACE_LINE()
+// #define CR_CORE_DEBUG_VAR(var)
 
 #define CR_APP_TRACE(...)
 #define CR_APP_DEBUG(...)

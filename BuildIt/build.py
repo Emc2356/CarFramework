@@ -6,7 +6,7 @@ from BuildIt.source_file import SourceFile
 from .compiler import Compiler, Toolchain
 from .static_library import StaticLibrary
 from .register import Register
-from .command_queue import CommandQueue, create_execute_command, create_gather_cmd
+from .command_queue import Command, CommandQueue, create_execute_command, create_gather_cmd
 from .logger import Logger
 from .log_file import LogFile
 from .source_file import SourceFile
@@ -209,6 +209,8 @@ def build_gnu() -> None:
 
     all_precompiled_headers = Register().precompiled_headers
     all_static_libraries = Register().static_libraries
+    
+    link_commands: list[Command] = []
 
     if len(all_precompiled_headers) > 0 or any(len(lib.attached_precompiled_headers) > 0 for lib in all_static_libraries):
         for header in all_precompiled_headers:
@@ -303,15 +305,15 @@ def build_gnu() -> None:
                 object_files_in_static_library.append(object_file)
 
             # make sure that the object files exist before the library is created
-            create_gather_cmd()
             if needs_rebuilding or not (library.out_filepath / f"lib{library.name}.a").exists():
                 library.out_filepath.mkdir(parents=True, exist_ok=True)
-                create_execute_command(
+                link_commands.append(create_execute_command(
                     ["ar", "rcs", "-o", str(library.out_filepath / f"lib{library.name}.a")] + list(
                         str(path) for path in object_files_in_static_library),
                     f"linking static library {library.out_filepath / f"lib{library.name}.a"}",
-                    f"failed to create static library {library.out_filepath / f"lib{library.name}.a"}"
-                )
+                    f"failed to create static library {library.out_filepath / f"lib{library.name}.a"}",
+                    submit=False
+                ))
 
     if len(Register().executables) > 0:
         for executable in Register().executables:
@@ -344,6 +346,11 @@ def build_gnu() -> None:
                     Logger.info(f"{source_file} already up to date")
 
         create_gather_cmd()
+        
+        for link_command in link_commands:
+            CommandQueue.add(link_command)
+            
+        create_gather_cmd()
 
         for executable in Register().executables:
             command: list[str] = [Compiler.linker] + Compiler.link_flags + executable.extra_link_flags
@@ -373,7 +380,7 @@ def build_gnu() -> None:
             if not Path(executable.name).exists() or changed_executables or changed_static_libraries:
                 create_execute_command(
                     command,
-                    f"linking objects into `{executable.name}`",
+                    f"creating executable `{executable.name}`",
                     "linker failed"
                 )
 
@@ -417,6 +424,8 @@ def build_clang() -> None:
 
     all_precompiled_headers = Register().precompiled_headers
     all_static_libraries = Register().static_libraries
+    
+    link_commands: list[Command] = []
 
     if len(all_precompiled_headers) > 0 or any(len(lib.attached_precompiled_headers) > 0 for lib in all_static_libraries):
         for header in all_precompiled_headers:
@@ -514,16 +523,15 @@ def build_clang() -> None:
 
                 object_files_in_static_library.append(object_file)
 
-            # make sure that the object files exist before the library is created
-            create_gather_cmd()
             if needs_rebuilding or not (library.out_filepath / f"lib{library.name}.a").exists():
                 library.out_filepath.mkdir(parents=True, exist_ok=True)
-                create_execute_command(
+                link_commands.append(create_execute_command(
                     ["ar", "rcs", "-o", str(library.out_filepath / f"lib{library.name}.a")] + list(
                         str(path) for path in object_files_in_static_library),
                     f"linking static library {library.out_filepath / f"lib{library.name}.a"}",
-                    f"failed to create static library {library.out_filepath / f"lib{library.name}.a"}"
-                )
+                    f"failed to create static library {library.out_filepath / f"lib{library.name}.a"}",
+                    submit=False
+                ))
 
     if len(Register().executables) > 0:
         for executable in Register().executables:
@@ -559,6 +567,11 @@ def build_clang() -> None:
 
         create_gather_cmd()
 
+        for link_command in link_commands:
+            CommandQueue.add(link_command)
+
+        create_gather_cmd()
+
         for executable in Register().executables:
             command: list[str] = [Compiler.linker] + Compiler.link_flags + executable.extra_link_flags
 
@@ -587,7 +600,7 @@ def build_clang() -> None:
             if not Path(executable.name).exists() or changed_executables or changed_static_libraries:
                 create_execute_command(
                     command,
-                    f"linking objects into `{executable.name}`",
+                    f"creating executable `{executable.name}`",
                     "linker failed"
                 )
 
@@ -628,9 +641,12 @@ def build_clang() -> None:
 
 def build() -> None:
     Functions.execute()
-    if Compiler.toolchain == Toolchain.GNU:
-        return build_gnu()
-    elif Compiler.toolchain == Toolchain.CLANG:
-        return build_clang()
-    else:
-        Logger.error(f"unrecognized toolchain `{Compiler.toolchain}`, build.py")
+    try:
+        if Compiler.toolchain == Toolchain.GNU:
+            return build_gnu()
+        elif Compiler.toolchain == Toolchain.CLANG:
+            return build_clang()
+        else:
+            Logger.error(f"unrecognized toolchain `{Compiler.toolchain}`, build.py")
+    except KeyboardInterrupt:
+        Logger.info("Aborting")

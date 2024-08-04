@@ -1,5 +1,6 @@
 #include "Car/internal/OpenGL/Shader.hpp"
 #include "Car/Core/Log.hpp"
+#include "Car/Utils.hpp"
 
 #include <glad/gl.h>
 
@@ -8,17 +9,8 @@ namespace Car {
         // Create an empty vertex shader handle
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
-        // Send the vertex shader binary code to GL
-        // TODO: make this work
-        // glShaderBinary(1, &vertexShader, GL_SHADER_BINARY_FORMAT_SPIR_V,
-        // vertexBinary.c_str(), vertexBinary.length());
-        // glSpecializeShader(vertexShader, "main", 0, nullptr, nullptr);
-        const char* vertexSource = vertexBinary.c_str();
-        int vertexSourceLength = vertexBinary.length();
-        glShaderSource(vertexShader, 1, &vertexSource, &vertexSourceLength);
-
-        // Compile the vertex shader
-        glCompileShader(vertexShader);
+        glShaderBinary(1, &vertexShader, GL_SHADER_BINARY_FORMAT_SPIR_V, vertexBinary.data(), vertexBinary.size());
+        glSpecializeShader(vertexShader, "main", 0, nullptr, nullptr);
 
         GLint isCompiled = 0;
         glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &isCompiled);
@@ -44,16 +36,9 @@ namespace Car {
         // Create an empty fragment shader handle
         GLuint fragmeantShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-        // Send the fragment shader binary code to GL
-        // glShaderBinary(1, &fragmeantShader, GL_SHADER_BINARY_FORMAT_SPIR_V,
-        // fragmeantBinary.c_str(), fragmeantBinary.length());
-        // glSpecializeShader(fragmeantShader, "main", 0, nullptr, nullptr);
-        const char* fragmeantSource = fragmeantBinary.c_str();
-        int fragmeantSourceLength = fragmeantBinary.length();
-        glShaderSource(fragmeantShader, 1, &fragmeantSource, &fragmeantSourceLength);
-
-        // Compile the fragment shader
-        glCompileShader(fragmeantShader);
+        glShaderBinary(1, &fragmeantShader, GL_SHADER_BINARY_FORMAT_SPIR_V, fragmeantBinary.data(),
+                       fragmeantBinary.size());
+        glSpecializeShader(fragmeantShader, "main", 0, nullptr, nullptr);
 
         glGetShaderiv(fragmeantShader, GL_COMPILE_STATUS, &isCompiled);
         if (isCompiled == GL_FALSE) {

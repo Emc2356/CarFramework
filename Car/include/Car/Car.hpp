@@ -1,6 +1,5 @@
 #pragma once
 
-
 /////////////////////////////////////////
 ////////////// APPLICATION //////////////
 /////////////////////////////////////////
@@ -10,6 +9,7 @@
 #include "Car/Core/Timestep.hpp"
 #include "Car/Core/Log.hpp"
 #include "Car/ResourceManager.hpp"
+#include "Car/Random.hpp"
 
 /////////////////////////////////////////
 //////////// POLLING SYSTEM /////////////
@@ -28,6 +28,7 @@
 #include "Car/Renderer/Renderer2D.hpp"
 #include "Car/Renderer/Font.hpp"
 #include "Car/Renderer/Shader.hpp"
+#include "Car/Renderer/UniformBuffer.hpp"
 #include "Car/Renderer/VertexArray.hpp"
 #include "Car/Renderer/Texture2D.hpp"
 #include "Car/Renderer/VertexBuffer.hpp"
@@ -55,3 +56,10 @@
 #include "Car/Constants/GeneralCodes.hpp"
 #include "Car/Constants/MouseCodes.hpp"
 #include "Car/Constants/KeyCodes.hpp"
+
+/////////////////////////////////////////
+///////////// ENTRY POINT ///////////////
+/////////////////////////////////////////
+#ifdef CR_ENTRY
+#include "Car/EntryPoint.hpp"
+#endif

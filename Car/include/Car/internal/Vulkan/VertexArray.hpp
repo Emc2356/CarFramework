@@ -6,14 +6,15 @@
 #include "Car/internal/Vulkan/IndexBuffer.hpp"
 #include "Car/internal/Vulkan/VertexBuffer.hpp"
 
-
 namespace Car {
     class VulkanVertexArray : public VertexArray {
     public:
         VulkanVertexArray(Ref<VertexBuffer> vb, Ref<IndexBuffer> ib, Ref<Shader> shader);
         virtual ~VulkanVertexArray() override;
 
-        virtual void setVertexBuffer(Ref<VertexBuffer> vb) override { mVb = reinterpretCastRef<VulkanVertexBuffer>(vb); }
+        virtual void setVertexBuffer(Ref<VertexBuffer> vb) override {
+            mVb = reinterpretCastRef<VulkanVertexBuffer>(vb);
+        }
         virtual void setIndexBuffer(Ref<IndexBuffer> ib) override { mIb = reinterpretCastRef<VulkanIndexBuffer>(ib); }
         virtual void setShader(Ref<Shader> shader) override { mShader = reinterpretCastRef<VulkanShader>(shader); }
 

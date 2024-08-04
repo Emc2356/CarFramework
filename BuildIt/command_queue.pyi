@@ -9,10 +9,6 @@ class CommandType(enum.Enum):
     GATHER: int
 
 
-def create_gather_cmd(): ...
-def create_execute_command(cmd: list[str], message: str, fail_message: str): ...
-
-
 class Command:
     __slots__ = ("cmd_type", "cmd", "message", "fail_message")
     cmd_type: CommandType
@@ -22,6 +18,10 @@ class Command:
     
     def __init__(self, cmd_type: CommandType, cmd: list[str], message: str, fail_message: str): ...
     
+
+def create_gather_cmd(submit: bool=True) -> Command: ...
+def create_execute_command(cmd: list[str], message: str, fail_message: str, submit: bool = True) -> Command: ...
+
 
 class CommandQueue:
     size: ClassVar[int]

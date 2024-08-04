@@ -11,16 +11,19 @@ namespace Car {
     public:
         static void DrawTexture(const Ref<Texture2D>& texture, const Rect& dest,
                                 const glm::vec3& tint = glm::vec3(1.0f));
-        static void DrawTexture(const Ref<Texture2D>& texture, const glm::ivec2& pos,
+        static void DrawTexture(const Ref<Texture2D>& texture, const glm::vec2& pos,
                                 const glm::vec3& tint = glm::vec3(1.0f));
         static void DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest,
                                    const glm::vec3& tint = glm::vec3(1.0f));
-        static void DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const glm::ivec2& pos,
+        static void DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const glm::vec2& pos,
                                    const glm::vec3& tint = glm::vec3(1.0f));
-        static void DrawText(const Ref<Font>& font, const std::string& text, const glm::ivec2& pos,
+        static void DrawText(const Ref<Font>& font, const std::string& text, const glm::vec2& pos,
                              const glm::vec3& color = glm::vec3(1.0f));
 
         static void DrawRect(const Rect& rect, const glm::vec3& color = glm::vec3(1.0f));
+        static void DrawLine(glm::vec2 posA, glm::vec2 posB, const glm::vec3& color = glm::vec3(1.0f),
+                             float lineWidth = 1.0f);
+        static void DrawPoint(const glm::vec2& pos, const glm::ivec3& color = glm::vec3(1.0f));
 
         // internal functions that are exposed if you are dealing with a single
         // sprite sheet or only a couple these functions dont validate the

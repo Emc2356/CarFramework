@@ -1,38 +1,57 @@
 #include "Car/internal/Vulkan/Shader.hpp"
-#include "Car/Core/Log.hpp"
-#include "Car/Application.hpp"
-#include "Car/Utils.hpp"
 #include "Car/internal/Vulkan/GraphicsContext.hpp"
+#include "Car/Utils.hpp"
 
 #include <glad/vulkan.h>
+#include <shaderc/shaderc.hpp>
+#include <spirv_cross/spirv_cross.hpp>
+
+static std::vector<uint32_t> crCompileSingleShader(const std::string& path, const shaderc_shader_kind kind) {
+    std::string sourceCode = Car::readFile(path);
+    shaderc::CompileOptions options;
+    shaderc::Compiler compiler;
+    options.SetOptimizationLevel(shaderc_optimization_level_performance);
+    options.SetSourceLanguage(shaderc_source_language_glsl);
+
+    options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
+
+    shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(sourceCode, kind, path.c_str(), options);
+    if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
+        throw std::runtime_error(result.GetErrorMessage());
+    }
+
+    return {result.cbegin(), result.cend()};
+}
 
 namespace Car {
-    VulkanShader::VulkanShader(const std::string& vertexBinary, const std::string& fragmeantBinary) {
-        mGraphicsContext = reinterpretCastRef<VulkanGraphicsContext>(Application::Get()->getWindow()->getGraphicsContext());
-        mVertBin = vertexBinary;
-        mFragBin = fragmeantBinary;
+    VulkanShader::VulkanShader(const std::string& vertexPath, const std::string& fragmeantPath) {
+        mGraphicsContext = reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get());
+        mVertBin = crCompileSingleShader(vertexPath, shaderc_vertex_shader);
+        mFragBin = crCompileSingleShader(fragmeantPath, shaderc_fragment_shader);
     }
-    
+
     void VulkanShader::trueCreateImplementation(Ref<VulkanVertexBuffer> vb) {
+        // createDescriptorLayouts();
+        // createDescriptorSets();
         createGraphicsPipeline(vb);
     }
-    
+
     VulkanShader::~VulkanShader() {
         VkDevice device = mGraphicsContext->getDevice();
-        
+
         vkDeviceWaitIdle(device);
-        
+
         vkDestroyPipeline(device, mGraphicsPipeline, nullptr);
         vkDestroyPipelineLayout(device, mPipelineLayout, nullptr);
     }
 
     void VulkanShader::bind() const {
-        VkCommandBuffer cmdBuffer = mGraphicsContext->getCurrentCommandBuffer();
+        VkCommandBuffer cmdBuffer = mGraphicsContext->getCurrentRenderCommandBuffer();
         vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
     }
 
     void VulkanShader::unbind() const {}
-    
+
     void VulkanShader::createGraphicsPipeline(Ref<VulkanVertexBuffer> vb) {
         VkShaderModule vertShaderModule = createShaderModule(mVertBin);
         VkShaderModule fragShaderModule = createShaderModule(mFragBin);
@@ -57,9 +76,10 @@ namespace Car {
         dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
         dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
         dynamicState.pDynamicStates = dynamicStates.data();
-        
+
         VkVertexInputBindingDescription bindingDescription = vb->getBindingDescription();
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions = vb->getAttributeDescriptions();
+
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexBindingDescriptionCount = 1;
@@ -137,17 +157,18 @@ namespace Car {
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = 0;            // Optional
-        pipelineLayoutInfo.pSetLayouts = nullptr;         // Optional
-        
+        pipelineLayoutInfo.setLayoutCount = 1;
+        pipelineLayoutInfo.pSetLayouts = &mDescriptorSetLayout;
+
         // i dont think i want to support push_constant
         pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
         pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-        if (vkCreatePipelineLayout(mGraphicsContext->getDevice(), &pipelineLayoutInfo, nullptr, &mPipelineLayout) != VK_SUCCESS) {
+        if (vkCreatePipelineLayout(mGraphicsContext->getDevice(), &pipelineLayoutInfo, nullptr, &mPipelineLayout) !=
+            VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
         }
-        
+
         VkGraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
         pipelineInfo.stageCount = 2;
@@ -164,22 +185,24 @@ namespace Car {
         pipelineInfo.renderPass = mGraphicsContext->getRenderPass();
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
-        pipelineInfo.basePipelineIndex = -1; // Optional
-            
+        pipelineInfo.basePipelineIndex = -1;              // Optional
+
         VkDevice device = mGraphicsContext->getDevice();
-        if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &mGraphicsPipeline) != VK_SUCCESS) {
+        if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &mGraphicsPipeline) !=
+            VK_SUCCESS) {
             throw std::runtime_error("failed to create graphics pipeline!");
         }
-    
+
         vkDestroyShaderModule(device, fragShaderModule, nullptr);
         vkDestroyShaderModule(device, vertShaderModule, nullptr);
     }
 
-    VkShaderModule VulkanShader::createShaderModule(const std::string& code) {
+    VkShaderModule VulkanShader::createShaderModule(const std::vector<uint32_t>& code) {
         VkShaderModuleCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        createInfo.codeSize = code.size();
-        createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+        // questionable code sadly
+        createInfo.codeSize = code.size() * sizeof(uint32_t);
+        createInfo.pCode = code.data();
 
         VkShaderModule shaderModule;
         if (vkCreateShaderModule(mGraphicsContext->getDevice(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
@@ -187,7 +210,7 @@ namespace Car {
         }
 
         return shaderModule;
-    }    
+    }
 
     Ref<Shader> Shader::CreateImpl(const std::string& vertexBinary, const std::string& fragmeantBinary) {
         return createRef<VulkanShader>(vertexBinary, fragmeantBinary);

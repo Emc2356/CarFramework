@@ -6,7 +6,6 @@ namespace Car {
     class OpenGLIndexBuffer : public IndexBuffer {
     public:
         OpenGLIndexBuffer(void* data, uint32_t count, Buffer::Usage usage, Buffer::Type type);
-        OpenGLIndexBuffer(uint32_t count, Buffer::Usage usage, Buffer::Type type);
         virtual ~OpenGLIndexBuffer() override;
 
         virtual void bind() const override;

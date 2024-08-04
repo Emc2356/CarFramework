@@ -20,6 +20,5 @@ namespace Car {
         virtual Buffer::Type getType() const = 0;
 
         static Ref<IndexBuffer> Create(void* data, uint32_t count, Buffer::Usage usage, Buffer::Type type);
-        static Ref<IndexBuffer> Create(uint32_t count, Buffer::Usage usage, Buffer::Type type);
     };
 } // namespace Car

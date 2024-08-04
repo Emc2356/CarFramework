@@ -1,7 +1,4 @@
-#include <Car/Car>
-
-#include <exception>
-#include <ostream>
+#include "Car/Application.hpp"
 
 int main() {
     Car::Application* app = Car::createApplication();

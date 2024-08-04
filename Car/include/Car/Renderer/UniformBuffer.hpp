@@ -14,6 +14,8 @@ namespace Car {
         virtual uint32_t getBinding() const = 0;
         virtual Buffer::Usage getUsage() const = 0;
 
-        static Ref<Car::UniformBuffer> Create(uint32_t size, uint32_t binding, Buffer::Usage usage);
+        // in vulkan the usage wont matter
+        static Ref<Car::UniformBuffer> Create(uint32_t size, uint32_t binding,
+                                              Buffer::Usage usage = Buffer::Usage::DynamicDraw);
     };
 } // namespace Car

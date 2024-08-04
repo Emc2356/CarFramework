@@ -2,7 +2,6 @@
 #include "Car/Renderer/Renderer2D.hpp"
 #include "Car/Application.hpp"
 #include "Car/Core/Core.hpp"
-#include "Car/Core/Log.hpp"
 #include "Car/Renderer/Buffer.hpp"
 #include "Car/Renderer/BufferLayout.hpp"
 #include "Car/Renderer/IndexBuffer.hpp"
@@ -11,15 +10,13 @@
 #include "Car/Renderer/VertexArray.hpp"
 #include "Car/Renderer/VertexBuffer.hpp"
 
-#include <glm/gtc/type_ptr.hpp>
-
 struct Renderer2DData {
     Car::Ref<Car::Shader> texturesShader;
     Car::Ref<Car::UniformBuffer> texturesUBO;
     Car::Ref<Car::IndexBuffer> texturesIB;
     Car::Ref<Car::VertexBuffer> texturesVB;
     Car::Ref<Car::VertexArray> texturesVA;
-    Car::Ref<Car::Texture2D> whiteTexture;
+    uint32_t whiteTextureID = 8;
 
     uint32_t texturesMaxBatchSize;
     uint32_t texturesCurrentBatchSize;
@@ -35,7 +32,7 @@ namespace Car {
     void Renderer2D::Init() {
         sData = new Renderer2DData();
         // internal use only so no reason to register with the ResourceManager
-        sData->texturesShader = Shader::Create("builtin/texture.vert", "builtin/texture.frag");
+        sData->texturesShader = Shader::Create("builtin/Renderer2D.vert", "builtin/Renderer2D.frag");
         sData->texturesUBO = UniformBuffer::Create(sizeof(glm::mat4), 0, Buffer::Usage::DynamicDraw);
 
         // TODO: change the batch size so the index buffer can use uint32_t
@@ -70,9 +67,6 @@ namespace Car {
                                                  layout, Buffer::Usage::DynamicDraw);
 
         sData->texturesVA = VertexArray::Create(sData->texturesVB, sData->texturesIB, sData->texturesShader);
-
-        uint32_t whiteTextureData = 0xFFFFFFFF;
-        sData->whiteTexture = Texture2D::Create(1, 1, (uint8_t*)&whiteTextureData);
     }
 
     void Renderer2D::Shutdown() {
@@ -125,7 +119,7 @@ namespace Car {
                 return i;
             }
         }
-        if (sData->textureTextures.size() >= 16) {
+        if (sData->textureTextures.size() >= 8) {
             // invalidate the data to make sure this is resolved
             sData->texturesCurrentBatchSize = 0;
             return -1;
@@ -139,25 +133,25 @@ namespace Car {
 
         if (textureID == -1) {
             CR_CORE_ERROR("Car::Renderer2D::DrawTexture too many textures sent, maximum as "
-                          "16, call Car::Renderer2D::FlushTextures if you plan on using "
-                          "more than 16 textures");
+                          "8, call Car::Renderer2D::FlushTextures if you plan on using "
+                          "more than 8 textures");
             return;
         }
 
         Renderer2D::DrawTextureFromID(dest, textureID, tint);
     }
 
-    void Renderer2D::DrawTexture(const Ref<Texture2D>& texture, const glm::ivec2& pos, const glm::vec3& tint) {
+    void Renderer2D::DrawTexture(const Ref<Texture2D>& texture, const glm::vec2& pos, const glm::vec3& tint) {
         int8_t textureID = getTextureID(texture);
 
         if (textureID == -1) {
             CR_CORE_ERROR("Car::Renderer2D::DrawTexture too many textures sent, maximum as "
-                          "16, call Car::Renderer2D::FlushTextures if you plan on using "
-                          "more than 16 textures");
+                          "8, call Car::Renderer2D::FlushTextures if you plan on using "
+                          "more than 8 textures");
             return;
         }
 
-        Renderer2D::DrawTextureFromID({pos.x, pos.y, (int32_t)texture->getWidth(), (int32_t)texture->getHeight()},
+        Renderer2D::DrawTextureFromID({pos.x, pos.y, (float)texture->getWidth(), (float)texture->getHeight()},
                                       textureID, tint);
     }
 
@@ -167,22 +161,22 @@ namespace Car {
 
         if (textureID == -1) {
             CR_CORE_ERROR("Car::Renderer2D::DrawSubTexture too many textures sent, maximum "
-                          "as 16, call Car::Renderer2D::FlushTextures if you plan on using "
-                          "more than 16 textures");
+                          "as 8, call Car::Renderer2D::FlushTextures if you plan on using "
+                          "more than 8 textures");
             return;
         }
 
         Renderer2D::DrawSubTextureFromID(texture, source, dest, textureID, tint);
     }
 
-    void Renderer2D::DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const glm::ivec2& pos,
+    void Renderer2D::DrawSubTexture(const Ref<Texture2D>& texture, const Rect& source, const glm::vec2& pos,
                                     const glm::vec3& tint) {
         int8_t textureID = getTextureID(texture);
 
         if (textureID == -1) {
             CR_CORE_ERROR("Car::Renderer2D::DrawSubTexture too many textures sent, maximum "
-                          "as 16, call Car::Renderer2D::FlushTextures if you plan on using "
-                          "more than 16 textures");
+                          "as 8, call Car::Renderer2D::FlushTextures if you plan on using "
+                          "more than 8 textures");
             return;
         }
 
@@ -191,35 +185,152 @@ namespace Car {
     }
 
     void Renderer2D::DrawRect(const Rect& rect, const glm::vec3& color) {
-        int8_t textureID = getTextureID(sData->whiteTexture);
-
-        if (textureID == -1) {
-            CR_CORE_ERROR("Car::Renderer2D::DrawRect too many textures sent, maximum as 16, "
-                          "call Car::Renderer2D::FlushTextures if you plan on using more "
-                          "than 16 textures");
-            return;
-        }
+        int8_t textureID = sData->whiteTextureID;
 
         Renderer2D::DrawTextureFromID(rect, textureID, color);
     }
 
-    void Renderer2D::DrawText(const Ref<Font>& font, const std::string& text, const glm::ivec2& pos,
+    void Renderer2D::DrawLine(glm::vec2 start_, glm::vec2 end_, const glm::vec3& color, float lineWidth) {
+        int8_t textureID = sData->whiteTextureID;
+
+        glm::ivec2 start = start_;
+        glm::ivec2 end = end_;
+
+        if (start.x == end.x) { // vertical line
+            Renderer2D::DrawTextureFromID(
+                {start.x - lineWidth / 2, MIN(start_.y, end_.y), lineWidth / 2, ABS(start_.y - end_.y)}, textureID,
+                color);
+            return;
+        } else if (start.y == end.y) { // horizontal line
+            Renderer2D::DrawTextureFromID(
+                {MIN(start_.x, end_.x), start.y - lineWidth / 2, ABS(start_.x - end_.x), lineWidth / 2}, textureID,
+                color);
+            return;
+        }
+
+        uint32_t i = sData->texturesCurrentBatchSize * 32;
+
+        float slope = (float)(end.y - (float)start.y) / ((float)end.x - (float)start.x);
+        // TODO: better name
+        slope = glm::atan(glm::degrees(slope));
+
+        sData->texturesVertexBufferData[i + 4] = color.r;
+        sData->texturesVertexBufferData[i + 5] = color.g;
+        sData->texturesVertexBufferData[i + 6] = color.b;
+        sData->texturesVertexBufferData[i + 7] = static_cast<float>(textureID);
+
+        sData->texturesVertexBufferData[i + 12] = color.r;
+        sData->texturesVertexBufferData[i + 13] = color.g;
+        sData->texturesVertexBufferData[i + 14] = color.b;
+        sData->texturesVertexBufferData[i + 15] = static_cast<float>(textureID);
+
+        sData->texturesVertexBufferData[i + 20] = color.r;
+        sData->texturesVertexBufferData[i + 21] = color.g;
+        sData->texturesVertexBufferData[i + 22] = color.b;
+        sData->texturesVertexBufferData[i + 23] = static_cast<float>(textureID);
+
+        sData->texturesVertexBufferData[i + 28] = color.r;
+        sData->texturesVertexBufferData[i + 29] = color.g;
+        sData->texturesVertexBufferData[i + 30] = color.b;
+        sData->texturesVertexBufferData[i + 31] = static_cast<float>(textureID);
+
+        // Questionable code but works ish for now
+        if (start.y > end.y) { // drawing upwards
+            sData->texturesVertexBufferData[i + 0] = glm::floor(start.x + glm::cos(slope) * lineWidth / 2);
+            sData->texturesVertexBufferData[i + 1] = glm::floor(start.y - glm::sin(slope) * lineWidth / 2);
+
+            sData->texturesVertexBufferData[i + 8] = glm::floor(end.x + glm::cos(slope) * lineWidth / 2);
+            sData->texturesVertexBufferData[i + 9] = glm::floor(end.y - glm::sin(slope) * lineWidth / 2);
+
+            sData->texturesVertexBufferData[i + 16] = glm::floor(end.x - glm::cos(slope) * lineWidth / 2);
+            sData->texturesVertexBufferData[i + 17] = glm::floor(end.y + glm::sin(slope) * lineWidth / 2);
+
+            sData->texturesVertexBufferData[i + 24] = glm::floor(start.x - glm::cos(slope) * lineWidth / 2);
+            sData->texturesVertexBufferData[i + 25] = glm::floor(start.y + glm::sin(slope) * lineWidth / 2);
+        } else { // drawing downwards
+            sData->texturesVertexBufferData[i + 0] = glm::ceil(start.x - glm::cos(slope) * lineWidth / 2);
+            sData->texturesVertexBufferData[i + 1] = glm::floor(start.y + glm::sin(slope) * lineWidth / 2);
+
+            sData->texturesVertexBufferData[i + 8] = glm::ceil(end.x - glm::cos(slope) * lineWidth / 2);
+            sData->texturesVertexBufferData[i + 9] = glm::floor(end.y + glm::sin(slope) * lineWidth / 2);
+
+            sData->texturesVertexBufferData[i + 16] = glm::ceil(end.x + glm::cos(slope) * lineWidth / 2);
+            sData->texturesVertexBufferData[i + 17] = glm::floor(end.y - glm::sin(slope) * lineWidth / 2);
+
+            sData->texturesVertexBufferData[i + 24] = glm::ceil(start.x + glm::cos(slope) * lineWidth / 2);
+            sData->texturesVertexBufferData[i + 25] = glm::floor(start.y - glm::sin(slope) * lineWidth / 2);
+        }
+
+        sData->texturesCurrentBatchSize++;
+
+        if (sData->texturesCurrentBatchSize >= sData->texturesMaxBatchSize) {
+            Renderer2D::FlushTextures();
+        }
+    }
+
+    void Renderer2D::DrawPoint(const glm::vec2& pos, const glm::ivec3& color) {
+        // TODO: It draws a rectangle right now :/
+        int8_t textureID = sData->whiteTextureID;
+        uint32_t i = sData->texturesCurrentBatchSize * 32;
+
+        sData->texturesVertexBufferData[i++] = pos.x - 1;
+        sData->texturesVertexBufferData[i++] = pos.y - 1;
+
+        sData->texturesVertexBufferData[i++] = color.r;
+        sData->texturesVertexBufferData[i++] = color.g;
+        sData->texturesVertexBufferData[i++] = color.b;
+
+        sData->texturesVertexBufferData[i++] = static_cast<float>(textureID);
+
+        sData->texturesVertexBufferData[i++] = pos.x + 1;
+        sData->texturesVertexBufferData[i++] = pos.y - 1;
+
+        sData->texturesVertexBufferData[i++] = color.r;
+        sData->texturesVertexBufferData[i++] = color.g;
+        sData->texturesVertexBufferData[i++] = color.b;
+
+        sData->texturesVertexBufferData[i++] = static_cast<float>(textureID);
+
+        sData->texturesVertexBufferData[i++] = pos.x + 1;
+        sData->texturesVertexBufferData[i++] = pos.y + 1;
+
+        sData->texturesVertexBufferData[i++] = color.r;
+        sData->texturesVertexBufferData[i++] = color.g;
+        sData->texturesVertexBufferData[i++] = color.b;
+
+        sData->texturesVertexBufferData[i++] = static_cast<float>(textureID);
+
+        sData->texturesVertexBufferData[i++] = pos.x - 1;
+        sData->texturesVertexBufferData[i++] = pos.y + 1;
+
+        sData->texturesVertexBufferData[i++] = color.r;
+        sData->texturesVertexBufferData[i++] = color.g;
+        sData->texturesVertexBufferData[i++] = color.b;
+
+        sData->texturesCurrentBatchSize++;
+
+        if (sData->texturesCurrentBatchSize >= sData->texturesMaxBatchSize) {
+            Renderer2D::FlushTextures();
+        }
+    }
+
+    void Renderer2D::DrawText(const Ref<Font>& font, const std::string& text, const glm::vec2& pos,
                               const glm::vec3& color) {
         Ref<Texture2D> texture = font->getTexture();
 
         int8_t textureID = getTextureID(texture);
 
         if (textureID == -1) {
-            CR_CORE_ERROR("Car::Renderer2D::DrawText too many textures sent, maximum as 16, "
+            CR_CORE_ERROR("Car::Renderer2D::DrawText too many textures sent, maximum as 8, "
                           "call Car::Renderer2D::FlushTextures if you plan on using more "
-                          "than 16 textures");
+                          "than 8 textures");
             return;
         }
 
-        int32_t fontHeight = font->mHeight;
+        float fontHeight = font->mHeight;
 
-        uint32_t x = pos.x;
-        uint32_t y = pos.y;
+        float x = pos.x;
+        float y = pos.y;
 
         for (size_t i = 0; i < text.size(); i++) {
             const uint8_t chr = text[i];
@@ -233,8 +344,8 @@ namespace Car {
 
             const Font::Character& character = font->mCharacters[chr];
 
-            Renderer2D::DrawSubTextureFromID(texture, character.rect,
-                                             {(int32_t)x, (int32_t)y, character.rect.w, fontHeight}, textureID, color);
+            Renderer2D::DrawSubTextureFromID(texture, character.rect, {x, y, character.rect.w, fontHeight}, textureID,
+                                             color);
 
             x += character.advance;
         }
@@ -242,59 +353,58 @@ namespace Car {
 
     void Renderer2D::DrawSubTextureFromID(const Ref<Texture2D>& texture, const Rect& source, const Rect& dest,
                                           int8_t textureID, const glm::vec3& tint) {
-        UNUSED(tint);
-        uint32_t i = sData->texturesCurrentBatchSize;
+        uint32_t i = sData->texturesCurrentBatchSize * 32;
 
         float textureWidth = static_cast<float>(texture->getWidth());
         float textureHeight = static_cast<float>(texture->getHeight());
 
-        sData->texturesVertexBufferData[i * 32 + 0] = dest.x;
-        sData->texturesVertexBufferData[i * 32 + 1] = dest.y;
+        sData->texturesVertexBufferData[i++] = dest.x;
+        sData->texturesVertexBufferData[i++] = dest.y;
 
-        sData->texturesVertexBufferData[i * 32 + 2] = source.x / textureWidth;
-        sData->texturesVertexBufferData[i * 32 + 3] = source.y / textureHeight;
+        sData->texturesVertexBufferData[i++] = source.x / textureWidth;
+        sData->texturesVertexBufferData[i++] = source.y / textureHeight;
 
-        sData->texturesVertexBufferData[i * 32 + 4] = tint.r;
-        sData->texturesVertexBufferData[i * 32 + 5] = tint.g;
-        sData->texturesVertexBufferData[i * 32 + 6] = tint.b;
+        sData->texturesVertexBufferData[i++] = tint.r;
+        sData->texturesVertexBufferData[i++] = tint.g;
+        sData->texturesVertexBufferData[i++] = tint.b;
 
-        sData->texturesVertexBufferData[i * 32 + 7] = static_cast<float>(textureID);
+        sData->texturesVertexBufferData[i++] = static_cast<float>(textureID);
 
-        sData->texturesVertexBufferData[i * 32 + 8] = dest.x + dest.w;
-        sData->texturesVertexBufferData[i * 32 + 9] = dest.y;
+        sData->texturesVertexBufferData[i++] = dest.x + dest.w;
+        sData->texturesVertexBufferData[i++] = dest.y;
 
-        sData->texturesVertexBufferData[i * 32 + 10] = (source.x + source.w) / textureWidth;
-        sData->texturesVertexBufferData[i * 32 + 11] = source.y / textureHeight;
+        sData->texturesVertexBufferData[i++] = (source.x + source.w) / textureWidth;
+        sData->texturesVertexBufferData[i++] = source.y / textureHeight;
 
-        sData->texturesVertexBufferData[i * 32 + 12] = tint.r;
-        sData->texturesVertexBufferData[i * 32 + 13] = tint.g;
-        sData->texturesVertexBufferData[i * 32 + 14] = tint.b;
+        sData->texturesVertexBufferData[i++] = tint.r;
+        sData->texturesVertexBufferData[i++] = tint.g;
+        sData->texturesVertexBufferData[i++] = tint.b;
 
-        sData->texturesVertexBufferData[i * 32 + 15] = static_cast<float>(textureID);
+        sData->texturesVertexBufferData[i++] = static_cast<float>(textureID);
 
-        sData->texturesVertexBufferData[i * 32 + 16] = dest.x + dest.w;
-        sData->texturesVertexBufferData[i * 32 + 17] = dest.y + dest.h;
+        sData->texturesVertexBufferData[i++] = dest.x + dest.w;
+        sData->texturesVertexBufferData[i++] = dest.y + dest.h;
 
-        sData->texturesVertexBufferData[i * 32 + 18] = (source.x + source.w) / textureWidth;
-        sData->texturesVertexBufferData[i * 32 + 19] = (source.y + source.h) / textureHeight;
+        sData->texturesVertexBufferData[i++] = (source.x + source.w) / textureWidth;
+        sData->texturesVertexBufferData[i++] = (source.y + source.h) / textureHeight;
 
-        sData->texturesVertexBufferData[i * 32 + 20] = tint.r;
-        sData->texturesVertexBufferData[i * 32 + 21] = tint.g;
-        sData->texturesVertexBufferData[i * 32 + 22] = tint.b;
+        sData->texturesVertexBufferData[i++] = tint.r;
+        sData->texturesVertexBufferData[i++] = tint.g;
+        sData->texturesVertexBufferData[i++] = tint.b;
 
-        sData->texturesVertexBufferData[i * 32 + 23] = static_cast<float>(textureID);
+        sData->texturesVertexBufferData[i++] = static_cast<float>(textureID);
 
-        sData->texturesVertexBufferData[i * 32 + 24] = dest.x;
-        sData->texturesVertexBufferData[i * 32 + 25] = dest.y + dest.h;
+        sData->texturesVertexBufferData[i++] = dest.x;
+        sData->texturesVertexBufferData[i++] = dest.y + dest.h;
 
-        sData->texturesVertexBufferData[i * 32 + 26] = source.x / textureWidth;
-        sData->texturesVertexBufferData[i * 32 + 27] = (source.y + source.h) / textureHeight;
+        sData->texturesVertexBufferData[i++] = source.x / textureWidth;
+        sData->texturesVertexBufferData[i++] = (source.y + source.h) / textureHeight;
 
-        sData->texturesVertexBufferData[i * 32 + 28] = tint.r;
-        sData->texturesVertexBufferData[i * 32 + 29] = tint.g;
-        sData->texturesVertexBufferData[i * 32 + 30] = tint.b;
+        sData->texturesVertexBufferData[i++] = tint.r;
+        sData->texturesVertexBufferData[i++] = tint.g;
+        sData->texturesVertexBufferData[i++] = tint.b;
 
-        sData->texturesVertexBufferData[i * 32 + 31] = static_cast<float>(textureID);
+        sData->texturesVertexBufferData[i++] = static_cast<float>(textureID);
 
         sData->texturesCurrentBatchSize++;
 
@@ -304,56 +414,55 @@ namespace Car {
     }
 
     void Renderer2D::DrawTextureFromID(const Rect& dest, int8_t textureID, const glm::vec3& tint) {
-        UNUSED(tint);
-        uint32_t i = sData->texturesCurrentBatchSize;
+        uint32_t i = sData->texturesCurrentBatchSize * 32;
 
-        sData->texturesVertexBufferData[i * 32 + 0] = dest.x;
-        sData->texturesVertexBufferData[i * 32 + 1] = dest.y;
+        sData->texturesVertexBufferData[i++] = dest.x;
+        sData->texturesVertexBufferData[i++] = dest.y;
 
-        sData->texturesVertexBufferData[i * 32 + 2] = 0;
-        sData->texturesVertexBufferData[i * 32 + 3] = 0;
+        sData->texturesVertexBufferData[i++] = 0;
+        sData->texturesVertexBufferData[i++] = 0;
 
-        sData->texturesVertexBufferData[i * 32 + 4] = tint.r;
-        sData->texturesVertexBufferData[i * 32 + 5] = tint.g;
-        sData->texturesVertexBufferData[i * 32 + 6] = tint.b;
+        sData->texturesVertexBufferData[i++] = tint.r;
+        sData->texturesVertexBufferData[i++] = tint.g;
+        sData->texturesVertexBufferData[i++] = tint.b;
 
-        sData->texturesVertexBufferData[i * 32 + 7] = static_cast<float>(textureID);
+        sData->texturesVertexBufferData[i++] = static_cast<float>(textureID);
 
-        sData->texturesVertexBufferData[i * 32 + 8] = dest.x + dest.w;
-        sData->texturesVertexBufferData[i * 32 + 9] = dest.y;
+        sData->texturesVertexBufferData[i++] = dest.x + dest.w;
+        sData->texturesVertexBufferData[i++] = dest.y;
 
-        sData->texturesVertexBufferData[i * 32 + 10] = 1;
-        sData->texturesVertexBufferData[i * 32 + 11] = 0;
+        sData->texturesVertexBufferData[i++] = 1;
+        sData->texturesVertexBufferData[i++] = 0;
 
-        sData->texturesVertexBufferData[i * 32 + 12] = tint.r;
-        sData->texturesVertexBufferData[i * 32 + 13] = tint.g;
-        sData->texturesVertexBufferData[i * 32 + 14] = tint.b;
+        sData->texturesVertexBufferData[i++] = tint.r;
+        sData->texturesVertexBufferData[i++] = tint.g;
+        sData->texturesVertexBufferData[i++] = tint.b;
 
-        sData->texturesVertexBufferData[i * 32 + 15] = static_cast<float>(textureID);
+        sData->texturesVertexBufferData[i++] = static_cast<float>(textureID);
 
-        sData->texturesVertexBufferData[i * 32 + 16] = dest.x + dest.w;
-        sData->texturesVertexBufferData[i * 32 + 17] = dest.y + dest.h;
+        sData->texturesVertexBufferData[i++] = dest.x + dest.w;
+        sData->texturesVertexBufferData[i++] = dest.y + dest.h;
 
-        sData->texturesVertexBufferData[i * 32 + 18] = 1;
-        sData->texturesVertexBufferData[i * 32 + 19] = 1;
+        sData->texturesVertexBufferData[i++] = 1;
+        sData->texturesVertexBufferData[i++] = 1;
 
-        sData->texturesVertexBufferData[i * 32 + 20] = tint.r;
-        sData->texturesVertexBufferData[i * 32 + 21] = tint.g;
-        sData->texturesVertexBufferData[i * 32 + 22] = tint.b;
+        sData->texturesVertexBufferData[i++] = tint.r;
+        sData->texturesVertexBufferData[i++] = tint.g;
+        sData->texturesVertexBufferData[i++] = tint.b;
 
-        sData->texturesVertexBufferData[i * 32 + 23] = static_cast<float>(textureID);
+        sData->texturesVertexBufferData[i++] = static_cast<float>(textureID);
 
-        sData->texturesVertexBufferData[i * 32 + 24] = dest.x;
-        sData->texturesVertexBufferData[i * 32 + 25] = dest.y + dest.h;
+        sData->texturesVertexBufferData[i++] = dest.x;
+        sData->texturesVertexBufferData[i++] = dest.y + dest.h;
 
-        sData->texturesVertexBufferData[i * 32 + 26] = 0;
-        sData->texturesVertexBufferData[i * 32 + 27] = 1;
+        sData->texturesVertexBufferData[i++] = 0;
+        sData->texturesVertexBufferData[i++] = 1;
 
-        sData->texturesVertexBufferData[i * 32 + 28] = tint.r;
-        sData->texturesVertexBufferData[i * 32 + 29] = tint.g;
-        sData->texturesVertexBufferData[i * 32 + 30] = tint.b;
+        sData->texturesVertexBufferData[i++] = tint.r;
+        sData->texturesVertexBufferData[i++] = tint.g;
+        sData->texturesVertexBufferData[i++] = tint.b;
 
-        sData->texturesVertexBufferData[i * 32 + 31] = static_cast<float>(textureID);
+        sData->texturesVertexBufferData[i++] = static_cast<float>(textureID);
 
         sData->texturesCurrentBatchSize++;
 

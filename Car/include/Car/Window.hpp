@@ -34,7 +34,7 @@ namespace Car {
         float getAspectRation() const { return (float)mSpec.width / (float)mSpec.height; }
         const std::string getTitle() const { return mSpec.title; }
         bool isVSync() const { return mSpec.vsync; }
-        
+
         void setVSync(bool enabled);
 
         GLFWwindow* getWindowHandle() const { return mHandle; }

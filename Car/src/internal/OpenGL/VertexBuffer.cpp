@@ -50,7 +50,7 @@ namespace Car {
         glGenBuffers(1, &mID);
         glBindBuffer(GL_ARRAY_BUFFER, mID);
         glBufferData(GL_ARRAY_BUFFER, size, data, mOpenGLUsage);
-        
+
         mLayout = layout;
         mUsage = usage;
         mSize = size;

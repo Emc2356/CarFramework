@@ -4,7 +4,6 @@
 #include "Car/internal/Vulkan/GraphicsContext.hpp"
 #include <glad/vulkan.h>
 
-
 namespace Car {
     class VulkanVertexBuffer : public VertexBuffer {
     public:
@@ -18,17 +17,20 @@ namespace Car {
         virtual Buffer::Usage getUsage() const override { return mUsage; }
 
         virtual void bind() const override;
-        virtual void unbind() const override;
+        virtual void unbind() const override {}
 
         virtual void updateData(void* data, uint32_t size, uint32_t offset) override;
 
         const VkVertexInputBindingDescription& getBindingDescription() const { return mBindingDescription; }
-        const std::vector<VkVertexInputAttributeDescription>& getAttributeDescriptions() const { return mAttributeDescriptions; }
+        const std::vector<VkVertexInputAttributeDescription>& getAttributeDescriptions() const {
+            return mAttributeDescriptions;
+        }
+
     private:
         BufferLayout mLayout;
         uint32_t mSize;
         Buffer::Usage mUsage;
-        
+
         Ref<VulkanGraphicsContext> mGraphicsContext;
         VkVertexInputBindingDescription mBindingDescription;
         std::vector<VkVertexInputAttributeDescription> mAttributeDescriptions;

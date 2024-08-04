@@ -1,4 +1,5 @@
 #include "Car/Utils.hpp"
+#include <stdexcept>
 
 namespace Car {
     std::string readFile(const std::string& path) {
@@ -26,4 +27,21 @@ namespace Car {
         file.read(&buffer[0], size);
         return buffer;
     }
+
+    void writeToFile(const std::string& path, const uint8_t* data, size_t size) {
+        std::ofstream wf(path, std::ios::out | std::ios::trunc);
+
+        if (!wf) {
+            throw std::runtime_error("failed to open file: " + path);
+        }
+
+        wf.write(reinterpret_cast<const char*>(data), size);
+
+        wf.close();
+
+        if (!wf.good()) {
+            throw std::runtime_error("error occured at writing time! " + path);
+        }
+    }
+
 } // namespace Car

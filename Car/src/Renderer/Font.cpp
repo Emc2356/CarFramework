@@ -65,7 +65,7 @@ namespace Car {
                     pixelBuffer[posInBuf + 3] = 255 * cond;
                 }
             }
-            mCharacters[chr] = {{(int32_t)curAdvance, 0, (int32_t)face->glyph->bitmap.width, (int32_t)mHeight},
+            mCharacters[chr] = {{(float)curAdvance, (float)0, (float)face->glyph->bitmap.width, (float)mHeight},
                                 (uint32_t)face->glyph->advance.x >> 6};
 
             curAdvance += face->glyph->bitmap.width;

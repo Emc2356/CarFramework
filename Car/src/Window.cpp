@@ -49,13 +49,12 @@ namespace Car {
             throw std::runtime_error("Car: Failed to create GLFW window");
         }
 
-        setVSync(mSpec.vsync);
-
         mGraphicsContext = GraphicsContext::Create(mHandle);
     }
 
     void Window::init() {
         mGraphicsContext->init();
+        setVSync(mSpec.vsync);
 
         // Event Handling
         glfwSetWindowUserPointer(mHandle, &mSpec);
