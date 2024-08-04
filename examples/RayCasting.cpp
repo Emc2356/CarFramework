@@ -33,6 +33,8 @@ public:
         if (ImGui::SliderInt("Wall count", &mWallCount, 1, 50)) {
             resetWalls();
         }
+        
+        ImGui::SliderFloat("Max distance", &mMaxDistance, 1, 5000);
 
         ImGui::End();
     }
@@ -81,7 +83,7 @@ public:
 
                 if (0 <= t && t <= 1 && 0 <= u) {
                     float dis = glm::distance(mousePos, {x1 + t * (x2 - x1), y1 + t * (y2 - y1)});
-                    if (dis < record) {
+                    if (dis < record && dis < mMaxDistance) {
                         record = dis;
                         closePoint.x = x1 + t * (x2 - x1);
                         closePoint.y = y1 + t * (y2 - y1);
