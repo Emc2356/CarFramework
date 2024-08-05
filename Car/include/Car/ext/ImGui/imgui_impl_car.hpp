@@ -10,7 +10,6 @@
 
 ImGuiKey ImGui_ImplCar_KeyToImGuiKey(int key);
 
-
 // Backend API
 IMGUI_IMPL_API bool ImGui_ImplCar_Init();
 IMGUI_IMPL_API void ImGui_ImplCar_Shutdown();
