@@ -54,7 +54,8 @@ namespace Car {
 // Setup Platform/Renderer bindings
 #if defined(CR_OPENGL)
         ImGui_ImplGlfw_InitForOpenGL(window, true);
-        ImGui_ImplOpenGL3_Init("#version 410");
+        ImGui_ImplCar_Init();
+        // ImGui_ImplOpenGL3_Init("#version 410");
 #elif defined(CR_VULKAN)
 
 #else
@@ -64,7 +65,8 @@ namespace Car {
 
     void ImGuiLayer::onDetach() {
 #if defined(CR_OPENGL)
-        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplCar_Shutdown();
+        // ImGui_ImplOpenGL3_Shutdown();
 #elif defined(CR_VULKAN)
 
 #else
@@ -96,7 +98,8 @@ namespace Car {
         mWantTextInput = io.WantTextInput;
 
 #if defined(CR_OPENGL)
-        ImGui_ImplOpenGL3_NewFrame();
+        // ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplCar_NewFrame();
 #elif defined(CR_VULKAN)
 
 #else
@@ -112,7 +115,8 @@ namespace Car {
         // Rendering
         ImGui::Render();
 #if defined(CR_OPENGL)
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        ImGui_ImplCar_RenderDrawData(ImGui::GetDrawData());
+        // ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 #elif defined(CR_VULKAN)
 #else
 #error only opengl and vulkan is supported right now

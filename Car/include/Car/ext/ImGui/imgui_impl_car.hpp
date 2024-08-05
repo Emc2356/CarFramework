@@ -9,3 +9,16 @@
 // with multiple Rendering APIs
 
 ImGuiKey ImGui_ImplCar_KeyToImGuiKey(int key);
+
+
+// Backend API
+IMGUI_IMPL_API bool ImGui_ImplCar_Init();
+IMGUI_IMPL_API void ImGui_ImplCar_Shutdown();
+IMGUI_IMPL_API void ImGui_ImplCar_NewFrame();
+IMGUI_IMPL_API void ImGui_ImplCar_RenderDrawData(ImDrawData* draw_data);
+
+// (Optional) Called by Init/NewFrame/Shutdown
+IMGUI_IMPL_API bool ImGui_ImplCar_CreateFontsTexture();
+IMGUI_IMPL_API void ImGui_ImplCar_DestroyFontsTexture();
+IMGUI_IMPL_API bool ImGui_ImplCar_CreateDeviceObjects();
+IMGUI_IMPL_API void ImGui_ImplCar_DestroyDeviceObjects();
