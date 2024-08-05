@@ -24,19 +24,19 @@ public:
         ImGui::Text("[FPS]: %f", 1 / dt);
         ImGui::End();
 
-        // ImGui::Begin("Settings");
+        ImGui::Begin("Settings");
 
-        // if (ImGui::Button("Recreate walls")) {
-        //     resetWalls();
-        // }
+        if (ImGui::Button("Recreate walls")) {
+            resetWalls();
+        }
 
-        // if (ImGui::SliderInt("Wall count", &mWallCount, 1, 50)) {
-        //     resetWalls();
-        // }
+        if (ImGui::SliderInt("Wall count", &mWallCount, 1, 50)) {
+            resetWalls();
+        }
 
-        // ImGui::SliderFloat("Max distance", &mMaxDistance, 1, 5000);
+        ImGui::SliderFloat("Max distance", &mMaxDistance, 1, 5000);
 
-        // ImGui::End();
+        ImGui::End();
     }
 
     void resetWalls() {

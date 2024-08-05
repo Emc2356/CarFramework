@@ -258,9 +258,10 @@ ImGuiKey ImGui_ImplCar_KeyToImGuiKey(int key) {
 
 // Car Data
 struct ImGui_ImplCar_Data {
-    GLuint FontTexture;
+    Car::Ref<Car::Texture2D> FontTexture;
+    // make sure that this data is deleted before the graphics context is destroyed
+    Car::Ref<Car::GraphicsContext> GraphicsContext;
     GLuint ShaderHandle;
-    GLint AttribLocationTex; // Uniforms location
     GLint AttribLocationProjMtx;
     GLuint AttribLocationVtxPos; // Vertex attributes location
     GLuint AttribLocationVtxUV;
@@ -272,9 +273,6 @@ struct ImGui_ImplCar_Data {
     ImGui_ImplCar_Data() { memset((void*)this, 0, sizeof(*this)); }
 };
 
-// Backend data stored in io.BackendRendererUserData to allow support for multiple Dear ImGui contexts
-// It is STRONGLY preferred that you use docking branch with multi-viewports (== single Dear ImGui context + multiple
-// windows) instead of multiple Dear ImGui contexts.
 static ImGui_ImplCar_Data* ImGui_ImplCar_GetBackendData() {
     return ImGui::GetCurrentContext() ? (ImGui_ImplCar_Data*)ImGui::GetIO().BackendRendererUserData : nullptr;
 }
@@ -293,20 +291,17 @@ bool ImGui_ImplCar_Init() {
     ImGui_ImplCar_Data* bd = IM_NEW(ImGui_ImplCar_Data)();
     io.BackendRendererUserData = (void*)bd;
     io.BackendRendererName = "imgui_impl_car";
+    bd->GraphicsContext = Car::GraphicsContext::Get();
 
     // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
     io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
     // We can create multi-viewports on the Renderer side (optional)
     // io.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;
 
-    // Make an arbitrary GL call (we don't actually need the result)
-    // IF YOU GET A CRASH HERE: it probably means the OpenGL function loader didn't do its job. Let us know!
-    GLint current_texture;
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
-
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
         ImGui_ImplCar_InitPlatformInterface();
-
+    }
+        
     ImGui_ImplCar_CreateDeviceObjects();
 
     return true;
@@ -376,7 +371,6 @@ static void ImGui_ImplCar_SetupRenderState(ImDrawData* draw_data, int fb_width, 
         {(R + L) / (L - R), (T + B) / (B - T), 0.0f, 1.0f},
     };
     glUseProgram(bd->ShaderHandle);
-    glUniform1i(bd->AttribLocationTex, 0);
     glUniformMatrix4fv(bd->AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
 
     glBindSampler(
@@ -469,8 +463,7 @@ void ImGui_ImplCar_RenderDrawData(ImDrawData* draw_data) {
                 glScissor((int)clip_min.x, (int)((float)fb_height - clip_max.y), (int)(clip_max.x - clip_min.x),
                           (int)(clip_max.y - clip_min.y));
 
-                // Bind texture, Draw
-                glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->GetTexID());
+                (*reinterpret_cast<Car::Ref<Car::Texture2D>*>(pcmd->GetTexID()))->bind(0);
 
                 glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount,
                                sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
@@ -498,46 +491,19 @@ bool ImGui_ImplCar_CreateFontsTexture() {
     ImGuiIO& io = ImGui::GetIO();
     ImGui_ImplCar_Data* bd = ImGui_ImplCar_GetBackendData();
 
-    // Build texture atlas
-    // Load as RGBA 32-bit (75% of the memory is wasted, but default font is so small)
-    // because it is more likely to be compatible with user's existing shaders. If your
-    // ImTextureId represent a higher-level concept than just a GL texture id, consider
-    // calling GetTexDataAsAlpha8() instead to save on GPU memory.
     unsigned char* pixels;
     int width, height;
     io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
-    // Upload texture to graphics system
-    // (Bilinear sampling is required by default. Set 'io.Fonts->Flags |= ImFontAtlasFlags_NoBakedLines' or
-    // 'style.AntiAliasedLinesUseTex = false' to allow point/nearest sampling)
-    GLint last_texture;
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-    glGenTextures(1, &bd->FontTexture);
-    glBindTexture(GL_TEXTURE_2D, bd->FontTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-
+    bd->FontTexture = Car::Texture2D::Create(width, height, pixels);
+    
     // Store our identifier
-    io.Fonts->SetTexID((ImTextureID)(intptr_t)bd->FontTexture);
-
-    // Restore state
-    glBindTexture(GL_TEXTURE_2D, last_texture);
+    io.Fonts->SetTexID((ImTextureID)(intptr_t)&bd->FontTexture);
 
     return true;
 }
 
-void ImGui_ImplCar_DestroyFontsTexture() {
-    ImGuiIO& io = ImGui::GetIO();
-    ImGui_ImplCar_Data* bd = ImGui_ImplCar_GetBackendData();
-    if (bd->FontTexture) {
-        glDeleteTextures(1, &bd->FontTexture);
-        io.Fonts->SetTexID(0);
-        bd->FontTexture = 0;
-    }
+void ImGui_ImplCar_DestroyFontsTexture() {    
 }
 
 bool ImGui_ImplCar_CreateDeviceObjects() {
@@ -562,8 +528,7 @@ bool ImGui_ImplCar_CreateDeviceObjects() {
                                   "uniform mat4 ProjMtx;\n"
                                   "out vec2 Frag_UV;\n"
                                   "out vec4 Frag_Color;\n"
-                                  "void main()\n"
-                                  "{\n"
+                                  "void main() {\n"
                                   "    Frag_UV = UV;\n"
                                   "    Frag_Color = Color;\n"
                                   "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
@@ -572,10 +537,9 @@ bool ImGui_ImplCar_CreateDeviceObjects() {
     const GLchar* fragment_shader = "#version 450\n"
                                     "in vec2 Frag_UV;\n"
                                     "in vec4 Frag_Color;\n"
-                                    "uniform sampler2D Texture;\n"
+                                    "layout(binding=0) uniform sampler2D Texture;\n"
                                     "layout (location = 0) out vec4 Out_Color;\n"
-                                    "void main()\n"
-                                    "{\n"
+                                    "void main() {\n"
                                     "    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"
                                     "}\n";
 
@@ -599,7 +563,6 @@ bool ImGui_ImplCar_CreateDeviceObjects() {
     glDeleteShader(vert_handle);
     glDeleteShader(frag_handle);
 
-    bd->AttribLocationTex = glGetUniformLocation(bd->ShaderHandle, "Texture");
     bd->AttribLocationProjMtx = glGetUniformLocation(bd->ShaderHandle, "ProjMtx");
     bd->AttribLocationVtxPos = (GLuint)glGetAttribLocation(bd->ShaderHandle, "Position");
     bd->AttribLocationVtxUV = (GLuint)glGetAttribLocation(bd->ShaderHandle, "UV");
