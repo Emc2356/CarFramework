@@ -1,6 +1,5 @@
 #include "Car/ext/ImGui/imgui_impl_car.hpp"
 #include "Car/Core/Core.hpp"
-#include <cstdint>
 #include <glad/gl.h>
 
 #include "Car/Constants/KeyCodes.hpp"
@@ -259,15 +258,14 @@ ImGuiKey ImGui_ImplCar_KeyToImGuiKey(int key) {
 // Car Data
 struct ImGui_ImplCar_Data {
     Car::Ref<Car::Texture2D> FontTexture;
+    Car::Ref<Car::UniformBuffer> UniformBuffer;
     // make sure that this data is deleted before the graphics context is destroyed
     Car::Ref<Car::GraphicsContext> GraphicsContext;
     GLuint ShaderHandle;
-    GLint AttribLocationProjMtx;
     GLuint AttribLocationVtxPos; // Vertex attributes location
     GLuint AttribLocationVtxUV;
     GLuint AttribLocationVtxColor;
     unsigned int VboHandle, ElementsHandle;
-    GLsizeiptr VertexBufferSize;
     GLsizeiptr IndexBufferSize;
 
     ImGui_ImplCar_Data() { memset((void*)this, 0, sizeof(*this)); }
@@ -371,12 +369,10 @@ static void ImGui_ImplCar_SetupRenderState(ImDrawData* draw_data, int fb_width, 
         {(R + L) / (L - R), (T + B) / (B - T), 0.0f, 1.0f},
     };
     glUseProgram(bd->ShaderHandle);
-    glUniformMatrix4fv(bd->AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
+    bd->UniformBuffer->setData(&ortho_projection[0][0]);
 
     glBindSampler(
         0, 0); // We use combined texture/sampler state. Applications using GL 3.3 and GL ES 3.0 may set that otherwise.
-
-    (void)vertex_array_object;
 
     glBindVertexArray(vertex_array_object);
 
@@ -405,16 +401,11 @@ void ImGui_ImplCar_RenderDrawData(ImDrawData* draw_data) {
     if (fb_width <= 0 || fb_height <= 0)
         return;
 
-    ImGui_ImplCar_Data* bd = ImGui_ImplCar_GetBackendData();
-
     // Backup GL state
-    GLint last_polygon_mode[2];
-    glGetIntegerv(GL_POLYGON_MODE, last_polygon_mode);
     GLint last_viewport[4];
     glGetIntegerv(GL_VIEWPORT, last_viewport);
     GLint last_scissor_box[4];
     glGetIntegerv(GL_SCISSOR_BOX, last_scissor_box);
-    GLboolean last_enable_primitive_restart = glIsEnabled(GL_PRIMITIVE_RESTART);
 
     // Setup desired GL state
     // Recreate the VAO every time (this is to easily allow multiple GL contexts to be rendered to. VAO are not shared
@@ -475,16 +466,7 @@ void ImGui_ImplCar_RenderDrawData(ImDrawData* draw_data) {
     // Destroy the temporary VAO
     glDeleteVertexArrays(1, &vertex_array_object);
 
-    if (last_enable_primitive_restart) {
-        glEnable(GL_PRIMITIVE_RESTART);
-    } else {
-        glDisable(GL_PRIMITIVE_RESTART);
-    }
-
-    glPolygonMode(GL_FRONT_AND_BACK, (GLenum)last_polygon_mode[0]);
-
     glScissor(last_scissor_box[0], last_scissor_box[1], (GLsizei)last_scissor_box[2], (GLsizei)last_scissor_box[3]);
-    (void)bd; // Not all compilation paths use this
 }
 
 bool ImGui_ImplCar_CreateFontsTexture() {
@@ -525,7 +507,9 @@ bool ImGui_ImplCar_CreateDeviceObjects() {
                                   "layout (location = 0) in vec2 Position;\n"
                                   "layout (location = 1) in vec2 UV;\n"
                                   "layout (location = 2) in vec4 Color;\n"
-                                  "uniform mat4 ProjMtx;\n"
+                                  "layout(std140, binding=1) uniform ImGuiData {\n"
+                                  "    mat4 ProjMtx;\n"
+                                  "};\n"
                                   "out vec2 Frag_UV;\n"
                                   "out vec4 Frag_Color;\n"
                                   "void main() {\n"
@@ -563,7 +547,8 @@ bool ImGui_ImplCar_CreateDeviceObjects() {
     glDeleteShader(vert_handle);
     glDeleteShader(frag_handle);
 
-    bd->AttribLocationProjMtx = glGetUniformLocation(bd->ShaderHandle, "ProjMtx");
+    bd->UniformBuffer = Car::UniformBuffer::Create(sizeof(float) * 4 * 4, 1);
+
     bd->AttribLocationVtxPos = (GLuint)glGetAttribLocation(bd->ShaderHandle, "Position");
     bd->AttribLocationVtxUV = (GLuint)glGetAttribLocation(bd->ShaderHandle, "UV");
     bd->AttribLocationVtxColor = (GLuint)glGetAttribLocation(bd->ShaderHandle, "Color");
