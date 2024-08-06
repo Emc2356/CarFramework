@@ -14,7 +14,11 @@ for now it only supports OpenGL but i try to limit OpenGL specific calls to only
 6. [shaderc](https://github.com/google/shaderc) for converting shaders to spirv at runtime
 
 # Building
-I am not 100% sure why i decided to make my own build script, maybe out of frustration from using make and the unnecessary complexity of CMake
+I am not 100% sure why i decided to make my own build script, maybe out of frustration from using make and the unnecessary complexity of CMake.  
+I recommend after cloning the repo to do `./build.py --help` for all of the options (NOTE: vulkan is broken for the time being)
 ```bash
-./build.py 
+git clone https://github.com/Emc2356/CarFramework
+cd CarFramework
+./build.py --deps
+./build.py -j
 ```
