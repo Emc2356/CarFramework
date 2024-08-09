@@ -5,9 +5,7 @@
 #include "Car/Renderer/BufferLayout.hpp"
 #include "Car/internal/Vulkan/GraphicsContext.hpp"
 
-#include <cstdlib>
 #include <glad/vulkan.h>
-#include <stdexcept>
 
 namespace Car {
     CR_FORCE_INLINE VkFormat BufferLayoutDataTypeToVulkanType(BufferLayout::DataType type) {

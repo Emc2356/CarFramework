@@ -85,11 +85,10 @@ namespace Car {
                           triangleCount);
             return;
         }
-        Ref<VulkanShader> shader = reinterpretCastRef<VulkanShader>(va->getShader());
+        va->bind();
+
         VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();
         VkExtent2D swapChainExtent = sGraphicsContext->getSwapChainExtent();
-
-        vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->getGraphicsPipeline());
 
         VkViewport viewport{};
         viewport.x = 0.0f;
@@ -109,12 +108,12 @@ namespace Car {
     }
 
     void VulkanRenderer::DrawTrianglesImpl(const Ref<VertexArray> va) {
-        // if (va->getIndexBuffer()->getCount() % 3 != 0) {
-        //     CR_CORE_ERROR("Car::Render::DrawTriangles recieved vertex array which "
-        //                   "holds an incompatible index buffer (size={})",
-        //                   va->getIndexBuffer()->getCount());
-        //     return;
-        // }
+        if (va->getIndexBuffer()->getCount() % 3 != 0) {
+            CR_CORE_ERROR("Car::Render::DrawTriangles recieved vertex array which "
+                          "holds an incompatible index buffer (size={})",
+                          va->getIndexBuffer()->getCount());
+            return;
+        }
 
         va->bind();
 

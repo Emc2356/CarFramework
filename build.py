@@ -8,6 +8,9 @@ from pathlib import Path
 OPENGL = 1
 VULKAN = 2
 rendering_api = OPENGL
+build_examples = False
+
+build_shaderc = False
 
 
 @buildspec
@@ -62,7 +65,6 @@ def glfw_posix_gnu_clang() -> None:
 
 @buildspec
 def glfw_windows_gnu_clang() -> None:
-    exit(55)
     BuildIt.StaticLibrary(
         name="glfw",
         out_filepath="./libraries/",
@@ -225,6 +227,17 @@ def shaderc_windows_posix_gnu_clang() -> None:
     # "./vendor/shaderc/third_party/spirv-tools/source/reduce/pch_source_reduce.h",
     # "./vendor/shaderc/third_party/glslang/glslang/HLSL/pch.h",
     # "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/pch.h",
+    if not build_shaderc:
+        BuildIt.StaticLibrary(
+            name="shaderc",
+            out_filepath="./libraries/",
+            sources=[],
+            depends_on=[],
+            extra_build_flags=[],
+            extra_defines=[],
+            include_directories=[]
+        )
+        return
     BuildIt.StaticLibrary(
         name="shaderc",
         out_filepath="./libraries/",
@@ -370,26 +383,44 @@ def core_win_posix() -> None:
         ]
     )
     
-    BuildIt.Executable(
-        name="raycasting.out",
-        sources=[
-            "examples/RayCasting.cpp"
-        ],
-        static_libraries=[
-            "Car"
-        ],
-        extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
-        extra_link_flags=[],
-        include_directories=[],
-        libraries=["fmt"],
-        extra_defines=[
-            ("GLFW_INCLUDE_NONE",),
-        ]
-    )
+    if build_examples:
+        BuildIt.Executable(
+            name="raycasting.out",
+            sources=[
+                "examples/RayCasting.cpp"
+            ],
+            static_libraries=[
+                "Car"
+            ],
+            extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
+            extra_link_flags=[],
+            include_directories=[],
+            libraries=["fmt"],
+            extra_defines=[
+                ("GLFW_INCLUDE_NONE",),
+            ]
+        )
+        
+        BuildIt.Executable(
+            name="Maze.out",
+            sources=[
+                "examples/Maze.cpp"
+            ],
+            static_libraries=[
+                "Car"
+            ],
+            extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
+            extra_link_flags=[],
+            include_directories=[],
+            libraries=["fmt"],
+            extra_defines=[
+                ("GLFW_INCLUDE_NONE",),
+            ]
+        )
 
 
 @BuildIt.unknown_argument
-def unknown_arg(arg: str) -> bool:
+def unknown_arg(arg: str) -> bool:    
     global rendering_api
     
     SPIRV_TOOLS_DIR = "./vendor/shaderc/third_party/spirv-tools"
@@ -418,6 +449,8 @@ def unknown_arg(arg: str) -> bool:
         print("    --opengl, -ogl to use OpenGL rendering backend (default)")
         print("    --vulkan, -vk to use Vulkan rendering backend")
         print("    --format formats the code (requires clang-format)")
+        print("    --shaderc build shaderc (required to compile shaders on the fly)")
+        print("    --examples builds the examples")
     elif arg == "--format":
         files = list(str(path) for path in Path("./Car").glob("**/*.cpp"))
         files += list(str(path) for path in Path("./Car").glob("**/*.hpp"))
@@ -425,14 +458,21 @@ def unknown_arg(arg: str) -> bool:
         files += list(str(path) for path in Path("./SandBox").glob("**/*.cpp"))
         files += list(str(path) for path in Path("./examples").glob("**/*.hpp"))
         files += list(str(path) for path in Path("./examples").glob("**/*.cpp"))
-        files += ["./Car/include/Car/Car.hpp"]
         
         exit(BuildIt.exec_cmd("clang-format", "-i", *files, "--verbose").returncode)
+    elif arg == "--shaderc":
+        global build_shaderc
+        build_shaderc = True
+        return True
     elif arg == "-ogl" or arg == "--opengl":
         rendering_api = OPENGL
         return True
     elif arg == "-vk" or arg == "--vulkan":
         rendering_api = VULKAN
+        return True
+    elif arg == "--examples":
+        global build_examples
+        build_examples = True
         return True
     elif arg == "--deps":
         if BuildIt.exec_cmd("git", "submodule", "init"):

@@ -28,13 +28,13 @@ struct Renderer2DData {
 
 #define _CR_R2_REQ_INIT_OR_RET(__ret_v)                                                                                \
     CR_IF (sData == nullptr) {                                                                                         \
-        CR_CORE_ERROR("Car::Renderer2D is noy initialized");                                                           \
+        CR_CORE_ERROR("Car::Renderer2D is not initialized");                                                           \
         CR_DEBUGBREAK();                                                                                               \
         return __ret_v;                                                                                                \
     }
 #define _CR_R2_REQ_INIT_OR_RET_VOID()                                                                                  \
     CR_IF (sData == nullptr) {                                                                                         \
-        CR_CORE_ERROR("Car::Renderer2D is noy initialized");                                                           \
+        CR_CORE_ERROR("Car::Renderer2D is not initialized");                                                           \
         CR_DEBUGBREAK();                                                                                               \
         return;                                                                                                        \
     }

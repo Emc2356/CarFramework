@@ -22,12 +22,12 @@
 #include <unordered_map>
 #include <tuple>
 
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <stdio.h>
-#include <math.h>
-#include <float.h>
-#include <assert.h>
-#include <stdarg.h>
+#include <cstdint>
+#include <cstring>
+#include <cstdlib>
+#include <climits>
+#include <cstdio>
+#include <cmath>
+#include <cfloat>
+#include <cassert>
+#include <cstdarg>

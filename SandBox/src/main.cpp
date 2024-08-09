@@ -1,15 +1,50 @@
+#include "Car/Application.hpp"
+#include "Car/Renderer/UniformBuffer.hpp"
+#include "Car/Renderer/VertexArray.hpp"
 #define CR_ENTRY
 #include <Car/Car.hpp>
 
-class RayCastingLayer : public Car::Layer {
+struct UniformBufferObject {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
+
+
+class SandboxLayer : public Car::Layer {
 public:
-    RayCastingLayer() : Car::Layer("Sandbox Layer") {}
+    SandboxLayer() : Car::Layer("Sandbox Layer") {}
 
     virtual void onAttach() override {
         Car::Renderer::EnableBlending();
-        Car::Renderer::ClearColor(0.1f);
-
-        mFont = Car::ResourceManager::LoadFont("zed-mono-regular.ttf", 50);
+        Car::Renderer::ClearColor(0.1f, 0.0f);
+        
+        std::vector<float> vertices = {
+            -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+            0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+            0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+            -0.5f, 0.5f, 1.0f, 1.0f, 1.0f,
+        };
+        
+        std::vector<uint32_t> indices = {
+            0, 1, 2,
+            2, 3, 0
+        };
+        
+        Car::BufferLayout layout = {
+            {"iPos", Car::BufferLayout::DataType::Float2},
+            {"iColor", Car::BufferLayout::DataType::Float3},
+        };
+        
+        mUb = Car::UniformBuffer::Create(sizeof(UniformBufferObject), 0);
+        
+        auto Vb = Car::VertexBuffer::Create(vertices.data(), vertices.size() * sizeof(vertices[0]), layout, Car::Buffer::Usage::StaticDraw);
+        auto Ib = Car::IndexBuffer::Create(indices.data(), indices.size() * sizeof(indices[0]), Car::Buffer::Usage::StaticDraw, Car::Buffer::Type::UnsignedInt);
+        auto shader = Car::Shader::Create("sandbox.vert", "sandbox.frag");
+        
+        shader->setInput(mUb, true, false);
+        
+        mVa = Car::VertexArray::Create(Vb, Ib, shader);
     }
 
     virtual void onImGuiRender(double dt) override {
@@ -21,42 +56,34 @@ public:
     }
 
     virtual void onRender() override {
-        // Car::Renderer2D::DrawText(mFont, "Hello\nWorld", Car::Input::MousePos());
-        // glm::ivec2 screenSize(Car::Application::Get()->getWindow()->getWidth(),
-        // Car::Application::Get()->getWindow()->getHeight());
+        static auto startTime = std::chrono::high_resolution_clock::now();
+        
+        auto window = Car::Application::Get()->getWindow();
+    
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+        
+        UniformBufferObject ubo{};
+        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.proj = glm::perspective(glm::radians(45.0f), (float)window->getWidth() / (float)window->getHeight(), 0.1f, 10.0f);
 
-        // glm::ivec2 mousePos = Car::Input::MousePos();
-        glm::ivec2 mousePos(Car::Application::Get()->getWindow()->getWidth() / 2,
-                            Car::Application::Get()->getWindow()->getHeight() / 2);
-
-        float radius = 256.0f;
-        for (uint32_t i = 0; i < 360; i++) {
-            glm::ivec2 pos{glm::cos(glm::radians(float(i))) * radius, glm::sin(glm::radians(float(i))) * radius};
-            pos += mousePos;
-
-            Car::Renderer2D::DrawLine(mousePos, pos, {1.0f, 1.0f, 1.0f});
-            // Car::Renderer2D::DrawPoint(pos, {1.0f, 0.0f, 0.0f});
-        }
-
-        // Car::Renderer2D::DrawLine(mousePos, mousePos + glm::ivec2(50, -100)*3);
-
-        // Car::Renderer2D::DrawLine(screenSize / 2, Car::Input::MousePos(), {1.0f, 1.0f, 1.0f});
-        // Car::Renderer2D::DrawRect({Car::Input::MousePos(), {256, 256}}, {1.0f, 0.0f, 0.0f});
-        // Car::Renderer2D::DrawTexture(mTexture, Car::Input::MousePos());
-        // Car::Renderer2D::DrawTexture(mTexture, {256, 256});
-
-        Car::Renderer2D::DrawText(mFont, "{Hello World!~\n{From too much work\nScore: {1.4}", {50, 50}, glm::vec3(.7f));
+        ubo.proj[1][1] *= -1;
+        
+        mUb->setData(&ubo);
+        
+        Car::Renderer::DrawTriangles(mVa, 2);
     }
 
 private:
-    Car::Ref<Car::Texture2D> mTexture;
-    Car::Ref<Car::Font> mFont;
+    Car::Ref<Car::VertexArray> mVa;
+    Car::Ref<Car::UniformBuffer> mUb;
 };
 
 class Sandbox : public Car::Application {
 public:
     Sandbox() {
-        mSandboxLayer = new RayCastingLayer();
+        mSandboxLayer = new SandboxLayer();
         pushLayer(mSandboxLayer);
     }
 
@@ -65,7 +92,7 @@ public:
     virtual ~Sandbox() override {}
 
 private:
-    RayCastingLayer* mSandboxLayer;
+    SandboxLayer* mSandboxLayer;
 };
 
 Car::Application* Car::createApplication() {
@@ -75,7 +102,7 @@ Car::Application* Car::createApplication() {
     spec.title = "Sandbox";
     spec.vsync = true;
     spec.resizable = true;
-    spec.useImGui = true;
+    spec.useImGui = false;
     Car::Application::SetSpecification(spec);
 
     return new Sandbox();

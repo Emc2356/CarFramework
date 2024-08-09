@@ -17,20 +17,17 @@ namespace Car {
 
         virtual void setData(const void* data, uint32_t offset = 0) override;
 
-        void createDescriptorLayouts();
-        void createDescriptorSets();
-
+        VkDescriptorSetLayoutBinding getDescriptorSetLayout(bool useInVertexShader, bool useInFragmeantShader);
+        VkDescriptorBufferInfo getDescriptorBufferInfo(uint32_t i);
     private:
         uint32_t mSize;
         uint32_t mBinding;
         Buffer::Usage mUsage;
 
-        VkDescriptorSetLayout mDescriptorSetLayout;
-        std::vector<VkDescriptorSet> mDescriptorSets;
-
-        Ref<VulkanGraphicsContext> mGraphicsContext;
         std::vector<VkBuffer> mBuffers;
         std::vector<VkDeviceMemory> mBuffersMemory;
         std::vector<void*> mBuffersMapped;
+
+        Ref<VulkanGraphicsContext> mGraphicsContext;
     };
 } // namespace Car

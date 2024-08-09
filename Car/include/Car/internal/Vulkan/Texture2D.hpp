@@ -23,7 +23,7 @@ namespace Car {
         virtual uint32_t getHeight() const override { return mHeight; }
         virtual uint32_t getBPP() const override { return mBPP; }
 
-        virtual Rect getRect() const override { return {0, 0, (int32_t)mWidth, (int32_t)mHeight}; }
+        virtual Rect getRect() const override { return {0.0f, 0.0f, (float)mWidth, (float)mHeight}; }
 
         virtual bool operator==(Ref<Texture2D> other) const override {
             return static_cast<const void*>(this) == static_cast<const void*>(other.get());

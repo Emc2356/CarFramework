@@ -6,33 +6,14 @@
 #include <shaderc/shaderc.hpp>
 #include <spirv_cross/spirv_cross.hpp>
 
-static std::vector<uint32_t> crCompileSingleShader(const std::string& path, const shaderc_shader_kind kind) {
-    std::string sourceCode = Car::readFile(path);
-    shaderc::CompileOptions options;
-    shaderc::Compiler compiler;
-    options.SetOptimizationLevel(shaderc_optimization_level_performance);
-    options.SetSourceLanguage(shaderc_source_language_glsl);
-
-    options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
-
-    shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(sourceCode, kind, path.c_str(), options);
-    if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-        throw std::runtime_error(result.GetErrorMessage());
-    }
-
-    return {result.cbegin(), result.cend()};
-}
 
 namespace Car {
-    VulkanShader::VulkanShader(const std::string& vertexPath, const std::string& fragmeantPath) {
+    VulkanShader::VulkanShader(const std::string& vertexBin, const std::string& fragmeantBin) :
+        mVertBin(vertexBin), mFragBin(fragmeantBin) {
         mGraphicsContext = reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get());
-        mVertBin = crCompileSingleShader(vertexPath, shaderc_vertex_shader);
-        mFragBin = crCompileSingleShader(fragmeantPath, shaderc_fragment_shader);
     }
 
     void VulkanShader::trueCreateImplementation(Ref<VulkanVertexBuffer> vb) {
-        // createDescriptorLayouts();
-        // createDescriptorSets();
         createGraphicsPipeline(vb);
     }
 
@@ -40,22 +21,78 @@ namespace Car {
         VkDevice device = mGraphicsContext->getDevice();
 
         vkDeviceWaitIdle(device);
-
+        
+        vkDestroyDescriptorSetLayout(device, mDescriptorSetLayout, nullptr);
+        
         vkDestroyPipeline(device, mGraphicsPipeline, nullptr);
         vkDestroyPipelineLayout(device, mPipelineLayout, nullptr);
     }
 
     void VulkanShader::bind() const {
         VkCommandBuffer cmdBuffer = mGraphicsContext->getCurrentRenderCommandBuffer();
+        if (mDescriptorSetLayout != VK_NULL_HANDLE) {
+            vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mDescriptorSets[mGraphicsContext->getCurrentFrameIndex()], 0, nullptr);
+        }
         vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
     }
 
     void VulkanShader::unbind() const {}
 
     void VulkanShader::createGraphicsPipeline(Ref<VulkanVertexBuffer> vb) {
+        VkDevice device = mGraphicsContext->getDevice();
+        
+        if (mUniformBufferInputs.size() != 0) {
+            std::vector<VkDescriptorSetLayoutBinding> descriorSetLayouts;
+            
+            for (const auto& input : mUniformBufferInputs) {
+                descriorSetLayouts.push_back(input.ub->getDescriptorSetLayout(input.useInVertexShader, input.useInFragmeantShader));
+            }
+            
+            VkDescriptorSetLayoutCreateInfo layoutInfo{};
+            layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            layoutInfo.bindingCount = descriorSetLayouts.size();
+            layoutInfo.pBindings = descriorSetLayouts.data();
+            
+            if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &mDescriptorSetLayout) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create descriptor set layout!");
+            }
+            
+            std::vector<VkDescriptorSetLayout> layouts(mGraphicsContext->getMaxFramesInFlight(), mDescriptorSetLayout);
+            VkDescriptorSetAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            allocInfo.descriptorPool = mGraphicsContext->getDescriptorPool();
+            allocInfo.descriptorSetCount = mGraphicsContext->getMaxFramesInFlight();
+            allocInfo.pSetLayouts = layouts.data();
+            
+            mDescriptorSets.resize(mGraphicsContext->getMaxFramesInFlight());
+            if (vkAllocateDescriptorSets(device, &allocInfo, mDescriptorSets.data()) != VK_SUCCESS) {
+                throw std::runtime_error("failed to allocate descriptor sets!");
+            }
+            
+            for (size_t i = 0; i < mGraphicsContext->getMaxFramesInFlight(); i++) {
+                std::vector<VkDescriptorBufferInfo> bufferInfos;
+                for (const auto& input : mUniformBufferInputs) {
+                    bufferInfos.push_back(input.ub->getDescriptorBufferInfo(i));
+                }
+                
+                VkWriteDescriptorSet descriptorWrite{};
+                descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrite.dstSet = mDescriptorSets[i];
+                descriptorWrite.dstBinding = 0;
+                descriptorWrite.dstArrayElement = 0;
+                descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                descriptorWrite.descriptorCount = bufferInfos.size();
+                descriptorWrite.pBufferInfo = bufferInfos.data();
+                descriptorWrite.pImageInfo = nullptr; // Optional
+                descriptorWrite.pTexelBufferView = nullptr; // Optional
+    
+                vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+            }
+        }
+        
         VkShaderModule vertShaderModule = createShaderModule(mVertBin);
         VkShaderModule fragShaderModule = createShaderModule(mFragBin);
-
+        
         VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
         vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -117,8 +154,10 @@ namespace Car {
         rasterizer.rasterizerDiscardEnable = VK_FALSE;
         rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
         rasterizer.lineWidth = 1.0f;
+        // rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+        // rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
         rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-        rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
         rasterizer.depthBiasEnable = VK_FALSE;
         rasterizer.depthBiasConstantFactor = 0.0f; // Optional
         rasterizer.depthBiasClamp = 0.0f;          // Optional
@@ -157,14 +196,19 @@ namespace Car {
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = 1;
-        pipelineLayoutInfo.pSetLayouts = &mDescriptorSetLayout;
-
+        if (mDescriptorSetLayout == VK_NULL_HANDLE) {
+            pipelineLayoutInfo.setLayoutCount = 0;
+            pipelineLayoutInfo.pSetLayouts = nullptr;
+        } else {
+            pipelineLayoutInfo.setLayoutCount = 1;
+            pipelineLayoutInfo.pSetLayouts = &mDescriptorSetLayout;
+        }
+        
         // i dont think i want to support push_constant
         pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
         pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-        if (vkCreatePipelineLayout(mGraphicsContext->getDevice(), &pipelineLayoutInfo, nullptr, &mPipelineLayout) !=
+        if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &mPipelineLayout) !=
             VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
         }
@@ -187,7 +231,6 @@ namespace Car {
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
         pipelineInfo.basePipelineIndex = -1;              // Optional
 
-        VkDevice device = mGraphicsContext->getDevice();
         if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &mGraphicsPipeline) !=
             VK_SUCCESS) {
             throw std::runtime_error("failed to create graphics pipeline!");
@@ -197,12 +240,12 @@ namespace Car {
         vkDestroyShaderModule(device, vertShaderModule, nullptr);
     }
 
-    VkShaderModule VulkanShader::createShaderModule(const std::vector<uint32_t>& code) {
+    VkShaderModule VulkanShader::createShaderModule(const std::string& code) {
         VkShaderModuleCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         // questionable code sadly
-        createInfo.codeSize = code.size() * sizeof(uint32_t);
-        createInfo.pCode = code.data();
+        createInfo.codeSize = code.size();
+        createInfo.pCode = reinterpret_cast<const uint32_t*>(code.c_str());
 
         VkShaderModule shaderModule;
         if (vkCreateShaderModule(mGraphicsContext->getDevice(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {

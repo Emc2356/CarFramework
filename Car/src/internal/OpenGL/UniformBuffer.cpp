@@ -4,7 +4,15 @@
 #include <glad/gl.h>
 
 namespace Car {
+    static std::vector<uint32_t> sTakenBindings{};
+    
     OpenGLUniformBuffer::OpenGLUniformBuffer(uint32_t size, uint32_t binding, Buffer::Usage usage) {
+        if (std::find(sTakenBindings.begin(), sTakenBindings.end(), binding) != sTakenBindings.end()) {
+            CR_CORE_ERROR("Binding {} is already taken", binding);
+            CR_DEBUGBREAK();
+        }
+        sTakenBindings.push_back(binding);
+        
         mSize = size;
         mBinding = binding;
         mUsage = usage;
@@ -29,7 +37,10 @@ namespace Car {
         glBindBufferBase(GL_UNIFORM_BUFFER, mBinding, mID);
     }
 
-    OpenGLUniformBuffer::~OpenGLUniformBuffer() { glDeleteBuffers(1, &mID); }
+    OpenGLUniformBuffer::~OpenGLUniformBuffer() { 
+        glDeleteBuffers(1, &mID);
+        sTakenBindings.erase(std::find(sTakenBindings.begin(), sTakenBindings.end(), mBinding));
+    }
 
     void OpenGLUniformBuffer::setData(const void* data, uint32_t offset /*=0*/) {
         glBindBufferBase(GL_UNIFORM_BUFFER, mBinding, mID);

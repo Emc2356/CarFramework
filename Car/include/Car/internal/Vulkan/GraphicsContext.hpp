@@ -58,6 +58,7 @@ namespace Car {
         VkSemaphore getCurrentImageAvailableSemaphore() const { return mImageAvailableSemaphores[mCurrentFrame]; }
         VkSemaphore getCurrentRenderFinishedSemaphore() const { return mRenderFinishedSemaphores[mCurrentFrame]; }
         VkFence getCurrentInFlightFence() const { return mInFlightFences[mCurrentFrame]; }
+        uint32_t getCurrentFrameIndex() const { return mCurrentFrame; }
         uint32_t aquireNextImageIndex();
         uint32_t getImageIndex() const { return mImageIndex; }
         VkDescriptorPool getDescriptorPool() const { return mDescriptorPool; }

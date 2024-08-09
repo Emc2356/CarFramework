@@ -19,7 +19,9 @@ namespace Car {
         // min, Float() * (max - min) + min); } static glm::vec2 Vec2() { return glm::vec2(Float(), Float()); } static
         // glm::vec2 Vec2(float min, float max) { return glm::vec2(Float() * (max - min) + min, Float() * (max - min) +
         // min); }
-    private:
+        template <typename T>
+        static const T& FromVec(const std::vector<T>& vec) { return vec[Random::UInt(0, vec.size())]; }
+        private:
         static std::mt19937 sRandomEngine;
         static std::uniform_int_distribution<std::mt19937::result_type> sDistribution;
     };
