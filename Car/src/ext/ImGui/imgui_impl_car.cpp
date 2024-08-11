@@ -299,7 +299,7 @@ bool ImGui_ImplCar_Init() {
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
         ImGui_ImplCar_InitPlatformInterface();
     }
-        
+
     ImGui_ImplCar_CreateDeviceObjects();
 
     return true;
@@ -478,15 +478,14 @@ bool ImGui_ImplCar_CreateFontsTexture() {
     io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
     bd->FontTexture = Car::Texture2D::Create(width, height, pixels);
-    
+
     // Store our identifier
     io.Fonts->SetTexID((ImTextureID)(intptr_t)&bd->FontTexture);
 
     return true;
 }
 
-void ImGui_ImplCar_DestroyFontsTexture() {    
-}
+void ImGui_ImplCar_DestroyFontsTexture() {}
 
 bool ImGui_ImplCar_CreateDeviceObjects() {
     ImGui_ImplCar_Data* bd = ImGui_ImplCar_GetBackendData();

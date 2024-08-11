@@ -6,24 +6,21 @@
 #include <shaderc/shaderc.hpp>
 #include <spirv_cross/spirv_cross.hpp>
 
-
 namespace Car {
-    VulkanShader::VulkanShader(const std::string& vertexBin, const std::string& fragmeantBin) :
-        mVertBin(vertexBin), mFragBin(fragmeantBin) {
+    VulkanShader::VulkanShader(const std::string& vertexBin, const std::string& fragmeantBin)
+        : mVertBin(vertexBin), mFragBin(fragmeantBin) {
         mGraphicsContext = reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get());
     }
 
-    void VulkanShader::trueCreateImplementation(Ref<VulkanVertexBuffer> vb) {
-        createGraphicsPipeline(vb);
-    }
+    void VulkanShader::trueCreateImplementation(Ref<VulkanVertexBuffer> vb) { createGraphicsPipeline(vb); }
 
     VulkanShader::~VulkanShader() {
         VkDevice device = mGraphicsContext->getDevice();
 
         vkDeviceWaitIdle(device);
-        
+
         vkDestroyDescriptorSetLayout(device, mDescriptorSetLayout, nullptr);
-        
+
         vkDestroyPipeline(device, mGraphicsPipeline, nullptr);
         vkDestroyPipelineLayout(device, mPipelineLayout, nullptr);
     }
@@ -31,7 +28,8 @@ namespace Car {
     void VulkanShader::bind() const {
         VkCommandBuffer cmdBuffer = mGraphicsContext->getCurrentRenderCommandBuffer();
         if (mDescriptorSetLayout != VK_NULL_HANDLE) {
-            vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mDescriptorSets[mGraphicsContext->getCurrentFrameIndex()], 0, nullptr);
+            vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1,
+                                    &mDescriptorSets[mGraphicsContext->getCurrentFrameIndex()], 0, nullptr);
         }
         vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
     }
@@ -40,41 +38,42 @@ namespace Car {
 
     void VulkanShader::createGraphicsPipeline(Ref<VulkanVertexBuffer> vb) {
         VkDevice device = mGraphicsContext->getDevice();
-        
+
         if (mUniformBufferInputs.size() != 0) {
             std::vector<VkDescriptorSetLayoutBinding> descriorSetLayouts;
-            
+
             for (const auto& input : mUniformBufferInputs) {
-                descriorSetLayouts.push_back(input.ub->getDescriptorSetLayout(input.useInVertexShader, input.useInFragmeantShader));
+                descriorSetLayouts.push_back(
+                    input.ub->getDescriptorSetLayout(input.useInVertexShader, input.useInFragmeantShader));
             }
-            
+
             VkDescriptorSetLayoutCreateInfo layoutInfo{};
             layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
             layoutInfo.bindingCount = descriorSetLayouts.size();
             layoutInfo.pBindings = descriorSetLayouts.data();
-            
+
             if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &mDescriptorSetLayout) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create descriptor set layout!");
             }
-            
+
             std::vector<VkDescriptorSetLayout> layouts(mGraphicsContext->getMaxFramesInFlight(), mDescriptorSetLayout);
             VkDescriptorSetAllocateInfo allocInfo{};
             allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
             allocInfo.descriptorPool = mGraphicsContext->getDescriptorPool();
             allocInfo.descriptorSetCount = mGraphicsContext->getMaxFramesInFlight();
             allocInfo.pSetLayouts = layouts.data();
-            
+
             mDescriptorSets.resize(mGraphicsContext->getMaxFramesInFlight());
             if (vkAllocateDescriptorSets(device, &allocInfo, mDescriptorSets.data()) != VK_SUCCESS) {
                 throw std::runtime_error("failed to allocate descriptor sets!");
             }
-            
+
             for (size_t i = 0; i < mGraphicsContext->getMaxFramesInFlight(); i++) {
                 std::vector<VkDescriptorBufferInfo> bufferInfos;
                 for (const auto& input : mUniformBufferInputs) {
                     bufferInfos.push_back(input.ub->getDescriptorBufferInfo(i));
                 }
-                
+
                 VkWriteDescriptorSet descriptorWrite{};
                 descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 descriptorWrite.dstSet = mDescriptorSets[i];
@@ -83,16 +82,16 @@ namespace Car {
                 descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                 descriptorWrite.descriptorCount = bufferInfos.size();
                 descriptorWrite.pBufferInfo = bufferInfos.data();
-                descriptorWrite.pImageInfo = nullptr; // Optional
+                descriptorWrite.pImageInfo = nullptr;       // Optional
                 descriptorWrite.pTexelBufferView = nullptr; // Optional
-    
+
                 vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
             }
         }
-        
+
         VkShaderModule vertShaderModule = createShaderModule(mVertBin);
         VkShaderModule fragShaderModule = createShaderModule(mFragBin);
-        
+
         VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
         vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -203,13 +202,12 @@ namespace Car {
             pipelineLayoutInfo.setLayoutCount = 1;
             pipelineLayoutInfo.pSetLayouts = &mDescriptorSetLayout;
         }
-        
+
         // i dont think i want to support push_constant
         pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
         pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-        if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &mPipelineLayout) !=
-            VK_SUCCESS) {
+        if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &mPipelineLayout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
         }
 

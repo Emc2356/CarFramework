@@ -12,7 +12,7 @@ namespace Car {
         bool useInVertexShader;
         bool useInFragmeantShader;
     };
-    
+
     class VulkanShader : public Shader {
     public:
         VulkanShader(const std::string& vertexBinary, const std::string& fragmeantBinary);
@@ -29,13 +29,10 @@ namespace Car {
                 CR_CORE_ERROR("Can not set an input to a shader after it has been binded with the VertexArray object");
                 return;
             }
-            mUniformBufferInputs.push_back({
-                reinterpretCastRef<VulkanUniformBuffer>(ub),
-                useInVertexShader,
-                useInFragmeantShader 
-            });
+            mUniformBufferInputs.push_back(
+                {reinterpretCastRef<VulkanUniformBuffer>(ub), useInVertexShader, useInFragmeantShader});
         }
-        
+
         // called by VulkanVertexArray to associtate shader and vb
         void trueCreateImplementation(Ref<VulkanVertexBuffer> vb);
 
@@ -47,13 +44,13 @@ namespace Car {
     private:
         std::string mVertBin;
         std::string mFragBin;
-        
+
         std::vector<UniformBufferInput> mUniformBufferInputs;
 
-        // TODO: Support multiple sets in the future 
+        // TODO: Support multiple sets in the future
         VkDescriptorSetLayout mDescriptorSetLayout = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet> mDescriptorSets;
-        
+
         VkPipelineLayout mPipelineLayout = VK_NULL_HANDLE;
         VkPipeline mGraphicsPipeline = VK_NULL_HANDLE;
 

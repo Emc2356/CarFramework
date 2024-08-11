@@ -19,7 +19,7 @@ namespace Car {
             return 1;
         }
         default: {
-            std::runtime_error("Unrecognized type: " + std::to_string((int)type));
+            throw std::runtime_error("Unrecognized type: " + std::to_string((int)type));
             return 0;
         }
         }

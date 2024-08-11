@@ -14,7 +14,7 @@ namespace Car {
         virtual void unbind() const = 0;
 
         virtual void setInput(Ref<UniformBuffer> ub, bool useInVertexShader, bool useInFragmeantShader) = 0;
-        
+
         static Ref<Shader> Create(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath);
 
         // implementation detail

@@ -74,7 +74,8 @@ namespace Car {
             sData->texturesIndexBufferData[i * 6 + 5] = i * 4 + 0;
         }
         // 0b1_00111000_01111111
-        sData->texturesIB = IndexBuffer::Create((void*)sData->texturesIndexBufferData, sData->texturesMaxBatchSize * 6,
+        sData->texturesIB = IndexBuffer::Create((void*)sData->texturesIndexBufferData,
+                                                sData->texturesMaxBatchSize * 6 * sizeof(uint32_t),
                                                 Buffer::Usage::StaticDraw, Buffer::Type::UnsignedInt);
 
         sData->texturesVB = VertexBuffer::Create(nullptr, sData->texturesMaxBatchSize * 4 * layout.getTotalSize(),

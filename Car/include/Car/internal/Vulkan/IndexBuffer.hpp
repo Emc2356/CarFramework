@@ -6,20 +6,24 @@
 namespace Car {
     class VulkanIndexBuffer : public IndexBuffer {
     public:
-        VulkanIndexBuffer(void* data, uint32_t count, Buffer::Usage usage, Buffer::Type type);
+        VulkanIndexBuffer(void* data, uint32_t size, Buffer::Usage usage, Buffer::Type type);
         virtual ~VulkanIndexBuffer() override;
+
+        void releaseDeviceObjects();
 
         virtual void bind() const override;
         virtual void unbind() const override;
 
         virtual uint32_t getCount() const override { return mCount; }
+        virtual uint32_t getSize() const override { return mSize; }
         virtual Buffer::Usage getUsage() const override { return mUsage; }
         virtual Buffer::Type getType() const override { return mType; }
 
-        virtual void updateData(void* data, uint32_t count, uint32_t offset) override;
+        virtual void updateData(void* data, uint32_t size, uint32_t offset) override;
 
     private:
         uint32_t mCount;
+        uint32_t mSize;
         Buffer::Usage mUsage;
         Buffer::Type mType;
 

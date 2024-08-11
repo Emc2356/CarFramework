@@ -11,6 +11,8 @@ namespace Car {
         VulkanVertexBuffer(uint32_t size, Buffer::Usage usage);
         virtual ~VulkanVertexBuffer() override;
 
+        void releaseDeviceObjects();
+
         virtual const BufferLayout& getLayout() const override { return mLayout; }
 
         virtual uint32_t getSize() const override { return mSize; }

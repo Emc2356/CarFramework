@@ -19,6 +19,7 @@ namespace Car {
 
         VkDescriptorSetLayoutBinding getDescriptorSetLayout(bool useInVertexShader, bool useInFragmeantShader);
         VkDescriptorBufferInfo getDescriptorBufferInfo(uint32_t i);
+
     private:
         uint32_t mSize;
         uint32_t mBinding;

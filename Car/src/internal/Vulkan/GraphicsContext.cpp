@@ -812,20 +812,20 @@ namespace Car {
     // TODO: https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
     // or my own heap implementation maybe
     void VulkanGraphicsContext::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                                             VkMemoryPropertyFlags properties, VkBuffer* buffer,
-                                             VkDeviceMemory* bufferMemory) {
+                                             VkMemoryPropertyFlags properties, VkBuffer* pBuffer,
+                                             VkDeviceMemory* pBufferMemory) {
         VkBufferCreateInfo bufferInfo{};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferInfo.size = size;
         bufferInfo.usage = usage;
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-        if (vkCreateBuffer(mDevice, &bufferInfo, nullptr, buffer) != VK_SUCCESS) {
+        if (vkCreateBuffer(mDevice, &bufferInfo, nullptr, pBuffer) != VK_SUCCESS) {
             throw std::runtime_error("failed to create a buffer!");
         }
 
         VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(mDevice, *buffer, &memRequirements);
+        vkGetBufferMemoryRequirements(mDevice, *pBuffer, &memRequirements);
 
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -833,7 +833,7 @@ namespace Car {
         allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
         // TODO: A custom heap implementation
-        if (vkAllocateMemory(mDevice, &allocInfo, nullptr, bufferMemory) != VK_SUCCESS) {
+        if (vkAllocateMemory(mDevice, &allocInfo, nullptr, pBufferMemory) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate buffer memory!");
         }
     }

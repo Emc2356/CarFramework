@@ -10,7 +10,6 @@ struct UniformBufferObject {
     glm::mat4 proj;
 };
 
-
 class SandboxLayer : public Car::Layer {
 public:
     SandboxLayer() : Car::Layer("Sandbox Layer") {}
@@ -18,32 +17,29 @@ public:
     virtual void onAttach() override {
         Car::Renderer::EnableBlending();
         Car::Renderer::ClearColor(0.1f, 0.0f);
-        
+
         std::vector<float> vertices = {
-            -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-            0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-            0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-            -0.5f, 0.5f, 1.0f, 1.0f, 1.0f,
+            -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.0f,
+            0.5f,  0.5f,  0.0f, 0.0f, 1.0f, -0.5f, 0.5f,  1.0f, 1.0f, 1.0f,
         };
-        
-        std::vector<uint32_t> indices = {
-            0, 1, 2,
-            2, 3, 0
-        };
-        
+
+        std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
+
         Car::BufferLayout layout = {
             {"iPos", Car::BufferLayout::DataType::Float2},
             {"iColor", Car::BufferLayout::DataType::Float3},
         };
-        
+
         mUb = Car::UniformBuffer::Create(sizeof(UniformBufferObject), 0);
-        
-        auto Vb = Car::VertexBuffer::Create(vertices.data(), vertices.size() * sizeof(vertices[0]), layout, Car::Buffer::Usage::StaticDraw);
-        auto Ib = Car::IndexBuffer::Create(indices.data(), indices.size() * sizeof(indices[0]), Car::Buffer::Usage::StaticDraw, Car::Buffer::Type::UnsignedInt);
+
+        auto Vb = Car::VertexBuffer::Create(vertices.data(), vertices.size() * sizeof(vertices[0]), layout,
+                                            Car::Buffer::Usage::StaticDraw);
+        auto Ib = Car::IndexBuffer::Create(indices.data(), indices.size() * sizeof(indices[0]),
+                                           Car::Buffer::Usage::StaticDraw, Car::Buffer::Type::UnsignedInt);
         auto shader = Car::Shader::Create("sandbox.vert", "sandbox.frag");
-        
+
         shader->setInput(mUb, true, false);
-        
+
         mVa = Car::VertexArray::Create(Vb, Ib, shader);
     }
 
@@ -57,21 +53,22 @@ public:
 
     virtual void onRender() override {
         static auto startTime = std::chrono::high_resolution_clock::now();
-        
+
         auto window = Car::Application::Get()->getWindow();
-    
+
         auto currentTime = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-        
+
         UniformBufferObject ubo{};
         ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.proj = glm::perspective(glm::radians(45.0f), (float)window->getWidth() / (float)window->getHeight(), 0.1f, 10.0f);
+        ubo.proj =
+            glm::perspective(glm::radians(45.0f), (float)window->getWidth() / (float)window->getHeight(), 0.1f, 10.0f);
 
         ubo.proj[1][1] *= -1;
-        
+
         mUb->setData(&ubo);
-        
+
         Car::Renderer::DrawTriangles(mVa, 2);
     }
 

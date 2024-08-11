@@ -67,7 +67,7 @@ namespace Car {
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
         // NOTE: it doesnt bind the memory
         void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
-                          VkBuffer* buffer, VkDeviceMemory* bufferMemory);
+                          VkBuffer* pBuffer, VkDeviceMemory* pBufferMemory);
         void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkDeviceSize srcOffset = 0,
                         VkDeviceSize dstOffset = 0);
         uint32_t getMaxFramesInFlight() const { return mMaxFramesInFlight; }
