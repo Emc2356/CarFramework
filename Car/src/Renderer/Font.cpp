@@ -71,8 +71,7 @@ namespace Car {
             curAdvance += face->glyph->bitmap.width;
         }
 
-        mTexture = Texture2D::Create(textureWidth, textureHeight + heightPadding, pixelBuffer, Texture2D::Format::RGBA,
-                                     Texture2D::Format::RGBA8, Texture2D::Type::Byte);
+        mTexture = Texture2D::Create(textureWidth, textureHeight + heightPadding, pixelBuffer);
 
         free(pixelBuffer);
     }

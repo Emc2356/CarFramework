@@ -9,8 +9,6 @@ namespace Car {
         mVb = reinterpretCastRef<VulkanVertexBuffer>(vb);
         mIb = reinterpretCastRef<VulkanIndexBuffer>(ib);
         mShader = reinterpretCastRef<VulkanShader>(shader);
-
-        mShader->trueCreateImplementation(mVb);
     }
 
     VulkanVertexArray::~VulkanVertexArray() {}

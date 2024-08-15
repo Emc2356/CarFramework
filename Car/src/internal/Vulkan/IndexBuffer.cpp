@@ -211,7 +211,7 @@ namespace Car {
                 }
                 default: {
                     throw std::runtime_error(
-                        fmt::format("internal error in Car::VulkanVertexBuffer::updateData() in line {}.", __LINE__));
+                        fmt::format("internal error in Car::VulkanIndexBuffer::updateData() in line {}.", __LINE__));
                     break;
                 }
                 }
@@ -265,7 +265,7 @@ namespace Car {
                 }
                 default: {
                     throw std::runtime_error(
-                        fmt::format("internal error in Car::VulkanVertexBuffer::updateData() in line {}.", __LINE__));
+                        fmt::format("internal error in Car::VulkanIndexBuffer::updateData() in line {}.", __LINE__));
                     break;
                 }
                 }
@@ -307,7 +307,7 @@ namespace Car {
                 }
                 default: {
                     throw std::runtime_error(
-                        fmt::format("internal error in Car::VulkanVertexBuffer::updateData() in line {}.", __LINE__));
+                        fmt::format("internal error in Car::VulkanIndexBuffer::updateData() in line {}.", __LINE__));
                     break;
                 }
                 }
@@ -367,7 +367,7 @@ namespace Car {
                 }
                 default: {
                     throw std::runtime_error(
-                        fmt::format("internal error in Car::VulkanVertexBuffer::updateData() in line {}.", __LINE__));
+                        fmt::format("internal error in Car::VulkanIndexBuffer::updateData() in line {}.", __LINE__));
                     break;
                 }
                 }

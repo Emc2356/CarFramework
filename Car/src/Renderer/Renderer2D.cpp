@@ -44,8 +44,16 @@ namespace Car {
 
     void Renderer2D::Init() {
         sData = new Renderer2DData();
+        
+        ShaderLayoutInput layout = {
+            {"iPos", ShaderLayoutInput::DataType::Float2},
+            {"iSourceUV", ShaderLayoutInput::DataType::Float2},
+            {"iTint", ShaderLayoutInput::DataType::Float3},
+            {"iTextureID", ShaderLayoutInput::DataType::Float},
+        };
+        
         // internal use only so no reason to register with the ResourceManager
-        sData->texturesShader = Shader::Create("builtin/Renderer2D.vert", "builtin/Renderer2D.frag");
+        sData->texturesShader = Shader::Create("builtin/Renderer2D.vert", "builtin/Renderer2D.frag", layout);
         sData->texturesUBO = UniformBuffer::Create(sizeof(glm::mat4), 0, Buffer::Usage::DynamicDraw);
 
         // TODO: change the batch size so the index buffer can use uint16_t
@@ -53,13 +61,6 @@ namespace Car {
         sData->texturesMaxBatchSize = 20000;
         // sData->texturesMaxBatchSize = 10800;
         sData->texturesCurrentBatchSize = 0;
-
-        BufferLayout layout = {
-            {"iPos", BufferLayout::DataType::Float2},
-            {"iSourceUV", BufferLayout::DataType::Float2},
-            {"iTint", BufferLayout::DataType::Float3},
-            {"iTextureID", BufferLayout::DataType::Float},
-        };
 
         sData->texturesVertexBufferData = (float*)malloc(sData->texturesMaxBatchSize * 4 * layout.getTotalSize());
         sData->texturesIndexBufferData = (uint32_t*)malloc(sData->texturesMaxBatchSize * 6 * sizeof(uint32_t));
@@ -78,8 +79,7 @@ namespace Car {
                                                 sData->texturesMaxBatchSize * 6 * sizeof(uint32_t),
                                                 Buffer::Usage::StaticDraw, Buffer::Type::UnsignedInt);
 
-        sData->texturesVB = VertexBuffer::Create(nullptr, sData->texturesMaxBatchSize * 4 * layout.getTotalSize(),
-                                                 layout, Buffer::Usage::DynamicDraw);
+        sData->texturesVB = VertexBuffer::Create(nullptr, sData->texturesMaxBatchSize * 4 * layout.getTotalSize(), Buffer::Usage::DynamicDraw);
 
         sData->texturesVA = VertexArray::Create(sData->texturesVB, sData->texturesIB, sData->texturesShader);
     }
@@ -127,7 +127,7 @@ namespace Car {
 
         sData->texturesVB->updateData(
             (void*)sData->texturesVertexBufferData,
-            sData->texturesCurrentBatchSize * 4 * sData->texturesVB->getLayout().getTotalSize(), 0);
+            sData->texturesCurrentBatchSize * 4 * sData->texturesShader->getInputLayout().getTotalSize(), 0);
 
         Renderer::DrawTriangles(sData->texturesVA, sData->texturesCurrentBatchSize * 2);
 

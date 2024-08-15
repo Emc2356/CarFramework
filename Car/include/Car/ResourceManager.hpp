@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Car/Core/Core.hpp"
+#include "Car/Renderer/BufferLayout.hpp"
 #include "Car/Renderer/Texture2D.hpp"
 #include "Car/Renderer/Shader.hpp"
 #include "Car/Renderer/Font.hpp"
@@ -24,20 +25,13 @@ namespace Car::ResourceManager {
     std::string getShadersSubdirectory();
     std::string getFontsSubdirectory();
 
-    Ref<Texture2D> LoadTexture2D(const std::string& name, bool flipped = false,
-                                 Texture2D::Format format = Texture2D::Format::RGBA,
-                                 Texture2D::Format internalFormat = Texture2D::Format::RGBA8,
-                                 Texture2D::Type type = Texture2D::Type::Byte);
-    Ref<Texture2D> LoadOrOverideTexture2D(const std::string& name, bool flipped = false,
-                                          Texture2D::Format format = Texture2D::Format::RGBA,
-                                          Texture2D::Format internalFormat = Texture2D::Format::RGBA8,
-                                          Texture2D::Type type = Texture2D::Type::Byte);
+    Ref<Texture2D> LoadTexture2D(const std::string& name, bool flipped = false);
+    Ref<Texture2D> LoadOrOverideTexture2D(const std::string& name, bool flipped = false);
     Ref<Texture2D> GetTexture2D(const std::string& name);
     bool Texture2DExists(const std::string& name);
 
-    Ref<Shader> LoadShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath);
-    Ref<Shader> LoadOrOverideShader(const std::string& vertexShaderFilepath,
-                                    const std::string& fragmeantShaderFilepath);
+    Ref<Shader> LoadShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath, const ShaderLayoutInput& inputLayout);
+    Ref<Shader> LoadOrOverideShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath, const ShaderLayoutInput& inputLayout);
     Ref<Shader> GetShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath);
     bool ShaderExists(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath);
 

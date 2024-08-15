@@ -90,8 +90,7 @@ namespace Car::ResourceManager {
         return sData->fontsSubdirectory;
     }
 
-    Ref<Texture2D> LoadTexture2D(const std::string& name, bool flipped, Texture2D::Format format,
-                                 Texture2D::Format internalFormat, Texture2D::Type type) {
+    Ref<Texture2D> LoadTexture2D(const std::string& name, bool flipped) {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
 
         std::string fullname = sData->resourceDirectory / sData->imagesSubdirectory / name;
@@ -104,20 +103,19 @@ namespace Car::ResourceManager {
             return nullptr;
         }
 
-        Ref<Texture2D> texture = Texture2D::Create(fullname, flipped, format, internalFormat, type);
+        Ref<Texture2D> texture = Texture2D::Create(fullname, flipped);
 
         sData->textures[fullname] = texture;
 
         return texture;
     }
 
-    Ref<Texture2D> LoadOrOverideTexture2D(const std::string& name, bool flipped, Texture2D::Format format,
-                                          Texture2D::Format internalFormat, Texture2D::Type type) {
+    Ref<Texture2D> LoadOrOverideTexture2D(const std::string& name, bool flipped) {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
 
         std::string fullname = sData->resourceDirectory / sData->imagesSubdirectory / name;
 
-        Ref<Texture2D> texture = Texture2D::Create(fullname, flipped, format, internalFormat, type);
+        Ref<Texture2D> texture = Texture2D::Create(fullname, flipped);
 
         sData->textures[fullname] = texture;
 
@@ -147,7 +145,7 @@ namespace Car::ResourceManager {
         return sData->textures.find(fullname) != sData->textures.end();
     }
 
-    Ref<Shader> LoadShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath) {
+    Ref<Shader> LoadShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath, const ShaderLayoutInput& inputLayout) {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
 
         std::string fullname = sData->resourceDirectory / sData->shadersSubdirectory / vertexShaderFilepath /
@@ -160,7 +158,7 @@ namespace Car::ResourceManager {
             return nullptr;
         }
 
-        Ref<Shader> shader = Shader::Create(vertexShaderFilepath, fragmeantShaderFilepath);
+        Ref<Shader> shader = Shader::Create(vertexShaderFilepath, fragmeantShaderFilepath, inputLayout);
 
         sData->shaders[fullname] = shader;
 
@@ -168,13 +166,13 @@ namespace Car::ResourceManager {
     }
 
     Ref<Shader> LoadOrOverideShader(const std::string& vertexShaderFilepath,
-                                    const std::string& fragmeantShaderFilepath) {
+                                    const std::string& fragmeantShaderFilepath, const ShaderLayoutInput& inputLayout) {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
 
         std::string fullname = sData->resourceDirectory / sData->shadersSubdirectory / vertexShaderFilepath /
                                sData->resourceDirectory / sData->shadersSubdirectory / fragmeantShaderFilepath;
 
-        Ref<Shader> shader = Shader::Create(vertexShaderFilepath, fragmeantShaderFilepath);
+        Ref<Shader> shader = Shader::Create(vertexShaderFilepath, fragmeantShaderFilepath, inputLayout);
 
         sData->shaders[fullname] = shader;
 

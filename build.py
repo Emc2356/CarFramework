@@ -306,7 +306,6 @@ def car_engine_windows_posix_gnu_clang() -> None:
             "./Car/src/Layers/ImGuiLayer.cpp",
             "./Car/src/Layers/LayerStack.cpp",
             "./Car/src/Renderer/Buffer.cpp",
-            "./Car/src/Renderer/Shader.cpp",
             "./Car/src/Renderer/Renderer2D.cpp",
             "./Car/src/Renderer/Font.cpp",
             "./Car/src/Renderer/GraphicsContext.cpp",

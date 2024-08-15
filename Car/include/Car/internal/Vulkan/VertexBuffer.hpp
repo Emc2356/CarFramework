@@ -7,13 +7,11 @@
 namespace Car {
     class VulkanVertexBuffer : public VertexBuffer {
     public:
-        VulkanVertexBuffer(void* data, uint32_t size, BufferLayout layout, Buffer::Usage usage);
+        VulkanVertexBuffer(void* data, uint32_t size, Buffer::Usage usage);
         VulkanVertexBuffer(uint32_t size, Buffer::Usage usage);
         virtual ~VulkanVertexBuffer() override;
 
         void releaseDeviceObjects();
-
-        virtual const BufferLayout& getLayout() const override { return mLayout; }
 
         virtual uint32_t getSize() const override { return mSize; }
         virtual Buffer::Usage getUsage() const override { return mUsage; }
@@ -23,19 +21,11 @@ namespace Car {
 
         virtual void updateData(void* data, uint32_t size, uint32_t offset) override;
 
-        const VkVertexInputBindingDescription& getBindingDescription() const { return mBindingDescription; }
-        const std::vector<VkVertexInputAttributeDescription>& getAttributeDescriptions() const {
-            return mAttributeDescriptions;
-        }
-
     private:
-        BufferLayout mLayout;
         uint32_t mSize;
         Buffer::Usage mUsage;
 
         Ref<VulkanGraphicsContext> mGraphicsContext;
-        VkVertexInputBindingDescription mBindingDescription;
-        std::vector<VkVertexInputAttributeDescription> mAttributeDescriptions;
         VkBuffer mBuffer;
         VkDeviceMemory mBufferMemory;
     };

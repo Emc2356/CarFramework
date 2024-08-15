@@ -496,28 +496,8 @@ namespace Car {
 
         mSwapChainImageViews.resize(mSwapChainImages.size());
 
-        for (size_t i = 0; i < mSwapChainImages.size(); i++) {
-            VkImageViewCreateInfo createInfo{};
-            createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            createInfo.image = mSwapChainImages[i];
-
-            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            createInfo.format = mSwapChainImageFormat;
-
-            createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-            createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            createInfo.subresourceRange.baseMipLevel = 0;
-            createInfo.subresourceRange.levelCount = 1;
-            createInfo.subresourceRange.baseArrayLayer = 0;
-            createInfo.subresourceRange.layerCount = 1;
-
-            if (vkCreateImageView(mDevice, &createInfo, nullptr, &mSwapChainImageViews[i]) != VK_SUCCESS) {
-                throw std::runtime_error("failed to create image views!");
-            }
+        for (uint32_t i = 0; i < mSwapChainImages.size(); i++) {
+            mSwapChainImageViews[i] = createImageView(&mSwapChainImages[i], mSwapChainImageFormat);
         }
     }
 
@@ -660,16 +640,28 @@ namespace Car {
         }
     }
 
+    // TODO: Pool manager
+    // but this might be enough too
     void VulkanGraphicsContext::createDescriptorPool() {
-        VkDescriptorPoolSize poolSize{};
-        poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        poolSize.descriptorCount = mMaxFramesInFlight;
+        std::vector<VkDescriptorPoolSize> poolSizes = {
+    		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+    		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+    		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+    		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+    		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+    		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+    		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+    		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+    		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+    		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+    		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+    	};
 
         VkDescriptorPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        poolInfo.poolSizeCount = 1;
-        poolInfo.pPoolSizes = &poolSize;
-        poolInfo.maxSets = mMaxFramesInFlight;
+        poolInfo.poolSizeCount = poolSizes.size();
+        poolInfo.pPoolSizes = poolSizes.data();
+        poolInfo.maxSets = 100;
 
         if (vkCreateDescriptorPool(mDevice, &poolInfo, nullptr, &mDescriptorPool) != VK_SUCCESS) {
             throw std::runtime_error("failed to create descriptor pool!");
@@ -838,13 +830,148 @@ namespace Car {
         }
     }
 
-    // TODO: We have command buffers allocated already so we dont need to craete them on the fly
+    // TODO: same as above
+    void VulkanGraphicsContext::createImage2D(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
+                                              VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
+                                              VkImage* pImage, VkDeviceMemory* pImageMemory) {
+        VkImageCreateInfo imageInfo{};
+        imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        imageInfo.imageType = VK_IMAGE_TYPE_2D;
+        imageInfo.extent.width = width;
+        imageInfo.extent.height = height;
+        imageInfo.extent.depth = 1;
+        imageInfo.mipLevels = 1;
+        imageInfo.arrayLayers = 1;
+        imageInfo.format = format;
+        imageInfo.tiling = tiling;
+        imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        imageInfo.usage = usage;
+        imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+        imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        if (vkCreateImage(mDevice, &imageInfo, nullptr, pImage) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create image!");
+        }
+
+        VkMemoryRequirements memRequirements;
+        vkGetImageMemoryRequirements(mDevice, *pImage, &memRequirements);
+
+        VkMemoryAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+        if (vkAllocateMemory(mDevice, &allocInfo, nullptr, pImageMemory) != VK_SUCCESS) {
+            throw std::runtime_error("failed to allocate image memory!");
+        }
+    }
+
+    // TODO: We have command buffers allocated already so we dont need to create them on the fly
     void VulkanGraphicsContext::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size,
                                            VkDeviceSize srcOffset /*=0*/, VkDeviceSize dstOffset /*=0*/) {
+        VkCommandBuffer cmdBuffer = beginSingleTimeCommands(mTransferCommandPool);
+
+        VkBufferCopy copyRegion{};
+        copyRegion.size = size;
+        copyRegion.srcOffset = srcOffset;
+        copyRegion.dstOffset = dstOffset;
+        vkCmdCopyBuffer(cmdBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+        endSingleTimeCommands(mTransferQueue, cmdBuffer, mTransferCommandPool);
+    }
+
+    void VulkanGraphicsContext::transitionImageLayout(VkImage* pImage, VkFormat format, VkImageLayout oldLayout,
+                                                      VkImageLayout newLayout) {
+        UNUSED(format);
+
+        VkCommandBuffer commandBuffer = beginSingleTimeCommands(mTransferCommandPool);
+
+        VkImageMemoryBarrier barrier{};
+        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barrier.oldLayout = oldLayout;
+        barrier.newLayout = newLayout;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = *pImage;
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        barrier.subresourceRange.baseMipLevel = 0;
+        barrier.subresourceRange.levelCount = 1;
+        barrier.subresourceRange.baseArrayLayer = 0;
+        barrier.subresourceRange.layerCount = 1;
+
+        VkPipelineStageFlags sourceStage;
+        VkPipelineStageFlags destinationStage;
+
+        if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+            barrier.srcAccessMask = 0;
+            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+                   newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+            sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+            destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        } else {
+            throw std::invalid_argument("unsupported layout transition!");
+        }
+
+        vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+        endSingleTimeCommands(mTransferQueue, commandBuffer, mTransferCommandPool);
+    }
+
+    void VulkanGraphicsContext::copyBufferToImage2D(VkBuffer* pBuffer, VkImage* pImage, uint32_t width, uint32_t height,
+                                                    uint32_t srcOffset /*=0*/, uint32_t dstOffsetX /*=0*/,
+                                                    uint32_t dstOffsetY /*=0*/) {
+        VkCommandBuffer commandBuffer = beginSingleTimeCommands(mTransferCommandPool);
+
+        VkBufferImageCopy region{};
+        region.bufferOffset = srcOffset;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+
+        region.imageOffset = {(int32_t)dstOffsetX, (int32_t)dstOffsetY, 0};
+        region.imageExtent = {width, height, 1};
+
+        vkCmdCopyBufferToImage(commandBuffer, *pBuffer, *pImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+        endSingleTimeCommands(mTransferQueue, commandBuffer, mTransferCommandPool);
+    }
+
+    VkImageView VulkanGraphicsContext::createImageView(VkImage* pImage, VkFormat format) {
+        VkImageViewCreateInfo viewInfo{};
+        viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        viewInfo.image = *pImage;
+        viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        viewInfo.format = format;
+        viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        viewInfo.subresourceRange.baseMipLevel = 0;
+        viewInfo.subresourceRange.levelCount = 1;
+        viewInfo.subresourceRange.baseArrayLayer = 0;
+        viewInfo.subresourceRange.layerCount = 1;
+
+        VkImageView imageView;
+        if (vkCreateImageView(mDevice, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create texture image view!");
+        }
+
+        return imageView;
+    }
+
+    VkCommandBuffer VulkanGraphicsContext::beginSingleTimeCommands(VkCommandPool cmdPool) {
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = mTransferCommandPool;
+        allocInfo.commandPool = cmdPool;
         allocInfo.commandBufferCount = 1;
 
         VkCommandBuffer commandBuffer;
@@ -856,23 +983,22 @@ namespace Car {
 
         vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-        VkBufferCopy copyRegion{};
-        copyRegion.size = size;
-        copyRegion.srcOffset = srcOffset;
-        copyRegion.dstOffset = dstOffset;
-        vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+        return commandBuffer;
+    }
 
-        vkEndCommandBuffer(commandBuffer);
+    void VulkanGraphicsContext::endSingleTimeCommands(VkQueue targetQueue, VkCommandBuffer cmdBuffer,
+                                                      VkCommandPool cmdPool) {
+        vkEndCommandBuffer(cmdBuffer);
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffer;
+        submitInfo.pCommandBuffers = &cmdBuffer;
 
-        vkQueueSubmit(mTransferQueue, 1, &submitInfo, VK_NULL_HANDLE);
-        vkQueueWaitIdle(mTransferQueue);
+        vkQueueSubmit(targetQueue, 1, &submitInfo, VK_NULL_HANDLE);
+        vkQueueWaitIdle(targetQueue);
 
-        vkFreeCommandBuffers(mDevice, mTransferCommandPool, 1, &commandBuffer);
+        vkFreeCommandBuffers(mDevice, cmdPool, 1, &cmdBuffer);
     }
 
     Ref<GraphicsContext> GraphicsContext::Create(GLFWwindow* windowHandle) {

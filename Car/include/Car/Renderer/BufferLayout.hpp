@@ -3,7 +3,7 @@
 #include "Car/Core/Core.hpp"
 
 namespace Car {
-    class BufferLayout {
+    class ShaderLayoutInput {
     public:
         enum class DataType {
             None,
@@ -62,10 +62,10 @@ namespace Car {
         };
 
     public:
-        BufferLayout(const std::initializer_list<Element>& elements) : mElements(elements), mStride(0) {
+        ShaderLayoutInput(const std::initializer_list<Element>& elements) : mElements(elements), mStride(0) {
             calculateOffsetsAndStrides();
         }
-        BufferLayout() : mElements(0), mStride(0) {}
+        ShaderLayoutInput() : mElements(0), mStride(0) {}
 
         static uint32_t sizeOfDataType(DataType type) {
             switch (type) {
@@ -111,8 +111,8 @@ namespace Car {
             return size;
         }
 
-        std::vector<BufferLayout::Element>::iterator begin() { return mElements.begin(); }
-        std::vector<BufferLayout::Element>::iterator end() { return mElements.end(); }
+        std::vector<ShaderLayoutInput::Element>::iterator begin() { return mElements.begin(); }
+        std::vector<ShaderLayoutInput::Element>::iterator end() { return mElements.end(); }
 
         const std::vector<Element>& getElements() const { return mElements; }
 

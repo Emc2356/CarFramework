@@ -25,20 +25,21 @@ public:
 
         std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
 
-        Car::BufferLayout layout = {
-            {"iPos", Car::BufferLayout::DataType::Float2},
-            {"iColor", Car::BufferLayout::DataType::Float3},
+        Car::ShaderLayoutInput layout = {
+            {"iPos", Car::ShaderLayoutInput::DataType::Float2},
+            {"iColor", Car::ShaderLayoutInput::DataType::Float3},
         };
 
         mUb = Car::UniformBuffer::Create(sizeof(UniformBufferObject), 0);
 
-        auto Vb = Car::VertexBuffer::Create(vertices.data(), vertices.size() * sizeof(vertices[0]), layout,
-                                            Car::Buffer::Usage::StaticDraw);
+        auto Vb = Car::VertexBuffer::Create(vertices.data(), vertices.size() * sizeof(vertices[0]), Car::Buffer::Usage::StaticDraw);
         auto Ib = Car::IndexBuffer::Create(indices.data(), indices.size() * sizeof(indices[0]),
                                            Car::Buffer::Usage::StaticDraw, Car::Buffer::Type::UnsignedInt);
-        auto shader = Car::Shader::Create("sandbox.vert", "sandbox.frag");
+        auto shader = Car::Shader::Create("sandbox.vert", "sandbox.frag", layout);
 
-        shader->setInput(mUb, true, false);
+        shader->setInput(0, 0, true, mUb);
+
+        mTexture = Car::Texture2D::Create("resources/images/pg_np.png");
 
         mVa = Car::VertexArray::Create(Vb, Ib, shader);
     }
@@ -75,6 +76,7 @@ public:
 private:
     Car::Ref<Car::VertexArray> mVa;
     Car::Ref<Car::UniformBuffer> mUb;
+    Car::Ref<Car::Texture2D> mTexture;
 };
 
 class Sandbox : public Car::Application {

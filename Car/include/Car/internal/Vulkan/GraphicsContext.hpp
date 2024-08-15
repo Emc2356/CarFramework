@@ -62,15 +62,25 @@ namespace Car {
         uint32_t aquireNextImageIndex();
         uint32_t getImageIndex() const { return mImageIndex; }
         VkDescriptorPool getDescriptorPool() const { return mDescriptorPool; }
+        uint32_t getMaxFramesInFlight() const { return mMaxFramesInFlight; }
 
         // functions meant to be used by vulkan objects
+        VkImageView createImageView(VkImage* pImage, VkFormat format);
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
         // NOTE: it doesnt bind the memory
         void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
                           VkBuffer* pBuffer, VkDeviceMemory* pBufferMemory);
         void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkDeviceSize srcOffset = 0,
                         VkDeviceSize dstOffset = 0);
-        uint32_t getMaxFramesInFlight() const { return mMaxFramesInFlight; }
+        void copyBufferToImage2D(VkBuffer* pBuffer, VkImage* pImage, uint32_t width, uint32_t height,
+                                 uint32_t srcOffset = 0, uint32_t dstOffsetX = 0, uint32_t dstOffsetY = 0);
+        void createImage2D(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
+                           VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* pImage,
+                           VkDeviceMemory* pImageMemory);
+        void transitionImageLayout(VkImage* pImage, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+
+        VkCommandBuffer beginSingleTimeCommands(VkCommandPool cmdPool);
+        void endSingleTimeCommands(VkQueue targetQueue, VkCommandBuffer cmdBuffer, VkCommandPool cmdPool);
 
     private:
         void createInstance();
