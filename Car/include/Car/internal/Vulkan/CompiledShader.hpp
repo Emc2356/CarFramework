@@ -6,6 +6,7 @@ namespace Car {
     enum class DescriptorType : uint8_t {
         NONE = 0,
         UniformBuffer = 1,
+        Sampler2D= 2,
     };
 
     enum class DescriptorStage : uint8_t {

@@ -35,6 +35,7 @@ namespace Car {
         VkDebugUtilsMessengerEXT getDebugMessenger() const { return mDebugMessenger; }
         VkSurfaceKHR getSurface() const { return mSurface; }
         VkPhysicalDevice getPhysicalDevice() const { return mPhysicalDevice; }
+        VkPhysicalDeviceProperties getPhysicalDeviceProperties() const { return mPhysicalDeviceProperties; }
         VkDevice getDevice() const { return mDevice; }
         VkQueue getGraphicsQueue() const { return mGraphicsQueue; }
         VkQueue getPresentQueue() const { return mPresentQueue; }
@@ -119,6 +120,7 @@ namespace Car {
         VkSurfaceKHR mSurface;
 
         VkPhysicalDevice mPhysicalDevice;
+        VkPhysicalDeviceProperties mPhysicalDeviceProperties;
         VkDevice mDevice;
         VkQueue mGraphicsQueue;
         VkQueue mPresentQueue;

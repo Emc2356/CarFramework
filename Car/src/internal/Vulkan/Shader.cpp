@@ -8,6 +8,7 @@
 #include "Car/Utils.hpp"
 
 #include "Car/ResourceManager.hpp"
+#include "Car/internal/Vulkan/Texture2D.hpp"
 #include "Car/internal/Vulkan/UniformBuffer.hpp"
 
 #include <glad/vulkan.h>
@@ -154,6 +155,44 @@ namespace Car {
         }
     }
     
+    void VulkanShader::setInput(uint32_t set, uint32_t binding, bool applyToAll, Ref<Texture2D> texture) {
+        VkDevice device = mGraphicsContext->getDevice();
+        if (applyToAll) {
+            for (size_t i = 0; i < mGraphicsContext->getMaxFramesInFlight(); i++) {
+                VkDescriptorImageInfo imageInfo = reinterpretCastRef<VulkanTexture2D>(texture)->getDescriptorImageInfo();
+                
+                VkWriteDescriptorSet descriptorWrite{};
+                descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrite.dstSet = mDescriptorSets[i][set];
+                descriptorWrite.dstBinding = binding;
+                descriptorWrite.dstArrayElement = 0;
+                descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                descriptorWrite.descriptorCount = 1;
+                descriptorWrite.pBufferInfo = nullptr;
+                descriptorWrite.pImageInfo = &imageInfo;
+                descriptorWrite.pTexelBufferView = nullptr;
+                
+                vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+            }
+        } else {
+            VkDescriptorImageInfo imageInfo = reinterpretCastRef<VulkanTexture2D>(texture)->getDescriptorImageInfo();
+            
+            VkWriteDescriptorSet descriptorWrite{};
+            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrite.dstSet = mDescriptorSets[mGraphicsContext->getCurrentFrameIndex()][set];
+            descriptorWrite.dstBinding = binding;
+            descriptorWrite.dstArrayElement = 0;
+            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrite.descriptorCount = 1;
+            descriptorWrite.pBufferInfo = nullptr;
+            descriptorWrite.pImageInfo = &imageInfo;
+            descriptorWrite.pTexelBufferView = nullptr;
+            
+            vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+        }
+    }
+    
+    
     void VulkanShader::createDescriptors() {
         VkDevice device = mGraphicsContext->getDevice();
         
@@ -178,8 +217,25 @@ namespace Car {
                             case Car::DescriptorStage::FragmeantShader: uboLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT; break;
                             case Car::DescriptorStage::Combined: uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT; break;
                         }
+                        uboLayoutBinding.pImmutableSamplers = nullptr;
 
                         descriptorSetLayouts.push_back(uboLayoutBinding);
+                        break;
+                    }
+                    case Car::DescriptorType::Sampler2D: {
+                        VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+                        samplerLayoutBinding.binding = mCompiledShader.sets[i][j].binding;
+                        samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        samplerLayoutBinding.descriptorCount = 1;
+                        
+                        switch (mCompiledShader.sets[i][j].stageFlags) {
+                            case Car::DescriptorStage::VertexShader: samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT; break;
+                            case Car::DescriptorStage::FragmeantShader: samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT; break;
+                            case Car::DescriptorStage::Combined: samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT; break;
+                        }
+                        samplerLayoutBinding.pImmutableSamplers = nullptr;
+
+                        descriptorSetLayouts.push_back(samplerLayoutBinding);
                         break;
                     }
                     case Car::DescriptorType::NONE: {
@@ -398,6 +454,7 @@ namespace Car {
     }
 
     static void fillSetField(CompiledShader* pCompiledShader) {
+        pCompiledShader->sets.resize(0);
         spirv_cross::Compiler vertCompiler((uint32_t*)pCompiledShader->vertexShader.data(), pCompiledShader->vertexShader.size() / 4);
         spirv_cross::ShaderResources vertResources(vertCompiler.get_shader_resources());
         spirv_cross::Compiler fragCompiler((uint32_t*)pCompiledShader->fragmeantShader.data(), pCompiledShader->fragmeantShader.size() / 4);
@@ -407,7 +464,13 @@ namespace Car {
         for (const auto& uniformBuffer : vertResources.uniform_buffers) {
             maxDescriptorSetCount = MAX(vertCompiler.get_decoration(uniformBuffer.id, spv::DecorationDescriptorSet) + 1, maxDescriptorSetCount);
         }
+        for (const auto& uniformBuffer : vertResources.sampled_images) {
+            maxDescriptorSetCount = MAX(vertCompiler.get_decoration(uniformBuffer.id, spv::DecorationDescriptorSet) + 1, maxDescriptorSetCount);
+        }
         for (const auto& uniformBuffer : fragResources.uniform_buffers) {
+            maxDescriptorSetCount = MAX(fragCompiler.get_decoration(uniformBuffer.id, spv::DecorationDescriptorSet) + 1, maxDescriptorSetCount);
+        }
+        for (const auto& uniformBuffer : fragResources.sampled_images) {
             maxDescriptorSetCount = MAX(fragCompiler.get_decoration(uniformBuffer.id, spv::DecorationDescriptorSet) + 1, maxDescriptorSetCount);
         }
         if (maxDescriptorSetCount > 4) {
@@ -415,13 +478,23 @@ namespace Car {
         }
 
         pCompiledShader->sets.resize(maxDescriptorSetCount);
-
+        
         for (const auto& resource : vertResources.uniform_buffers) {
             uint32_t set = vertCompiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
             uint8_t binding = vertCompiler.get_decoration(resource.id, spv::DecorationBinding);
             pCompiledShader->sets[set].push_back({
                binding,
                Car::DescriptorType::UniformBuffer,
+               Car::DescriptorStage::VertexShader,
+            });
+        }
+        
+        for (const auto& resource : vertResources.sampled_images) {
+            uint32_t set = vertCompiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+            uint8_t binding = vertCompiler.get_decoration(resource.id, spv::DecorationBinding);
+            pCompiledShader->sets[set].push_back({
+               binding,
+               Car::DescriptorType::Sampler2D,
                Car::DescriptorStage::VertexShader,
             });
         }
@@ -448,10 +521,33 @@ namespace Car {
                 });
             }
         }
+        
+        for (const auto& resource : fragResources.sampled_images) {
+            uint32_t set = fragCompiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+            uint8_t binding = fragCompiler.get_decoration(resource.id, spv::DecorationBinding);
+            bool shouldPush = true;
+            for (auto& binding_ : pCompiledShader->sets[set]) {
+                if (binding == binding_.binding) {
+                    if (binding_.descriptorType == Car::DescriptorType::Sampler2D) {
+                        binding_.stageFlags = Car::DescriptorStage::Combined;
+                        shouldPush = false;
+                    } else {
+                        throw std::runtime_error("Descriptor missmatch between two shader in set " + std::to_string(set) + "and in binding " + std::to_string(binding));
+                    }
+                }
+            }
+            if (shouldPush) {
+                pCompiledShader->sets[set].push_back({
+                    binding,
+                    Car::DescriptorType::Sampler2D,
+                    Car::DescriptorStage::FragmeantShader,
+                });
+            }
+        }
 
         for (const auto& set : pCompiledShader->sets) {
             if (set.size() == 0) {
-                throw std::runtime_error("Interal error in " + (std::string)__FILE__ + ":" + std::to_string(__LINE__));
+                throw std::runtime_error("can not have an empty set in a shader");
             }
         }
     }

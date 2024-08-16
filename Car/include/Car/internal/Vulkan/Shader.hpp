@@ -21,6 +21,7 @@ namespace Car {
         VkPipeline getGraphicsPipeline() const { return mGraphicsPipeline; }
         
         virtual void setInput(uint32_t set, uint32_t binding, bool applyToAll, Ref<UniformBuffer> ub) override;
+        virtual void setInput(uint32_t set, uint32_t binding, bool applyToAll, Ref<Texture2D> texture) override;
 
         VkShaderModule createShaderModule(const std::string& code);
     

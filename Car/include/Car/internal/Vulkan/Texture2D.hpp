@@ -8,6 +8,10 @@ namespace Car {
     public:
         VulkanTexture2D(uint32_t width, uint32_t height, void* pBuffer);
         VulkanTexture2D(const std::string& filepath, bool flipped);
+        
+        void createTextureImage2D(void* pBuffer);
+        void createImageView();
+        void createImageSampler();
 
         virtual ~VulkanTexture2D() override;
 
@@ -26,6 +30,15 @@ namespace Car {
         virtual bool operator!=(Ref<Texture2D> other) const override {
             return static_cast<const void*>(this) != static_cast<const void*>(other.get());
         }
+        
+        VkDescriptorImageInfo getDescriptorImageInfo() {
+            VkDescriptorImageInfo imageInfo{};
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.imageView = mImageView;
+            imageInfo.sampler = mSampler;
+
+            return imageInfo;
+        }
 
     private:
         void setInternalData(uint32_t width, uint32_t height, void* pixels);
@@ -36,8 +49,9 @@ namespace Car {
 
         Ref<VulkanGraphicsContext> mGraphicsContext;
 
-        VkImage mImage = VK_NULL_HANDLE;
-        VkDeviceMemory mImageMemory = VK_NULL_HANDLE;
-        VkImageView mImageView = VK_NULL_HANDLE;
+        VkImage mImage;
+        VkDeviceMemory mImageMemory;
+        VkImageView mImageView;
+        VkSampler mSampler;
     };
 } // namespace Car

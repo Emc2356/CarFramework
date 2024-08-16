@@ -191,8 +191,11 @@ namespace Car {
             CrSwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
             swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
         }
+        
+        VkPhysicalDeviceFeatures supportedFeatures;
+        vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
-        return indices.isComplete() && extensionsSupported && swapChainAdequate;
+        return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
     }
 
     std::vector<const char*> getRequiredExtensions() {
@@ -374,6 +377,8 @@ namespace Car {
         if (!gladLoaderLoadVulkan(mInstance, mPhysicalDevice, nullptr)) {
             throw std::runtime_error("Car: Failed to initialize glad");
         }
+        
+        vkGetPhysicalDeviceProperties(physicalDevice, &mPhysicalDeviceProperties);
     }
 
     void VulkanGraphicsContext::createLogicalDevice() {
@@ -395,7 +400,8 @@ namespace Car {
         }
 
         VkPhysicalDeviceFeatures deviceFeatures{};
-
+        deviceFeatures.samplerAnisotropy = VK_TRUE;
+        
         VkDeviceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
