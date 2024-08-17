@@ -9,8 +9,6 @@ namespace Car {
         virtual ~IndexBuffer() = default;
 
         virtual void bind() const = 0;
-        // for debug purposes
-        virtual void unbind() const = 0;
 
         virtual void updateData(void* data, uint32_t size, uint32_t offset) = 0;
 

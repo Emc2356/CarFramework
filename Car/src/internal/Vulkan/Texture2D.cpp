@@ -15,7 +15,7 @@ namespace Car {
 
         createTextureImage2D(pBuffer);
         createImageView();
-        createImageSampler();        
+        createImageSampler();
     }
 
     VulkanTexture2D::VulkanTexture2D(const std::string& filepath, bool flipped) {
@@ -28,14 +28,14 @@ namespace Car {
 
         mWidth = texWidth;
         mHeight = texHeight;
-        
+
         if (!pixels) {
             throw std::runtime_error("failed to load texture image!");
         }
 
         createTextureImage2D(pixels);
         createImageView();
-        createImageSampler();       
+        createImageSampler();
 
         stbi_image_free(pixels);
     }
@@ -50,8 +50,6 @@ namespace Car {
                                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                        &stagingBuffer, &stagingBufferMemory);
 
-        vkBindBufferMemory(device, stagingBuffer, stagingBufferMemory, 0);
-
         void* mappedData;
         vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &mappedData);
         std::memcpy(mappedData, pBuffer, imageSize);
@@ -60,8 +58,6 @@ namespace Car {
         mGraphicsContext->createImage2D(mWidth, mHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
                                         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                                         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &mImage, &mImageMemory);
-        
-        vkBindImageMemory(device, mImage, mImageMemory, 0);
 
         mGraphicsContext->transitionImageLayout(&mImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
                                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -73,11 +69,11 @@ namespace Car {
         vkDestroyBuffer(device, stagingBuffer, nullptr);
         vkFreeMemory(device, stagingBufferMemory, nullptr);
     }
-    
+
     void VulkanTexture2D::createImageView() {
         mImageView = mGraphicsContext->createImageView(&mImage, VK_FORMAT_R8G8B8A8_SRGB);
     }
-    
+
     void VulkanTexture2D::createImageSampler() {
         // TODO: TextureSpecification
         VkSamplerCreateInfo samplerInfo{};
@@ -99,7 +95,7 @@ namespace Car {
             throw std::runtime_error("failed to create texture sampler!");
         }
     }
-    
+
     VulkanTexture2D::~VulkanTexture2D() {
         VkDevice device = mGraphicsContext->getDevice();
 
@@ -114,8 +110,6 @@ namespace Car {
         UNUSED(filepath);
         UNUSED(flipped);
     }
-
-    void VulkanTexture2D::bind(uint32_t slot) const { UNUSED(slot); }
 
     Ref<Texture2D> Texture2D::Create(const std::string& filepath, bool flipped) {
         return createRef<VulkanTexture2D>(filepath, flipped);

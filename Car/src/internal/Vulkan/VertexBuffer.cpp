@@ -9,7 +9,6 @@
 #include <stdexcept>
 
 namespace Car {
-    
 
     VulkanVertexBuffer::VulkanVertexBuffer(void* data, uint32_t size, Buffer::Usage usage) {
         mGraphicsContext = reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get());
@@ -32,8 +31,6 @@ namespace Car {
                                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                            &mBuffer, &mBufferMemory);
 
-            vkBindBufferMemory(device, mBuffer, mBufferMemory, 0);
-
             void* mappedData;
             vkMapMemory(device, mBufferMemory, 0, mSize, 0, &mappedData);
             std::memcpy(mappedData, data, (size_t)mSize);
@@ -47,8 +44,6 @@ namespace Car {
                                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                            &stagingBuffer, &stagingBufferMemory);
 
-            vkBindBufferMemory(device, stagingBuffer, stagingBufferMemory, 0);
-
             void* mappedData;
             vkMapMemory(device, stagingBufferMemory, 0, mSize, 0, &mappedData);
             std::memcpy(mappedData, data, (size_t)mSize);
@@ -57,8 +52,6 @@ namespace Car {
             mGraphicsContext->createBuffer(bufferSize,
                                            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                                            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &mBuffer, &mBufferMemory);
-
-            vkBindBufferMemory(device, mBuffer, mBufferMemory, 0);
 
             mGraphicsContext->copyBuffer(stagingBuffer, mBuffer, bufferSize, 0, 0);
 
@@ -107,8 +100,6 @@ namespace Car {
             if (size <= mSize) {
                 switch (mUsage) {
                 case Buffer::Usage::DynamicDraw: {
-                    vkBindBufferMemory(device, mBuffer, mBufferMemory, 0);
-
                     void* mappedData;
                     vkMapMemory(device, mBufferMemory, 0, size, 0, &mappedData);
                     std::memcpy(mappedData, data, (size_t)size);
@@ -123,14 +114,10 @@ namespace Car {
                                                        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                                    &stagingBuffer, &stagingBufferMemory);
 
-                    vkBindBufferMemory(device, stagingBuffer, stagingBufferMemory, 0);
-
                     void* mappedData;
                     vkMapMemory(device, stagingBufferMemory, 0, size, 0, &mappedData);
                     std::memcpy(mappedData, data, (size_t)size);
                     vkUnmapMemory(device, stagingBufferMemory);
-
-                    vkBindBufferMemory(device, mBuffer, mBufferMemory, 0);
 
                     mGraphicsContext->copyBuffer(stagingBuffer, mBuffer, size, 0, 0);
 
@@ -157,8 +144,6 @@ namespace Car {
                                                        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                                    &mBuffer, &mBufferMemory);
 
-                    vkBindBufferMemory(device, mBuffer, mBufferMemory, 0);
-
                     void* mappedData;
                     vkMapMemory(device, mBufferMemory, 0, mSize, 0, &mappedData);
                     std::memcpy(mappedData, data, (size_t)mSize);
@@ -173,8 +158,6 @@ namespace Car {
                                                        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                                    &stagingBuffer, &stagingBufferMemory);
 
-                    vkBindBufferMemory(device, stagingBuffer, stagingBufferMemory, 0);
-
                     void* mappedData;
                     vkMapMemory(device, stagingBufferMemory, 0, mSize, 0, &mappedData);
                     std::memcpy(mappedData, data, (size_t)mSize);
@@ -183,8 +166,6 @@ namespace Car {
                     mGraphicsContext->createBuffer(bufferSize,
                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                                                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &mBuffer, &mBufferMemory);
-
-                    vkBindBufferMemory(device, mBuffer, mBufferMemory, 0);
 
                     mGraphicsContext->copyBuffer(stagingBuffer, mBuffer, bufferSize, 0, 0);
 
@@ -203,8 +184,6 @@ namespace Car {
             if (offset + size <= mSize) {
                 switch (mUsage) {
                 case Buffer::Usage::DynamicDraw: {
-                    vkBindBufferMemory(device, mBuffer, mBufferMemory, 0);
-
                     void* mappedData;
                     vkMapMemory(device, mBufferMemory, offset, size, 0, &mappedData);
                     std::memcpy(mappedData, data, (size_t)size);
@@ -219,14 +198,10 @@ namespace Car {
                                                        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                                    &stagingBuffer, &stagingBufferMemory);
 
-                    vkBindBufferMemory(device, stagingBuffer, stagingBufferMemory, 0);
-
                     void* mappedData;
                     vkMapMemory(device, stagingBufferMemory, offset, size, 0, &mappedData);
                     std::memcpy(mappedData, data, (size_t)size);
                     vkUnmapMemory(device, stagingBufferMemory);
-
-                    vkBindBufferMemory(device, mBuffer, mBufferMemory, 0);
 
                     mGraphicsContext->copyBuffer(stagingBuffer, mBuffer, size, 0, offset);
 
@@ -276,8 +251,6 @@ namespace Car {
                                                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                                        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                                    &mBuffer, &mBufferMemory);
-
-                    vkBindBufferMemory(device, mBuffer, mBufferMemory, 0);
 
                     void* mappedData;
                     vkMapMemory(device, mBufferMemory, 0, mSize, 0, &mappedData);

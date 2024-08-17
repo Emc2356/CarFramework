@@ -16,17 +16,18 @@ namespace Car {
         virtual void bind() const override;
 
         virtual const ShaderLayoutInput& getInputLayout() const override { return mInputLayout; }
-        
+
         VkPipelineLayout getPipelineLayout() const { return mPipelineLayout; }
         VkPipeline getGraphicsPipeline() const { return mGraphicsPipeline; }
-        
+
         virtual void setInput(uint32_t set, uint32_t binding, bool applyToAll, Ref<UniformBuffer> ub) override;
         virtual void setInput(uint32_t set, uint32_t binding, bool applyToAll, Ref<Texture2D> texture) override;
 
         VkShaderModule createShaderModule(const std::string& code);
-    
+
         void createGraphicsPipeline();
         void createDescriptors();
+
     private:
         CompiledShader mCompiledShader;
 

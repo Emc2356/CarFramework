@@ -17,7 +17,6 @@ namespace Car {
         virtual Buffer::Usage getUsage() const override { return mUsage; }
 
         virtual void bind() const override;
-        virtual void unbind() const override {}
 
         virtual void updateData(void* data, uint32_t size, uint32_t offset) override;
 

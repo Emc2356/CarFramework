@@ -15,9 +15,8 @@ namespace Car {
         virtual uint32_t getBinding() const override { return mBinding; }
         virtual Buffer::Usage getUsage() const override { return mUsage; }
 
-        virtual void setData(const void* data, uint32_t offset = 0) override;
+        virtual void setData(const void* data) override;
 
-        VkDescriptorSetLayoutBinding getDescriptorSetLayout(bool useInVertexShader, bool useInFragmeantShader);
         VkDescriptorBufferInfo getDescriptorBufferInfo(uint32_t i);
 
     private:

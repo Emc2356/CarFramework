@@ -191,7 +191,7 @@ namespace Car {
             CrSwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
             swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
         }
-        
+
         VkPhysicalDeviceFeatures supportedFeatures;
         vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
@@ -377,7 +377,7 @@ namespace Car {
         if (!gladLoaderLoadVulkan(mInstance, mPhysicalDevice, nullptr)) {
             throw std::runtime_error("Car: Failed to initialize glad");
         }
-        
+
         vkGetPhysicalDeviceProperties(physicalDevice, &mPhysicalDeviceProperties);
     }
 
@@ -401,7 +401,7 @@ namespace Car {
 
         VkPhysicalDeviceFeatures deviceFeatures{};
         deviceFeatures.samplerAnisotropy = VK_TRUE;
-        
+
         VkDeviceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
@@ -649,19 +649,17 @@ namespace Car {
     // TODO: Pool manager
     // but this might be enough too
     void VulkanGraphicsContext::createDescriptorPool() {
-        std::vector<VkDescriptorPoolSize> poolSizes = {
-    		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-    		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-    		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-    		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-    		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-    		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-    		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-    		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-    		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-    		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-    		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
-    	};
+        std::vector<VkDescriptorPoolSize> poolSizes = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+                                                       {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
 
         VkDescriptorPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -834,6 +832,13 @@ namespace Car {
         if (vkAllocateMemory(mDevice, &allocInfo, nullptr, pBufferMemory) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate buffer memory!");
         }
+
+        vkBindBufferMemory(mDevice, *pBuffer, *pBufferMemory, 0);
+    }
+
+    void VulkanGraphicsContext::freeBuffer(VkBuffer* pBuffer, VkDeviceMemory* pBufferMemory) {
+        vkDestroyBuffer(mDevice, *pBuffer, nullptr);
+        vkFreeMemory(mDevice, *pBufferMemory, nullptr);
     }
 
     // TODO: same as above
@@ -870,6 +875,8 @@ namespace Car {
         if (vkAllocateMemory(mDevice, &allocInfo, nullptr, pImageMemory) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate image memory!");
         }
+
+        vkBindImageMemory(mDevice, *pImage, *pImageMemory, 0);
     }
 
     // TODO: We have command buffers allocated already so we dont need to create them on the fly

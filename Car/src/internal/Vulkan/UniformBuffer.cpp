@@ -24,32 +24,8 @@ namespace Car {
                                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                            &mBuffers[i], &mBuffersMemory[i]);
 
-            vkBindBufferMemory(device, mBuffers[i], mBuffersMemory[i], 0);
-
             vkMapMemory(device, mBuffersMemory[i], 0, mSize, 0, &mBuffersMapped[i]);
         }
-    }
-
-    VkDescriptorSetLayoutBinding VulkanUniformBuffer::getDescriptorSetLayout(bool useInVertexShader,
-                                                                             bool useInFragmeantShader) {
-        VkDescriptorSetLayoutBinding uboLayoutBinding{};
-        uboLayoutBinding.binding = mBinding;
-        uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        uboLayoutBinding.descriptorCount = 1;
-
-        CR_IF (!useInVertexShader && !useInFragmeantShader) {
-            CR_CORE_ERROR("A uniform buffer most be used in at least one stage");
-        }
-
-        if (useInVertexShader) {
-            uboLayoutBinding.stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
-        }
-        if (useInFragmeantShader) {
-            uboLayoutBinding.stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-        }
-        uboLayoutBinding.pImmutableSamplers = nullptr;
-
-        return uboLayoutBinding;
     }
 
     VulkanUniformBuffer::~VulkanUniformBuffer() {
@@ -69,10 +45,8 @@ namespace Car {
         return bufferInfo;
     }
 
-    void VulkanUniformBuffer::setData(const void* data, uint32_t offset /*=0*/) {
-        UNUSED(offset);
-
-        memcpy(mBuffersMapped[mGraphicsContext->getCurrentFrameIndex()], data, mSize);
+    void VulkanUniformBuffer::setData(const void* data) {
+        std::memcpy(mBuffersMapped[mGraphicsContext->getCurrentFrameIndex()], data, mSize);
     }
 
     Ref<Car::UniformBuffer> UniformBuffer::Create(uint32_t size, uint32_t binding, Buffer::Usage usage) {

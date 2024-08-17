@@ -16,7 +16,8 @@ namespace Car {
 
         virtual void setInput(uint32_t set, uint32_t binding, bool applyToAll, Ref<UniformBuffer> ub) = 0;
         virtual void setInput(uint32_t set, uint32_t binding, bool applyToAll, Ref<Texture2D> texture) = 0;
-        
-        static Ref<Shader> Create(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath, const ShaderLayoutInput& inputLayout);
+
+        static Ref<Shader> Create(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath,
+                                  const ShaderLayoutInput& inputLayout);
     };
 } // namespace Car

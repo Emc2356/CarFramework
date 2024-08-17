@@ -30,8 +30,10 @@ namespace Car::ResourceManager {
     Ref<Texture2D> GetTexture2D(const std::string& name);
     bool Texture2DExists(const std::string& name);
 
-    Ref<Shader> LoadShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath, const ShaderLayoutInput& inputLayout);
-    Ref<Shader> LoadOrOverideShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath, const ShaderLayoutInput& inputLayout);
+    Ref<Shader> LoadShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath,
+                           const ShaderLayoutInput& inputLayout);
+    Ref<Shader> LoadOrOverideShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath,
+                                    const ShaderLayoutInput& inputLayout);
     Ref<Shader> GetShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath);
     bool ShaderExists(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath);
 

@@ -8,7 +8,7 @@ namespace Car {
     public:
         virtual ~UniformBuffer() = default;
 
-        virtual void setData(const void* data, uint32_t offset = 0) = 0;
+        virtual void setData(const void* data) = 0;
 
         virtual uint32_t getSize() const = 0;
         virtual uint32_t getBinding() const = 0;

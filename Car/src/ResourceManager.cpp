@@ -145,7 +145,8 @@ namespace Car::ResourceManager {
         return sData->textures.find(fullname) != sData->textures.end();
     }
 
-    Ref<Shader> LoadShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath, const ShaderLayoutInput& inputLayout) {
+    Ref<Shader> LoadShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath,
+                           const ShaderLayoutInput& inputLayout) {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
 
         std::string fullname = sData->resourceDirectory / sData->shadersSubdirectory / vertexShaderFilepath /
@@ -165,8 +166,8 @@ namespace Car::ResourceManager {
         return shader;
     }
 
-    Ref<Shader> LoadOrOverideShader(const std::string& vertexShaderFilepath,
-                                    const std::string& fragmeantShaderFilepath, const ShaderLayoutInput& inputLayout) {
+    Ref<Shader> LoadOrOverideShader(const std::string& vertexShaderFilepath, const std::string& fragmeantShaderFilepath,
+                                    const ShaderLayoutInput& inputLayout) {
         CR_RM_NEED_INITIALIZATION_RET_SPECIAL(nullptr);
 
         std::string fullname = sData->resourceDirectory / sData->shadersSubdirectory / vertexShaderFilepath /

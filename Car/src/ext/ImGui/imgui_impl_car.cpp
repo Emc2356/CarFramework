@@ -454,7 +454,7 @@ void ImGui_ImplCar_RenderDrawData(ImDrawData* draw_data) {
                 glScissor((int)clip_min.x, (int)((float)fb_height - clip_max.y), (int)(clip_max.x - clip_min.x),
                           (int)(clip_max.y - clip_min.y));
 
-                (*reinterpret_cast<Car::Ref<Car::Texture2D>*>(pcmd->GetTexID()))->bind(0);
+                // (*reinterpret_cast<Car::Ref<Car::Texture2D>*>(pcmd->GetTexID()))->bind(0);
 
                 glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount,
                                sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,

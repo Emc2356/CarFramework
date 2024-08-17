@@ -12,7 +12,6 @@ namespace Car {
         void releaseDeviceObjects();
 
         virtual void bind() const override;
-        virtual void unbind() const override;
 
         virtual uint32_t getCount() const override { return mCount; }
         virtual uint32_t getSize() const override { return mSize; }

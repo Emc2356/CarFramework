@@ -44,14 +44,14 @@ namespace Car {
 
     void Renderer2D::Init() {
         sData = new Renderer2DData();
-        
+
         ShaderLayoutInput layout = {
             {"iPos", ShaderLayoutInput::DataType::Float2},
             {"iSourceUV", ShaderLayoutInput::DataType::Float2},
             {"iTint", ShaderLayoutInput::DataType::Float3},
             {"iTextureID", ShaderLayoutInput::DataType::Float},
         };
-        
+
         // internal use only so no reason to register with the ResourceManager
         sData->texturesShader = Shader::Create("builtin/Renderer2D.vert", "builtin/Renderer2D.frag", layout);
         sData->texturesUBO = UniformBuffer::Create(sizeof(glm::mat4), 0, Buffer::Usage::DynamicDraw);
@@ -79,7 +79,8 @@ namespace Car {
                                                 sData->texturesMaxBatchSize * 6 * sizeof(uint32_t),
                                                 Buffer::Usage::StaticDraw, Buffer::Type::UnsignedInt);
 
-        sData->texturesVB = VertexBuffer::Create(nullptr, sData->texturesMaxBatchSize * 4 * layout.getTotalSize(), Buffer::Usage::DynamicDraw);
+        sData->texturesVB = VertexBuffer::Create(nullptr, sData->texturesMaxBatchSize * 4 * layout.getTotalSize(),
+                                                 Buffer::Usage::DynamicDraw);
 
         sData->texturesVA = VertexArray::Create(sData->texturesVB, sData->texturesIB, sData->texturesShader);
     }
@@ -122,7 +123,7 @@ namespace Car {
         sData->texturesUBO->setData(glm::value_ptr(proj));
 
         for (size_t i = 0; i < sData->textureTextures.size(); i++) {
-            sData->textureTextures[i]->bind(i);
+            // sData->textureTextures[i]->bind(i);
         }
 
         sData->texturesVB->updateData(

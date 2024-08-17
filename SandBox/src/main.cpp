@@ -19,10 +19,8 @@ public:
         Car::Renderer::ClearColor(0.1f, 0.0f);
 
         std::vector<float> vertices = {
-            -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-            0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-            0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-            -0.5f, 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+            -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+            0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 0.0f, 1.0f, -0.5f, 0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
         };
 
         std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
@@ -35,13 +33,14 @@ public:
 
         mUb = Car::UniformBuffer::Create(sizeof(UniformBufferObject), 0);
 
-        auto Vb = Car::VertexBuffer::Create(vertices.data(), vertices.size() * sizeof(vertices[0]), Car::Buffer::Usage::StaticDraw);
+        auto Vb = Car::VertexBuffer::Create(vertices.data(), vertices.size() * sizeof(vertices[0]),
+                                            Car::Buffer::Usage::StaticDraw);
         auto Ib = Car::IndexBuffer::Create(indices.data(), indices.size() * sizeof(indices[0]),
                                            Car::Buffer::Usage::StaticDraw, Car::Buffer::Type::UnsignedInt);
         auto shader = Car::Shader::Create("sandbox.vert", "sandbox.frag", layout);
 
         mTexture = Car::Texture2D::Create("resources/images/pg_np.png");
-        
+
         shader->setInput(0, 0, true, mUb);
         shader->setInput(1, 1, true, mTexture);
 
