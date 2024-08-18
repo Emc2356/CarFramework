@@ -83,6 +83,13 @@ namespace Car {
         VkCommandBuffer beginSingleTimeCommands(VkCommandPool cmdPool);
         void endSingleTimeCommands(VkQueue targetQueue, VkCommandBuffer cmdBuffer, VkCommandPool cmdPool);
 
+        CrQueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+        bool isDeviceSuitable(VkPhysicalDevice device);
+        bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+        CrSwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+        VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+        VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+        VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
     private:
         void createInstance();
         void setupDebugMessenger();
@@ -100,15 +107,6 @@ namespace Car {
 
         void cleanupSwapChain();
         void recreateSwapchain();
-
-        // helper functions
-        CrQueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
-        bool isDeviceSuitable(VkPhysicalDevice device);
-        bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-        CrSwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
-        VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-        VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-        VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
     private:
         GLFWwindow* mWindowHandle;

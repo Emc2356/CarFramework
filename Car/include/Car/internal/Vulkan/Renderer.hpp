@@ -11,13 +11,7 @@ namespace Car {
         virtual void InitImpl() override;
         virtual void ShutdownImpl() override;
         virtual void ClearColorImpl(float r, float g, float b, float a) override;
-        virtual void ClearImpl() override;
-        virtual void EnableBlendingImpl() override;
-        virtual void DisableBlendingImpl() override;
-        virtual void EnableDepthTestImpl() override;
-        virtual void DisableDepthTestImpl() override;
-        virtual void DrawTrianglesImpl(const Ref<VertexArray> va) override;
-        virtual void DrawTrianglesImpl(const Ref<VertexArray> va, uint32_t triangleCount) override;
+        virtual void DrawCommandImpl(const Ref<VertexArray> va, uint32_t indicesCount) override;
 
         virtual void BeginRecordingImpl() override;
         virtual void EndRecordingImpl() override;

@@ -8,30 +8,25 @@
 
 #include <glad/vulkan.h>
 
+struct VulkanRendererData {
+    glm::vec4 clearColor;
+};
+
 namespace Car {
     Renderer* Renderer::sInstance = new VulkanRenderer();
     Ref<VulkanGraphicsContext> sGraphicsContext;
-    static glm::vec4 sClearColor;
+    static VulkanRendererData* sData;
 
     void VulkanRenderer::InitImpl() {
+        sData = new VulkanRendererData();
         sGraphicsContext = reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get());
-
-        sClearColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
     }
 
-    void VulkanRenderer::ShutdownImpl() {}
+    void VulkanRenderer::ShutdownImpl() { delete sData; }
 
-    void VulkanRenderer::ClearColorImpl(float r, float g, float b, float a) { sClearColor = glm::vec4(r, g, b, a); }
-
-    void VulkanRenderer::ClearImpl() {}
-
-    void VulkanRenderer::EnableBlendingImpl() {}
-
-    void VulkanRenderer::DisableBlendingImpl() {}
-
-    void VulkanRenderer::EnableDepthTestImpl() {}
-
-    void VulkanRenderer::DisableDepthTestImpl() {}
+    void VulkanRenderer::ClearColorImpl(float r, float g, float b, float a) {
+        sData->clearColor = glm::vec4(r, g, b, a);
+    }
 
     void VulkanRenderer::BeginRecordingImpl() {
         VkCommandBufferBeginInfo beginInfo{};
@@ -61,7 +56,7 @@ namespace Car {
         renderPassInfo.renderArea.extent = sGraphicsContext->getSwapChainExtent();
 
         VkClearValue clearColor;
-        std::memcpy(clearColor.color.float32, glm::value_ptr(sClearColor), sizeof(glm::vec4));
+        std::memcpy(clearColor.color.float32, glm::value_ptr(sData->clearColor), sizeof(glm::vec4));
 
         renderPassInfo.clearValueCount = 1;
         renderPassInfo.pClearValues = &clearColor;
@@ -78,13 +73,7 @@ namespace Car {
         }
     }
 
-    void VulkanRenderer::DrawTrianglesImpl(const Ref<VertexArray> va, uint32_t triangleCount) {
-        if (triangleCount > va->getIndexBuffer()->getCount() * 3) {
-            CR_CORE_ERROR("Car::Renderer::DrawTriangles(VertexArray, triangleCount={}) "
-                          "index buffer doesnt have enough items",
-                          triangleCount);
-            return;
-        }
+    void VulkanRenderer::DrawCommandImpl(const Ref<VertexArray> va, uint32_t indicesCount) {
         va->bind();
 
         VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();
@@ -104,36 +93,6 @@ namespace Car {
         scissor.extent = swapChainExtent;
         vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
 
-        vkCmdDrawIndexed(cmdBuffer, triangleCount * 3, 1, 0, 0, 0);
-    }
-
-    void VulkanRenderer::DrawTrianglesImpl(const Ref<VertexArray> va) {
-        if (va->getIndexBuffer()->getCount() % 3 != 0) {
-            CR_CORE_ERROR("Car::Render::DrawTriangles recieved vertex array which "
-                          "holds an incompatible index buffer (size={})",
-                          va->getIndexBuffer()->getCount());
-            return;
-        }
-
-        va->bind();
-
-        VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();
-        VkExtent2D swapChainExtent = sGraphicsContext->getSwapChainExtent();
-
-        VkViewport viewport{};
-        viewport.x = 0.0f;
-        viewport.y = 0.0f;
-        viewport.width = static_cast<float>(swapChainExtent.width);
-        viewport.height = static_cast<float>(swapChainExtent.height);
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-        vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
-
-        VkRect2D scissor{};
-        scissor.offset = {0, 0};
-        scissor.extent = swapChainExtent;
-        vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
-
-        vkCmdDrawIndexed(cmdBuffer, va->getIndexBuffer()->getCount(), 1, 0, 0, 0);
+        vkCmdDrawIndexed(cmdBuffer, indicesCount, 1, 0, 0, 0);
     }
 } // namespace Car

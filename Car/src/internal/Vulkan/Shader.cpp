@@ -14,6 +14,7 @@
 #include <glad/vulkan.h>
 #include <spirv_cross/spirv_cross.hpp>
 #include <stdexcept>
+#include <string>
 #ifdef CR_HAVE_SHADERC
 #include <shaderc/shaderc.hpp>
 
@@ -79,12 +80,13 @@ namespace Car {
         }
     }
 
-    VulkanShader::VulkanShader(const CompiledShader& compiledShader, const ShaderLayoutInput& inputLayout)
+    VulkanShader::VulkanShader(const CompiledShader& compiledShader, const ShaderLayoutInput& inputLayout,
+                               const Specification* pSpec)
         : mCompiledShader(compiledShader), mInputLayout(inputLayout) {
         mGraphicsContext = reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get());
 
         createDescriptors();
-        createGraphicsPipeline();
+        createGraphicsPipeline(pSpec);
     }
 
     VulkanShader::~VulkanShader() {
@@ -177,7 +179,7 @@ namespace Car {
             descriptorWrite.dstSet = mDescriptorSets[mGraphicsContext->getCurrentFrameIndex()][set];
             descriptorWrite.dstBinding = binding;
             descriptorWrite.dstArrayElement = 0;
-            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             descriptorWrite.descriptorCount = 1;
             descriptorWrite.pBufferInfo = nullptr;
             descriptorWrite.pImageInfo = &imageInfo;
@@ -278,7 +280,7 @@ namespace Car {
         }
     }
 
-    void VulkanShader::createGraphicsPipeline() {
+    void VulkanShader::createGraphicsPipeline(const Specification* pSpec) {
         VkDevice device = mGraphicsContext->getDevice();
 
         VkShaderModule vertShaderModule = createShaderModule(mCompiledShader.vertexShader);
@@ -288,13 +290,13 @@ namespace Car {
         vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
         vertShaderStageInfo.module = vertShaderModule;
-        vertShaderStageInfo.pName = "main";
+        vertShaderStageInfo.pName = pSpec->vertexShaderEntryName.c_str();
 
         VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
         fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
         fragShaderStageInfo.module = fragShaderModule;
-        fragShaderStageInfo.pName = "main";
+        fragShaderStageInfo.pName = pSpec->fragmentShaderEntryName.c_str();
 
         VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
@@ -308,7 +310,17 @@ namespace Car {
         VkVertexInputBindingDescription bindingDescription{};
         bindingDescription.binding = 0;
         bindingDescription.stride = mInputLayout.getTotalSize();
-        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+        switch (pSpec->vertexInputRate) {
+        case Shader::VertexInputRate::VERTEX: {
+            bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+            break;
+        }
+        default: {
+            throw std::runtime_error("unrecognized VertexInputRate " +
+                                     std::to_string((uint32_t)pSpec->vertexInputRate));
+            break;
+        }
+        }
 
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 
@@ -332,16 +344,66 @@ namespace Car {
 
         VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
         inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-        inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        inputAssembly.primitiveRestartEnable = VK_FALSE;
+        switch (pSpec->primitiveTopology) {
+        case Shader::PrimitiveTopology::POINT_LIST: {
+            inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+            break;
+        }
+        case Shader::PrimitiveTopology::LINE_LIST: {
+            inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+            break;
+        }
+        case Shader::PrimitiveTopology::LINE_STRIP: {
+            inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+            break;
+        }
+        case Shader::PrimitiveTopology::TRIANGLE_LIST: {
+            inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+            break;
+        }
+        case Shader::PrimitiveTopology::TRIANGLE_STRIP: {
+            inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+            break;
+        }
+        case Shader::PrimitiveTopology::TRIANGLE_FAN: {
+            inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+            break;
+        }
+        case Shader::PrimitiveTopology::LINE_LIST_WITH_ADJACENCY: {
+            inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY;
+            break;
+        }
+        case Shader::PrimitiveTopology::LINE_STRIP_WITH_ADJACENCY: {
+            inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY;
+            break;
+        }
+        case Shader::PrimitiveTopology::TRIANGLE_LIST_WITH_ADJACENCY: {
+            inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY;
+            break;
+        }
+        case Shader::PrimitiveTopology::TRIANGLE_STRIP_WITH_ADJACENCY: {
+            inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY;
+            break;
+        }
+        case Shader::PrimitiveTopology::PATCH_LIST: {
+            inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+            break;
+        }
+        default: {
+            throw std::runtime_error("unrecognized primitive topology " +
+                                     std::to_string((uint32_t)pSpec->primitiveTopology));
+            break;
+        }
+        }
+        inputAssembly.primitiveRestartEnable = pSpec->primitiveRestartEnable ? VK_TRUE : VK_FALSE;
 
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
         viewport.width = (float)mGraphicsContext->getSwapChainExtent().width;
         viewport.height = (float)mGraphicsContext->getSwapChainExtent().height;
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
+        viewport.minDepth = pSpec->minDepth;
+        viewport.maxDepth = pSpec->maxDepth;
 
         VkRect2D scissor{};
         scissor.offset = {0, 0};
@@ -358,12 +420,61 @@ namespace Car {
         rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         rasterizer.depthClampEnable = VK_FALSE;
         rasterizer.rasterizerDiscardEnable = VK_FALSE;
-        rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+        switch (pSpec->polygonMode) {
+        case Shader::PolygonMode::FILL: {
+            rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+            break;
+        }
+        case Shader::PolygonMode::LINE: {
+            rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
+            break;
+        }
+        case Shader::PolygonMode::POINT: {
+            rasterizer.polygonMode = VK_POLYGON_MODE_POINT;
+            break;
+        }
+        default: {
+            throw std::runtime_error("unrecognized polygon mode " + std::to_string((uint32_t)pSpec->polygonMode));
+            break;
+        }
+        }
         rasterizer.lineWidth = 1.0f;
-        // rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-        // rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
-        rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-        rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        switch (pSpec->cullMode) {
+        case Shader::CullMode::NONE: {
+            rasterizer.cullMode = VK_CULL_MODE_NONE;
+            break;
+        }
+        case Shader::CullMode::FRONT: {
+            rasterizer.cullMode = VK_CULL_MODE_FRONT_BIT;
+            break;
+        }
+        case Shader::CullMode::BACK: {
+            rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+            break;
+        }
+        case Shader::CullMode::FRONT_AND_BACK: {
+            rasterizer.cullMode = VK_CULL_MODE_FRONT_AND_BACK;
+            break;
+        }
+        default: {
+            throw std::runtime_error("unrecognized cull mode " + std::to_string((uint32_t)pSpec->cullMode));
+            break;
+        }
+        }
+        switch (pSpec->frontFace) {
+        case Shader::FrontFace::CLOCKWISE: {
+            rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+            break;
+        }
+        case Shader::FrontFace::COUNTER_CLOCKWISE: {
+            rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+            break;
+        }
+        default: {
+            throw std::runtime_error("unrecognized front face " + std::to_string((uint32_t)pSpec->frontFace));
+            break;
+        }
+        }
         rasterizer.depthBiasEnable = VK_FALSE;
         rasterizer.depthBiasConstantFactor = 0.0f; // Optional
         rasterizer.depthBiasClamp = 0.0f;          // Optional
@@ -568,7 +679,7 @@ namespace Car {
     }
 
     Ref<Shader> Shader::Create(const std::string& vertexShaderName, const std::string& fragmeantShaderName,
-                               const ShaderLayoutInput& inputLayout) {
+                               const ShaderLayoutInput& inputLayout, const Shader::Specification* pSpec) {
         std::string vertexBinary;
         std::string fragmeantBinary;
 
@@ -618,6 +729,6 @@ namespace Car {
         compiledShader.fragmeantShader = fragmeantBinary;
         fillSetField(&compiledShader);
 
-        return createRef<VulkanShader>(compiledShader, inputLayout);
+        return createRef<VulkanShader>(compiledShader, inputLayout, pSpec);
     }
 } // namespace Car

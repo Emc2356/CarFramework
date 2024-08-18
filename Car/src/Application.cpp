@@ -25,7 +25,7 @@ namespace Car {
         Random::Init();
         ResourceManager::Init();
         Renderer::Init();
-        // Renderer2D::Init();
+        Renderer2D::Init();
     }
 
     Application::~Application() {
@@ -33,7 +33,7 @@ namespace Car {
             (*--it)->onDetach();
             CR_CORE_DEBUG("Layer destroyed");
         }
-        // Renderer2D::Shutdown();
+        Renderer2D::Shutdown();
         Renderer::Shutdown();
         ResourceManager::Shutdown();
         CR_CORE_DEBUG("Application shutdown");
@@ -57,12 +57,12 @@ namespace Car {
             }
 
             Renderer::BeginRecording();
-            // Car::Renderer2D::Begin();
+            Car::Renderer2D::Begin();
             onRender();
             for (Layer* layer : mLayerStack) {
                 layer->onRender();
             }
-            // Car::Renderer2D::End();
+            Car::Renderer2D::End();
             Renderer::EndRecording();
 
             if (sSpec.useImGui) {

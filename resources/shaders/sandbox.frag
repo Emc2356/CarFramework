@@ -7,7 +7,6 @@ layout(location=1) in vec2 iUv;
 layout(location=0) out vec4 oColor;
 
 void main() {
-    // outColor = vec4(iColor, 1.0f);
-    // outColor.rg = iUv.rg;
     oColor = texture(uTexture, iUv);
+    oColor.rgb *= iColor.rgb;
 }

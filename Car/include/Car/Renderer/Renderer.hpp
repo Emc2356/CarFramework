@@ -20,16 +20,11 @@ namespace Car {
                                       float((hex >> 8) & 0xFF) / 255, float(hex & 0xFF) / 255);
         }
 
-        static void Clear() { sInstance->ClearImpl(); }
-
-        static void EnableBlending() { sInstance->EnableBlendingImpl(); }
-        static void DisableBlending() { sInstance->DisableBlendingImpl(); }
-        static void EnableDepthTest() { sInstance->EnableDepthTestImpl(); }
-        static void DisableDepthTest() { sInstance->DisableDepthTestImpl(); }
-
-        static void DrawTriangles(const Ref<VertexArray> va) { sInstance->DrawTrianglesImpl(va); }
-        static void DrawTriangles(const Ref<VertexArray> va, uint32_t triangleCount) {
-            sInstance->DrawTrianglesImpl(va, triangleCount);
+        static void DrawCommand(const Ref<VertexArray> va) {
+            sInstance->DrawCommandImpl(va, va->getIndexBuffer()->getCount());
+        }
+        static void DrawCommand(const Ref<VertexArray> va, uint32_t indicesCount) {
+            sInstance->DrawCommandImpl(va, indicesCount);
         }
 
         static void BeginRecording() { sInstance->BeginRecordingImpl(); }
@@ -39,13 +34,7 @@ namespace Car {
         virtual void InitImpl() = 0;
         virtual void ShutdownImpl() = 0;
         virtual void ClearColorImpl(float r, float g, float b, float a) = 0;
-        virtual void ClearImpl() = 0;
-        virtual void EnableBlendingImpl() = 0;
-        virtual void DisableBlendingImpl() = 0;
-        virtual void EnableDepthTestImpl() = 0;
-        virtual void DisableDepthTestImpl() = 0;
-        virtual void DrawTrianglesImpl(const Ref<VertexArray> va) = 0;
-        virtual void DrawTrianglesImpl(const Ref<VertexArray> va, uint32_t triangleCount) = 0;
+        virtual void DrawCommandImpl(const Ref<VertexArray> va, uint32_t indicesCount) = 0;
         virtual void BeginRecordingImpl() = 0;
         virtual void EndRecordingImpl() = 0;
 

@@ -1,111 +1,131 @@
-#include "Car/Application.hpp"
-#include "Car/Renderer/UniformBuffer.hpp"
-#include "Car/Renderer/VertexArray.hpp"
+#include "Car/Core/Ref.hpp"
+#include "Car/Renderer/Font.hpp"
+#include "Car/Renderer/Renderer2D.hpp"
+#include "Car/Renderer/Texture2D.hpp"
 #define CR_ENTRY
 #include <Car/Car.hpp>
 
-struct UniformBufferObject {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
-};
-
-class SandboxLayer : public Car::Layer {
+class RayCastingLayer : public Car::Layer {
 public:
-    SandboxLayer() : Car::Layer("Sandbox Layer") {}
+    struct Wall {
+        glm::vec2 start;
+        glm::vec2 end;
+    };
+
+public:
+    RayCastingLayer() : Car::Layer("RayCasting Layer") {}
 
     virtual void onAttach() override {
-        Car::Renderer::EnableBlending();
-        Car::Renderer::ClearColor(0.1f, 0.0f);
+        Car::Renderer::ClearColor(0.1f);
 
-        std::vector<float> vertices = {
-            -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-            0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 0.0f, 1.0f, -0.5f, 0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-        };
-
-        std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
-
-        Car::ShaderLayoutInput layout = {
-            {"iPos", Car::ShaderLayoutInput::DataType::Float2},
-            {"iColor", Car::ShaderLayoutInput::DataType::Float3},
-            {"iUv", Car::ShaderLayoutInput::DataType::Float2},
-        };
-
-        mUb = Car::UniformBuffer::Create(sizeof(UniformBufferObject), 0);
-
-        auto Vb = Car::VertexBuffer::Create(vertices.data(), vertices.size() * sizeof(vertices[0]),
-                                            Car::Buffer::Usage::StaticDraw);
-        auto Ib = Car::IndexBuffer::Create(indices.data(), indices.size() * sizeof(indices[0]),
-                                           Car::Buffer::Usage::StaticDraw, Car::Buffer::Type::UnsignedInt);
-        auto shader = Car::Shader::Create("sandbox.vert", "sandbox.frag", layout);
-
-        mTexture = Car::Texture2D::Create("resources/images/pg_np.png");
-
-        shader->setInput(0, 0, true, mUb);
-        shader->setInput(1, 1, true, mTexture);
-
-        mVa = Car::VertexArray::Create(Vb, Ib, shader);
+        mWallCount = 5;
+        resetWalls();
     }
 
     virtual void onImGuiRender(double dt) override {
         ImGui::Begin("Performance");
-
         ImGui::Text("[FPS]: %f", 1 / dt);
+        ImGui::End();
+
+        ImGui::Begin("Settings");
+
+        if (ImGui::Button("Recreate walls")) {
+            resetWalls();
+        }
+
+        if (ImGui::SliderInt("Wall count", &mWallCount, 1, 50)) {
+            resetWalls();
+        }
+
+        ImGui::SliderFloat("Max distance", &mMaxDistance, 1, 5000);
 
         ImGui::End();
     }
 
+    void resetWalls() {
+        mWalls.clear();
+        glm::ivec2 screenSize(Car::Application::Get()->getWindow()->getWidth(),
+                              Car::Application::Get()->getWindow()->getHeight());
+        for (int32_t i = 0; i < mWallCount; i++) {
+            mWalls.push_back({{(float)Car::Random::UInt(0, screenSize.x), (float)Car::Random::UInt(0, screenSize.y)},
+                              {(float)Car::Random::UInt(0, screenSize.x), (float)Car::Random::UInt(0, screenSize.y)}});
+        }
+    }
+
     virtual void onRender() override {
-        static auto startTime = std::chrono::high_resolution_clock::now();
+        for (const auto& wall : mWalls) {
+            Car::Renderer2D::DrawLine(wall.start, wall.end);
+        }
 
-        auto window = Car::Application::Get()->getWindow();
+        glm::ivec2 mousePos_ = Car::Input::MousePos();
+        glm::vec2 mousePos = {mousePos_.x, mousePos_.y};
 
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+        for (float i = 0; i < 360.0f; i += 1.0f) {
+            glm::vec2 ray(glm::cos(glm::radians(i)), glm::sin(glm::radians(i)));
 
-        UniformBufferObject ubo{};
-        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.proj =
-            glm::perspective(glm::radians(45.0f), (float)window->getWidth() / (float)window->getHeight(), 0.1f, 10.0f);
+            float x3 = mousePos.x;
+            float y3 = mousePos.y;
+            float x4 = x3 + ray.x;
+            float y4 = y3 + ray.y;
+            float record = FLT_MAX;
+            glm::vec2 closePoint;
+            for (const auto& wall : mWalls) {
+                float x1 = wall.start.x;
+                float y1 = wall.start.y;
+                float x2 = wall.end.x;
+                float y2 = wall.end.y;
 
-        ubo.proj[1][1] *= -1;
+                float den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
 
-        mUb->setData(&ubo);
+                if (den == 0) { // line are parallel and they will never meet even if you stretch them out infinitely
+                    continue;
+                }
 
-        Car::Renderer::DrawTriangles(mVa, 2);
+                float t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
+                float u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
+
+                if (0 <= t && t <= 1 && 0 <= u) {
+                    float dis = glm::distance(mousePos, {x1 + t * (x2 - x1), y1 + t * (y2 - y1)});
+                    if (dis < record && dis < mMaxDistance) {
+                        record = dis;
+                        closePoint.x = x1 + t * (x2 - x1);
+                        closePoint.y = y1 + t * (y2 - y1);
+                    }
+                }
+            }
+            if (record < FLT_MAX) {
+                Car::Renderer2D::DrawLine(mousePos, closePoint, {0.0f, 1.0f, 0.f});
+            }
+        }
     }
 
 private:
-    Car::Ref<Car::VertexArray> mVa;
-    Car::Ref<Car::UniformBuffer> mUb;
-    Car::Ref<Car::Texture2D> mTexture;
+    std::vector<Wall> mWalls;
+    int32_t mWallCount;
+    float mMaxDistance = 500;
 };
 
-class Sandbox : public Car::Application {
+class RayCastingApplication : public Car::Application {
 public:
-    Sandbox() {
-        mSandboxLayer = new SandboxLayer();
+    RayCastingApplication() {
+        mSandboxLayer = new RayCastingLayer();
         pushLayer(mSandboxLayer);
     }
-
-    virtual void onRender() override { Car::Renderer::Clear(); }
-
-    virtual ~Sandbox() override {}
+    virtual ~RayCastingApplication() override {}
 
 private:
-    SandboxLayer* mSandboxLayer;
+    RayCastingLayer* mSandboxLayer;
 };
 
 Car::Application* Car::createApplication() {
     Car::Application::Specification spec{};
     spec.width = 1280;
     spec.height = 720;
-    spec.title = "Sandbox";
-    spec.vsync = true;
+    spec.title = "Ray Casting";
+    spec.vsync = false;
     spec.resizable = true;
     spec.useImGui = false;
     Car::Application::SetSpecification(spec);
 
-    return new Sandbox();
+    return new RayCastingApplication();
 }

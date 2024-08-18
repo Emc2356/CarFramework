@@ -2,16 +2,17 @@
 
 #include "Car/Layers/ImGuiLayer.hpp"
 #include "Car/Application.hpp"
+#include "Car/Core/Ref.hpp"
+#include "Car/Renderer/GraphicsContext.hpp"
+#include "Car/internal/Vulkan/GraphicsContext.hpp"
 
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <Car/ext/ImGui/imgui_impl_car.hpp>
-#if defined(CR_OPENGL)
-#include <backends/imgui_impl_opengl3.h>
-#elif defined(CR_VULKAN)
-#include <backends/imgui_impl_vulkan.h>
+#if defined(CR_VULKAN)
+// #include <backends/imgui_impl_vulkan.h>
 #else
-#error only opengl and vulkan are supported at this time
+#error only vulkan is supported
 #endif
 
 #include <GLFW/glfw3.h>
@@ -51,27 +52,25 @@ namespace Car {
         const Application* app = Car::Application::Get();
         GLFWwindow* window = static_cast<GLFWwindow*>(app->getWindow()->getWindowHandle());
         UNUSED(window);
-// Setup Platform/Renderer bindings
-#if defined(CR_OPENGL)
-        ImGui_ImplGlfw_InitForOpenGL(window, true);
-        // ImGui_ImplCar_Init();
-        ImGui_ImplOpenGL3_Init("#version 410");
-#elif defined(CR_VULKAN)
 
-#else
-#error only opengl and vulkan is supported right now
-#endif
+        ImGui_ImplGlfw_InitForVulkan(window, true);
+        auto graphicsContext = reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get());
+        // ImGui_ImplVulkan_InitInfo info{};
+        // info.Instance = graphicsContext->getInstance();
+        // info.PhysicalDevice = graphicsContext->getPhysicalDevice();
+        // info.Device = graphicsContext->getDevice();
+        // info.QueueFamily = graphicsContext->findQueueFamilies(graphicsContext->getPhysicalDevice()).graphicsFamily.value();
+        // info.Queue = graphicsContext->getGraphicsQueue();
+        // info.DescriptorPool = graphicsContext->getDescriptorPool();
+        // info.RenderPass = graphicsContext->getRenderPass();
+        // info.MinImageCount = 3;
+        // info.ImageCount = 3;
+        // info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+        // ImGui_ImplVulkan_Init(&info);
     }
 
     void ImGuiLayer::onDetach() {
-#if defined(CR_OPENGL)
-        // ImGui_ImplCar_Shutdown();
-        ImGui_ImplOpenGL3_Shutdown();
-#elif defined(CR_VULKAN)
-
-#else
-#error only opengl and vulkan is supported right now
-#endif
+        // ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
     }
@@ -97,14 +96,7 @@ namespace Car {
         mWantCaptureKeyboard = io.WantCaptureKeyboard;
         mWantTextInput = io.WantTextInput;
 
-#if defined(CR_OPENGL)
-        ImGui_ImplOpenGL3_NewFrame();
-        // ImGui_ImplCar_NewFrame();
-#elif defined(CR_VULKAN)
-
-#else
-#error only opengl and vulkan is supported right now
-#endif
+        // ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
     }
@@ -114,13 +106,7 @@ namespace Car {
 
         // Rendering
         ImGui::Render();
-#if defined(CR_OPENGL)
-        // ImGui_ImplCar_RenderDrawData(ImGui::GetDrawData());
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-#elif defined(CR_VULKAN)
-#else
-#error only opengl and vulkan is supported right now
-#endif
+        // ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get())->getCurrentRenderCommandBuffer());
 
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
             GLFWwindow* backup_current_context = glfwGetCurrentContext();

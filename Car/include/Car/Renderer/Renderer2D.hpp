@@ -23,7 +23,6 @@ namespace Car {
         static void DrawRect(const Rect& rect, const glm::vec3& color = glm::vec3(1.0f));
         static void DrawLine(glm::vec2 posA, glm::vec2 posB, const glm::vec3& color = glm::vec3(1.0f),
                              float lineWidth = 1.0f);
-        static void DrawPoint(const glm::vec2& pos, const glm::ivec3& color = glm::vec3(1.0f));
 
         // internal functions that are exposed if you are dealing with a single
         // sprite sheet or only a couple these functions dont validate the

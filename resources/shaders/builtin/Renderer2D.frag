@@ -6,14 +6,14 @@ layout(location=2) in flat uint iTextureID;
 
 layout(location=0) out vec4 oColor;
 
-layout(set=0, binding=0) uniform sampler2D uTexture0;
-layout(set=0, binding=1) uniform sampler2D uTexture1;
-layout(set=0, binding=2) uniform sampler2D uTexture2;
-layout(set=0, binding=3) uniform sampler2D uTexture3;
-layout(set=0, binding=4) uniform sampler2D uTexture4;
-layout(set=0, binding=5) uniform sampler2D uTexture5;
-layout(set=0, binding=6) uniform sampler2D uTexture6;
-layout(set=0, binding=7) uniform sampler2D uTexture7;
+layout(set=1, binding=0) uniform sampler2D uTexture0;
+layout(set=1, binding=1) uniform sampler2D uTexture1;
+layout(set=1, binding=2) uniform sampler2D uTexture2;
+layout(set=1, binding=3) uniform sampler2D uTexture3;
+layout(set=1, binding=4) uniform sampler2D uTexture4;
+layout(set=1, binding=5) uniform sampler2D uTexture5;
+layout(set=1, binding=6) uniform sampler2D uTexture6;
+layout(set=1, binding=7) uniform sampler2D uTexture7;
 
 void main() {
     switch (iTextureID) {

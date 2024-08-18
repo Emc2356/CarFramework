@@ -10,7 +10,8 @@
 namespace Car {
     class VulkanShader : public Shader {
     public:
-        VulkanShader(const CompiledShader& compiledShader, const ShaderLayoutInput& inputLayout);
+        VulkanShader(const CompiledShader& compiledShader, const ShaderLayoutInput& inputLayout,
+                     const Specification* pSpec);
         virtual ~VulkanShader() override;
 
         virtual void bind() const override;
@@ -25,7 +26,7 @@ namespace Car {
 
         VkShaderModule createShaderModule(const std::string& code);
 
-        void createGraphicsPipeline();
+        void createGraphicsPipeline(const Specification* pSpec);
         void createDescriptors();
 
     private:

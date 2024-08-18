@@ -1,8 +1,6 @@
 #version 450
 
 layout(set=0, binding=0) uniform UniformBufferObject {
-    mat4 uModel;
-    mat4 uView;
     mat4 uProj;
 };
 
@@ -14,7 +12,7 @@ layout(location=0) out vec3 oColor;
 layout(location=1) out vec2 oUv;
 
 void main() {
-    gl_Position = uProj * uView * uModel * vec4(iPos, 0.0, 1.0);
+    gl_Position = uProj * vec4(iPos, 0.0, 1.0);
     oColor = iColor;
     oUv = iUv;
 }
