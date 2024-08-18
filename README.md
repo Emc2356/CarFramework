@@ -3,13 +3,13 @@ Car Framework, sometimes it works beatifuly and other times it just breaks.
 
 a simple project born out of boardom that might be worth nothing but still a great experience
 
-for now it only supports OpenGL but i try to limit OpenGL specific calls to only a couple of files so it is easier to add Vulkan to it later if i have the motivation 
+It has a backend for vulkan
 
 # Dependencies
 1. [glfw](https://www.glfw.org/) for the creation of the window and the events
 2. [imgui](https://github.com/ocornut/imgui) for nice windows (currently the multiple viewports is disabled as it doesnt look and feel nice in linux)
 3. [GLM](https://github.com/g-truc/glm) for the mathematical part of the framework
-4. [GLAD](https://gen.glad.sh/) as a OpenGL loader and in the future for vulkan extension loader
+4. [GLAD](https://gen.glad.sh/) vulkan extension loader
 5. [freetype](https://github.com/freetype/freetype) for the loading of fonts
 6. [shaderc](https://github.com/google/shaderc) for converting shaders to spirv at runtime
 
@@ -20,5 +20,5 @@ I recommend after cloning the repo to do `./build.py --help` for all of the opti
 git clone https://github.com/Emc2356/CarFramework
 cd CarFramework
 ./build.py --deps
-./build.py -j
+./build.py -j --verbose
 ```

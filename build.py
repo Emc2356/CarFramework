@@ -5,9 +5,6 @@ from BuildIt import buildspec, BuildSpecFlags, ExecResult
 from pathlib import Path
 
 
-OPENGL = 1
-VULKAN = 2
-rendering_api = OPENGL
 build_examples = False
 
 build_shaderc = False
@@ -107,7 +104,6 @@ def glad_windows_posix_gnu_clang() -> None:
         name="glad",
         out_filepath="./libraries/",
         sources=[
-            "./vendor/glad/src/gl.c",
             "./vendor/glad/src/vulkan.c",
         ],
         include_directories=[],
@@ -319,32 +315,18 @@ def car_engine_windows_posix_gnu_clang() -> None:
         ],
         include_directories=[],
     )
-    if rendering_api == OPENGL:
-        carlib.add_sources(
-            "./Car/src/internal/OpenGL/Renderer.cpp",
-            "./Car/src/internal/OpenGL/GraphicsContext.cpp",
-            "./Car/src/internal/OpenGL/Shader.cpp",
-            "./Car/src/internal/OpenGL/IndexBuffer.cpp",
-            "./Car/src/internal/OpenGL/VertexBuffer.cpp",
-            "./Car/src/internal/OpenGL/SSBO.cpp",
-            "./Car/src/internal/OpenGL/VertexArray.cpp",
-            "./Car/src/internal/OpenGL/UniformBuffer.cpp",
-            "./Car/src/internal/OpenGL/Texture2D.cpp",
-        )
-        carlib.add_define("CR_OPENGL")
-    elif rendering_api == VULKAN:
-        carlib.add_sources(
-            "./Car/src/internal/Vulkan/Renderer.cpp",
-            "./Car/src/internal/Vulkan/GraphicsContext.cpp",
-            "./Car/src/internal/Vulkan/Shader.cpp",
-            "./Car/src/internal/Vulkan/IndexBuffer.cpp",
-            "./Car/src/internal/Vulkan/VertexBuffer.cpp",
-            "./Car/src/internal/Vulkan/SSBO.cpp",
-            "./Car/src/internal/Vulkan/VertexArray.cpp",
-            "./Car/src/internal/Vulkan/UniformBuffer.cpp",
-            "./Car/src/internal/Vulkan/Texture2D.cpp",
-        )
-        carlib.add_define("CR_VULKAN")
+    carlib.add_sources(
+        "./Car/src/internal/Vulkan/Renderer.cpp",
+        "./Car/src/internal/Vulkan/GraphicsContext.cpp",
+        "./Car/src/internal/Vulkan/Shader.cpp",
+        "./Car/src/internal/Vulkan/IndexBuffer.cpp",
+        "./Car/src/internal/Vulkan/VertexBuffer.cpp",
+        "./Car/src/internal/Vulkan/SSBO.cpp",
+        "./Car/src/internal/Vulkan/VertexArray.cpp",
+        "./Car/src/internal/Vulkan/UniformBuffer.cpp",
+        "./Car/src/internal/Vulkan/Texture2D.cpp",
+    )
+    carlib.add_define("CR_VULKAN")
     BuildIt.add_include_directory("./Car/include/")
 
 
@@ -420,8 +402,6 @@ def core_win_posix() -> None:
 
 @BuildIt.unknown_argument
 def unknown_arg(arg: str) -> bool:    
-    global rendering_api
-    
     SPIRV_TOOLS_DIR = "./vendor/shaderc/third_party/spirv-tools"
     GRAMMAR_PROCESSING_SCRIPT = f"{SPIRV_TOOLS_DIR}/utils/generate_grammar_tables.py"
     XML_REGISTRY_PROCESSING_SCRIPT = f"{SPIRV_TOOLS_DIR}/utils/generate_registry_tables.py"
@@ -445,8 +425,6 @@ def unknown_arg(arg: str) -> bool:
     if arg == "--help" or arg == "-h":
         print("Car build script:")
         print("    --deps fetchs all of the dependencies and it initializes them")
-        print("    --opengl, -ogl to use OpenGL rendering backend (default)")
-        print("    --vulkan, -vk to use Vulkan rendering backend")
         print("    --format formats the code (requires clang-format)")
         print("    --shaderc build shaderc (required to compile shaders on the fly)")
         print("    --examples builds the examples")
@@ -462,12 +440,6 @@ def unknown_arg(arg: str) -> bool:
     elif arg == "--shaderc":
         global build_shaderc
         build_shaderc = True
-        return True
-    elif arg == "-ogl" or arg == "--opengl":
-        rendering_api = OPENGL
-        return True
-    elif arg == "-vk" or arg == "--vulkan":
-        rendering_api = VULKAN
         return True
     elif arg == "--examples":
         global build_examples

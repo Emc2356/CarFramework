@@ -25,17 +25,11 @@ namespace Car {
                 [](int error, const char* description) { CR_CORE_ERROR("GLFW Error ({0}): {1}", error, description); });
 #endif
 
-#if defined(CR_OPENGL)
-            // opengl 4.6 was released in 2017, at this point **most**
-            // graphics drivers support opengl 4.6
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#elif defined(CR_VULKAN)
+#if defined(CR_VULKAN)
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 #else
 #error not implemented yet
-#endif /*defined(CR_OPENGL)*/
+#endif
 
             glfwWindowHint(GLFW_RESIZABLE, spec.resizable ? GLFW_TRUE : GLFW_FALSE);
 
@@ -166,9 +160,8 @@ namespace Car {
     }
 
     void Window::setVSync(bool vsync) {
-#if defined(CR_OPENGL)
-        glfwSwapInterval(mSpec.vsync = vsync);
-#elif defined(CR_VULKAN)
+        // TOOD: Vsync
+#if defined(CR_VULKAN)
         UNUSED(vsync);
 #endif
     }
