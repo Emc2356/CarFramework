@@ -5,13 +5,19 @@ class BuildSpecFlags(enum.IntFlag):
 
     # platforms
     WINDOWS: BuildSpecFlags
-    POSIX: BuildSpecFlags
+    LINUX: BuildSpecFlags
     MACOS: BuildSpecFlags
+    
+    ANY_PLATFORM: BuildSpecFlags
 
     # toolchains
     GNU: BuildSpecFlags
     CLANG: BuildSpecFlags
     MSVC: BuildSpecFlags
+    
+    ANY_TOOLCHAIN: BuildSpecFlags
+    
+    ANY: BuildSpecFlags
 
     # special flags
     CORE: BuildSpecFlags

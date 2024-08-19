@@ -10,7 +10,7 @@ def get_build_flags_from_function_name(func: Callable) -> BuildSpecFlags:
     name = func.__name__
 
     flags |= BuildSpecFlags.WINDOWS if "windows" in name else 0
-    flags |= BuildSpecFlags.POSIX if "posix" in name else 0
+    flags |= BuildSpecFlags.LINUX if "linux" in name else 0
     flags |= BuildSpecFlags.MACOS if "macos" in name else 0
     flags |= BuildSpecFlags.GNU if "gnu" in name else 0
     flags |= BuildSpecFlags.CLANG if "clang" in name else 0
@@ -22,7 +22,7 @@ def get_build_flags_from_function_name(func: Callable) -> BuildSpecFlags:
 
 def buildspec(*args):
     is_windows: bool = "win" in sys.platform
-    is_posix: bool = "linux" in sys.platform
+    is_linux: bool = "linux" in sys.platform
     is_macos: bool = "darwin" in sys.platform
     # @buildspec(flags)
     # @buildspec
@@ -31,7 +31,7 @@ def buildspec(*args):
         if callable(flags_or_function):  # a function
             flags = get_build_flags_from_function_name(flags_or_function)
             if ((flags & BuildSpecFlags.WINDOWS and is_windows) or
-                    (flags & BuildSpecFlags.POSIX and is_posix) or
+                    (flags & BuildSpecFlags.LINUX and is_linux) or
                     (flags & BuildSpecFlags.MACOS and is_macos)):
                 Functions.add_function(flags, flags_or_function)
 
@@ -41,7 +41,7 @@ def buildspec(*args):
         def inner(func):
             flags = args[0]
             if ((flags & BuildSpecFlags.WINDOWS and is_windows) or
-                    (flags & BuildSpecFlags.POSIX and is_posix) or
+                    (flags & BuildSpecFlags.LINUX and is_linux) or
                     (flags & BuildSpecFlags.MACOS and is_macos)):
                 Functions.add_function(flags, func)
 
@@ -61,7 +61,7 @@ def buildspec(*args):
         if condition:
             def inner(func):
                 if ((flags & BuildSpecFlags.WINDOWS and is_windows) or
-                        (flags & BuildSpecFlags.POSIX and is_posix) or
+                        (flags & BuildSpecFlags.LINUX and is_linux) or
                         (flags & BuildSpecFlags.MACOS and is_macos)):
                     Functions.add_function(flags, func)
 

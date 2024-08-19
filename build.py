@@ -10,8 +10,8 @@ build_examples = False
 build_shaderc = False
 
 
-@buildspec
-def pch_windows_posix_gnu_clang() -> None:
+@buildspec(BuildSpecFlags.ANY)
+def pch() -> None:
     BuildIt.PreCompiledHeader(
         source="./Car/include/Car/Core/crpch.hpp",
         extra_build_flags=[],
@@ -19,8 +19,8 @@ def pch_windows_posix_gnu_clang() -> None:
     )
 
 
-@buildspec
-def glfw_posix_gnu_clang() -> None:
+@buildspec(BuildSpecFlags.ANY_TOOLCHAIN | BuildSpecFlags.LINUX)
+def glfw() -> None:
     BuildIt.StaticLibrary(
         name="glfw",
         out_filepath="./libraries/",
@@ -60,7 +60,7 @@ def glfw_posix_gnu_clang() -> None:
     BuildIt.add_include_directory("./vendor/glfw/include")
 
 
-@buildspec
+@buildspec(BuildSpecFlags.ANY_TOOLCHAIN | BuildSpecFlags.WINDOWS)
 def glfw_windows_gnu_clang() -> None:
     BuildIt.StaticLibrary(
         name="glfw",
@@ -98,8 +98,8 @@ def glfw_windows_gnu_clang() -> None:
     BuildIt.add_include_directory("./vendor/glfw/include")
 
 
-@buildspec
-def glad_windows_posix_gnu_clang() -> None:
+@buildspec(BuildSpecFlags.ANY)
+def glad() -> None:
     BuildIt.StaticLibrary(
         name="glad",
         out_filepath="./libraries/",
@@ -111,8 +111,8 @@ def glad_windows_posix_gnu_clang() -> None:
     BuildIt.add_include_directory("./vendor/glad/include")
 
 
-@buildspec
-def stb_windows_posix_gnu_clang() -> None:
+@buildspec(BuildSpecFlags.ANY)
+def stb() -> None:
     BuildIt.StaticLibrary(
         name="stb",
         out_filepath="./libraries/",
@@ -124,8 +124,8 @@ def stb_windows_posix_gnu_clang() -> None:
     BuildIt.add_include_directory("./vendor/stb/include")
 
 
-@buildspec
-def imgui_windows_posix_gnu_clang() -> None:
+@buildspec(BuildSpecFlags.ANY)
+def imgui() -> None:
     BuildIt.StaticLibrary(
         name="ImGui",
         out_filepath="./libraries/",
@@ -134,7 +134,6 @@ def imgui_windows_posix_gnu_clang() -> None:
             "./vendor/imgui/imgui_draw.cpp",
             "./Car/src/ext/ImGui/imgui_impl_car.cpp",
             "./vendor/imgui/backends/imgui_impl_glfw.cpp",
-            "./vendor/imgui/backends/imgui_impl_opengl3.cpp",
             "./vendor/imgui/backends/imgui_impl_vulkan.cpp",
             "./vendor/imgui/imgui_tables.cpp",
             "./vendor/imgui/imgui_widgets.cpp",
@@ -151,8 +150,8 @@ def imgui_windows_posix_gnu_clang() -> None:
     BuildIt.add_include_directory("./vendor/imgui")
 
 
-@buildspec
-def freetype_windows_posix_gnu_clang() -> None:
+@buildspec(BuildSpecFlags.ANY)
+def freetype() -> None:
     # https://github.com/freetype/freetype/blob/master/docs/INSTALL.ANY
     BuildIt.StaticLibrary(
         name="freetype",
@@ -214,15 +213,8 @@ def freetype_windows_posix_gnu_clang() -> None:
     BuildIt.add_include_directory("./vendor/freetype/include")
 
 
-@buildspec
-def shaderc_windows_posix_gnu_clang() -> None:
-    # this are the pre compiled headers that it uses but since i am doing 
-    # unity builds i dont think they will make any major difference 
-    # "./vendor/shaderc/third_party/spirv-tools/source/pch_source.h",
-    # "./vendor/shaderc/third_party/spirv-tools/source/opt/pch_source_opt.h",
-    # "./vendor/shaderc/third_party/spirv-tools/source/reduce/pch_source_reduce.h",
-    # "./vendor/shaderc/third_party/glslang/glslang/HLSL/pch.h",
-    # "./vendor/shaderc/third_party/glslang/glslang/MachineIndependent/pch.h",
+@buildspec(BuildSpecFlags.ANY)
+def shaderc() -> None:
     if not build_shaderc:
         BuildIt.StaticLibrary(
             name="shaderc",
@@ -258,7 +250,7 @@ def shaderc_windows_posix_gnu_clang() -> None:
         include_directories=[
             "./"
         ]
-    ).force_language_cxx()
+    )
     
     BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-tools/")
     BuildIt.add_include_directory("./vendor/shaderc/libshaderc_util/include/")
@@ -268,8 +260,8 @@ def shaderc_windows_posix_gnu_clang() -> None:
     BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-headers/include/binary")
 
 
-@buildspec
-def spirv_cross_gnu_clang_posix() -> None:
+@buildspec(BuildSpecFlags.ANY)
+def spirv_cross() -> None:
     BuildIt.StaticLibrary(
         name="spirv_cross",
         out_filepath="./libraries/",
@@ -285,8 +277,8 @@ def spirv_cross_gnu_clang_posix() -> None:
     BuildIt.add_include_directory("vendor/spirv_cross")
 
 
-@buildspec
-def car_engine_windows_posix_gnu_clang() -> None:
+@buildspec(BuildSpecFlags.ANY)
+def carlib() -> None:
     carlib = BuildIt.StaticLibrary(
         name="Car",
         out_filepath="./libraries/",
@@ -309,6 +301,7 @@ def car_engine_windows_posix_gnu_clang() -> None:
         extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
         extra_defines=[
             ("GLFW_INCLUDE_NONE",),
+            ("CR_VULKAN",),
         ],
         depends_on=[
             "ImGui", "glad", "stb", "glfw", "freetype", "shaderc", "spirv_cross"
@@ -326,11 +319,10 @@ def car_engine_windows_posix_gnu_clang() -> None:
         "./Car/src/internal/Vulkan/UniformBuffer.cpp",
         "./Car/src/internal/Vulkan/Texture2D.cpp",
     )
-    carlib.add_define("CR_VULKAN")
     BuildIt.add_include_directory("./Car/include/")
 
 
-@buildspec(BuildSpecFlags.CORE | BuildSpecFlags.POSIX | BuildSpecFlags.WINDOWS, __name__ == "__main__")
+@buildspec(BuildSpecFlags.CORE | BuildSpecFlags.ANY_PLATFORM, __name__ == "__main__")
 def core_win_posix() -> None:
     BuildIt.set_toolchain(BuildIt.Toolchain.CLANG)
     BuildIt.set_c_standard(99)

@@ -6,13 +6,19 @@ class BuildSpecFlags(enum.IntFlag):
 
     # platforms
     WINDOWS = enum.auto()
-    POSIX = enum.auto()
+    LINUX = enum.auto()
     MACOS = enum.auto()
+    
+    ANY_PLATFORM = WINDOWS | LINUX | MACOS
 
     # toolchains
     GNU = enum.auto()
     CLANG = enum.auto()
     MSVC = enum.auto()
+    
+    ANY_TOOLCHAIN = GNU | CLANG | MSVC
+
+    ANY = WINDOWS | LINUX | MACOS | GNU | CLANG | MSVC
 
     # special flags
     CORE = enum.auto()
@@ -23,8 +29,8 @@ class BuildSpecFlags(enum.IntFlag):
         flags = []
         if self & BuildSpecFlags.WINDOWS:
             flags.append("WINDOWS")
-        if self & BuildSpecFlags.POSIX:
-            flags.append("POSIX")
+        if self & BuildSpecFlags.LINUX:
+            flags.append("LINUX")
         if self & BuildSpecFlags.MACOS:
             flags.append("MACOS")
         if self & BuildSpecFlags.GNU:
