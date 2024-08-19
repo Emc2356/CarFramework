@@ -13,6 +13,7 @@
 [submodule "vendor/freetype"]
 	path = vendor/freetype
 	url = https://github.com/freetype/freetype
+	branch = f92c96550ad763639158587974cf11067ace743d
 [submodule "vendor/shaderc"]
 	path = vendor/shaderc
 	url = https://github.com/google/shaderc
