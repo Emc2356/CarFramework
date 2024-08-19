@@ -18,12 +18,14 @@ class ExecResult:
 
 def exec_cmd(*command, is_python=False, cwd=""):
     cmd = list(command)
+    
     if is_python:
-        cmd.insert(0, sys.executable)
+        cmd = [sys.executable] + cmd
+    
     if cwd == "":
         cwd = os.getcwd()
-        
-    result = subprocess.run(command, cwd=cwd)
+    
+    result = subprocess.run(cmd, cwd=cwd)
 
     return ExecResult(result.args, result.returncode, result.stdout, result.stderr)
     
