@@ -14,6 +14,7 @@
 [submodule "vendor/shaderc"]
 	path = vendor/shaderc
 	url = https://github.com/google/shaderc
+	branch = 5d0f6ed6e46d3c0ccd23151c6a1486c2ec90c037
 [submodule "vendor/spirv_cross/spirv_cross"]
 	path = vendor/spirv_cross/spirv_cross
 	url = https://github.com/KhronosGroup/SPIRV-Cross
