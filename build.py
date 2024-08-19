@@ -19,6 +19,11 @@ def pch() -> None:
     )
 
 
+@buildspec(BuildSpecFlags.ANY)
+def fmtlib() -> None:
+    BuildIt.add_include_directory("./vendor/fmt/include")
+
+
 @buildspec(BuildSpecFlags.ANY_TOOLCHAIN | BuildSpecFlags.LINUX)
 def glfw() -> None:
     BuildIt.StaticLibrary(
@@ -348,9 +353,7 @@ def core_win_posix() -> None:
         extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
         extra_link_flags=[],
         include_directories=[],
-        libraries=[
-            "fmt"
-        ],
+        libraries=[],
         extra_defines=[
             ("GLFW_INCLUDE_NONE",),
         ]
@@ -368,7 +371,7 @@ def core_win_posix() -> None:
             extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
             extra_link_flags=[],
             include_directories=[],
-            libraries=["fmt"],
+            libraries=[],
             extra_defines=[
                 ("GLFW_INCLUDE_NONE",),
             ]
@@ -385,7 +388,7 @@ def core_win_posix() -> None:
             extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
             extra_link_flags=[],
             include_directories=[],
-            libraries=["fmt"],
+            libraries=[],
             extra_defines=[
                 ("GLFW_INCLUDE_NONE",),
             ]

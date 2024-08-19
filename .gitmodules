@@ -21,3 +21,7 @@
 	path = vendor/spirv_cross/spirv_cross
 	url = https://github.com/KhronosGroup/SPIRV-Cross
 	branch = 66363ac7e8fe4465169ceb2ad5905b1657244cfe
+[submodule "vendor/fmt"]
+	path = vendor/fmt
+	url = https://github.com/fmtlib/fmt
+	branch = 1a79bbfa83b0942fca3f2794655b6b91bb682583
