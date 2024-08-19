@@ -234,8 +234,6 @@ def build_gnu() -> None:
                 changed_precompiled_headers = True
 
                 LogFile.update(header.source)
-            else:
-                Logger.info(f"{header.source} already up to date")
 
         for static_library in all_static_libraries:
             c_build_command, cxx_build_command = Compiler.construct_build_command(static_library, True)
@@ -261,8 +259,6 @@ def build_gnu() -> None:
                     changed_precompiled_headers = True
     
                     LogFile.update(header_file)
-                else:
-                    Logger.info(f"{header_file} already up to date")
         
         create_gather_cmd()
     
@@ -299,8 +295,6 @@ def build_gnu() -> None:
                     LogFile.update(str(source_file))
                     changed_static_libraries = True
                     needs_rebuilding = True
-                else:
-                    Logger.info(f"{source_file} already up to date")
 
                 object_files_in_static_library.append(object_file)
 
@@ -342,8 +336,6 @@ def build_gnu() -> None:
 
                     LogFile.update(source_file)
                     changed_executables = True
-                else:
-                    Logger.info(f"{source_file} already up to date")
 
         create_gather_cmd()
         
@@ -450,8 +442,6 @@ def build_clang() -> None:
                 changed_precompiled_headers = True
                 LogFile.update(header.source)
                 compile_commands[str(header.source)] = command
-            else:
-                Logger.info(f"{header.source} already up to date")
 
         for static_library in all_static_libraries:
             c_build_command, cxx_build_command = Compiler.construct_build_command(static_library, True)
@@ -478,8 +468,6 @@ def build_clang() -> None:
                     changed_precompiled_headers = True
                     LogFile.update(header_file)
                     compile_commands[str(header_file.path)] = command
-                else:
-                    Logger.info(f"{header_file} already up to date")
         
         create_gather_cmd()
     
@@ -518,8 +506,6 @@ def build_clang() -> None:
                     changed_static_libraries = True
                     needs_rebuilding = True
                     compile_commands[str(source_file.path)] = command
-                else:
-                    Logger.info(f"{source_file} already up to date")
 
                 object_files_in_static_library.append(object_file)
 
@@ -562,8 +548,6 @@ def build_clang() -> None:
                     LogFile.update(source_file)
                     changed_executables = True
                     compile_commands[str(source_file.path)] = command
-                else:
-                    Logger.info(f"{source_file} already up to date")
 
         create_gather_cmd()
 
