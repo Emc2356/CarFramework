@@ -1,13 +1,15 @@
 [submodule "vendor/glfw"]
 	path = vendor/glfw
 	url = https://github.com/glfw/glfw
+	branch = b35641f4a3c62aa86a0b3c983d163bc0fe36026d
 [submodule "vendor/glm"]
 	path = vendor/glm
 	url = https://github.com/g-truc/glm
+	branch = 0af55ccecd98d4e5a8d1fad7de25ba429d60e863
 [submodule "vendor/imgui"]
 	path = vendor/imgui
 	url = https://github.com/ocornut/imgui
-	branch = docking
+	branch = 65840c19c4823e537b51bed3298b2818a018a6bf
 [submodule "vendor/freetype"]
 	path = vendor/freetype
 	url = https://github.com/freetype/freetype
@@ -18,3 +20,4 @@
 [submodule "vendor/spirv_cross/spirv_cross"]
 	path = vendor/spirv_cross/spirv_cross
 	url = https://github.com/KhronosGroup/SPIRV-Cross
+	branch = 66363ac7e8fe4465169ceb2ad5905b1657244cfe
