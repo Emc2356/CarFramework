@@ -2,6 +2,7 @@
 
 #include "Car/Layers/ImGuiLayer.hpp"
 #include "Car/Application.hpp"
+#include "Car/Core/Log.hpp"
 #include "Car/Core/Ref.hpp"
 #include "Car/Renderer/GraphicsContext.hpp"
 #include "Car/internal/Vulkan/GraphicsContext.hpp"
@@ -10,7 +11,7 @@
 #include <backends/imgui_impl_glfw.h>
 #include <Car/ext/ImGui/imgui_impl_car.hpp>
 #if defined(CR_VULKAN)
-// #include <backends/imgui_impl_vulkan.h>
+#include <backends/imgui_impl_vulkan.h>
 #else
 #error only vulkan is supported
 #endif
@@ -25,17 +26,20 @@ namespace Car {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-        // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable
-        // Gamepad Controls
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
+        // Enable Keyboard Controls
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        // Enable Gamepad Controls
+        // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      
+        // Enable Docking
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         // for now i disabled multiple viewports as it doesnt look and feel that
         // good in linux maybe in the future if i figure out wtf is causing it to
-        // look so bad (looking at you plasma KDE) i will enable it io.ConfigFlags
-        // |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport /
-        // Platform Windows io.ConfigFlags |=
-        // ImGuiConfigFlags_ViewportsNoTaskBarIcons; io.ConfigFlags |=
-        // ImGuiConfigFlags_ViewportsNoMerge;
+        // look so bad (looking at you plasma KDE) i will enable it 
+        // Enable Multi-Viewport / Platform Windows
+        // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+        // io.ConfigViewportsNoAutoMerge = true;
+        // io.ConfigViewportsNoTaskBarIcon = true;
+    
 
         // Setup Dear ImGui style
         ImGui::StyleColorsDark();
@@ -51,26 +55,26 @@ namespace Car {
 
         const Application* app = Car::Application::Get();
         GLFWwindow* window = static_cast<GLFWwindow*>(app->getWindow()->getWindowHandle());
-        UNUSED(window);
 
         ImGui_ImplGlfw_InitForVulkan(window, true);
         auto graphicsContext = reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get());
-        // ImGui_ImplVulkan_InitInfo info{};
-        // info.Instance = graphicsContext->getInstance();
-        // info.PhysicalDevice = graphicsContext->getPhysicalDevice();
-        // info.Device = graphicsContext->getDevice();
-        // info.QueueFamily = graphicsContext->findQueueFamilies(graphicsContext->getPhysicalDevice()).graphicsFamily.value();
-        // info.Queue = graphicsContext->getGraphicsQueue();
-        // info.DescriptorPool = graphicsContext->getDescriptorPool();
-        // info.RenderPass = graphicsContext->getRenderPass();
-        // info.MinImageCount = 3;
-        // info.ImageCount = 3;
-        // info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-        // ImGui_ImplVulkan_Init(&info);
+        ImGui_ImplVulkan_InitInfo info{};
+        info.Instance = graphicsContext->getInstance();
+        info.PhysicalDevice = graphicsContext->getPhysicalDevice();
+        info.Device = graphicsContext->getDevice();
+        info.QueueFamily = graphicsContext->findQueueFamilies(graphicsContext->getPhysicalDevice()).graphicsFamily.value();
+        info.Queue = graphicsContext->getGraphicsQueue();
+        info.DescriptorPool = graphicsContext->getDescriptorPool();
+        info.RenderPass = graphicsContext->getRenderPass();
+        info.MinImageCount = 3;
+        info.ImageCount = 3;
+        info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+        ImGui_ImplVulkan_Init(&info);
     }
 
     void ImGuiLayer::onDetach() {
-        // ImGui_ImplVulkan_Shutdown();
+        vkDeviceWaitIdle(reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get())->getDevice());
+        ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
     }
@@ -96,7 +100,7 @@ namespace Car {
         mWantCaptureKeyboard = io.WantCaptureKeyboard;
         mWantTextInput = io.WantTextInput;
 
-        // ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
     }
@@ -106,13 +110,15 @@ namespace Car {
 
         // Rendering
         ImGui::Render();
-        // ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get())->getCurrentRenderCommandBuffer());
+        ImGui_ImplVulkan_RenderDrawData(
+            ImGui::GetDrawData(), 
+            reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get())->getCurrentRenderCommandBuffer(),
+            nullptr
+        );
 
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-            GLFWwindow* backup_current_context = glfwGetCurrentContext();
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
-            glfwMakeContextCurrent(backup_current_context);
         }
     }
 } // namespace Car

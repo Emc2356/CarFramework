@@ -62,8 +62,6 @@ namespace Car {
             for (Layer* layer : mLayerStack) {
                 layer->onRender();
             }
-            Car::Renderer2D::End();
-            Renderer::EndRecording();
 
             if (sSpec.useImGui) {
                 mImGuiLayer.begin();
@@ -73,6 +71,8 @@ namespace Car {
                 onImGuiRender((double)dt);
                 mImGuiLayer.end();
             }
+            Car::Renderer2D::End();
+            Renderer::EndRecording();
 
             mWindow->onUpdate();
         }

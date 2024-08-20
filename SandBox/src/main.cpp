@@ -51,7 +51,7 @@ public:
                               {(float)Car::Random::UInt(0, screenSize.x), (float)Car::Random::UInt(0, screenSize.y)}});
         }
     }
-
+    
     virtual void onRender() override {
         for (const auto& wall : mWalls) {
             Car::Renderer2D::DrawLine(wall.start, wall.end);
@@ -124,7 +124,7 @@ Car::Application* Car::createApplication() {
     spec.title = "Ray Casting";
     spec.vsync = false;
     spec.resizable = true;
-    spec.useImGui = false;
+    spec.useImGui = true;
     Car::Application::SetSpecification(spec);
 
     return new RayCastingApplication();

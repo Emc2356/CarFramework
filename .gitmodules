@@ -6,10 +6,6 @@
 	path = vendor/glm
 	url = https://github.com/g-truc/glm
 	branch = 0af55ccecd98d4e5a8d1fad7de25ba429d60e863
-[submodule "vendor/imgui"]
-	path = vendor/imgui
-	url = https://github.com/ocornut/imgui
-	branch = 65840c19c4823e537b51bed3298b2818a018a6bf
 [submodule "vendor/freetype"]
 	path = vendor/freetype
 	url = https://github.com/freetype/freetype
