@@ -12,10 +12,13 @@ It has a backend for vulkan
 4. [GLAD](https://gen.glad.sh/) vulkan extension loader
 5. [freetype](https://github.com/freetype/freetype) for the loading of fonts
 6. [shaderc](https://github.com/google/shaderc) for converting shaders to spirv at runtime
+7. [fmt](https://github.com/fmtlib/fmt) for prety printing and formating
+8. [stb](https://github.com/nothings/stb) specifically stb_image
+9. [spirv_cross](https://github.com/KhronosGroup/SPIRV-Cross) for analyzing spirv code 
 
 # Building
 I am not 100% sure why i decided to make my own build script, maybe out of frustration from using make and the unnecessary complexity of CMake.  
-I recommend after cloning the repo to do `./build.py --help` for all of the options (NOTE: vulkan is broken for the time being)
+I recommend after cloning the repo to do `./build.py --help` for all of the options
 ```bash
 git clone https://github.com/Emc2356/CarFramework --recursive
 cd CarFramework
