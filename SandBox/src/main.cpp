@@ -1,7 +1,3 @@
-#include "Car/Core/Ref.hpp"
-#include "Car/Renderer/Font.hpp"
-#include "Car/Renderer/Renderer2D.hpp"
-#include "Car/Renderer/Texture2D.hpp"
 #define CR_ENTRY
 #include <Car/Car.hpp>
 

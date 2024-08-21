@@ -2,8 +2,6 @@ from typing import NoReturn, ClassVar
 
 
 class Logger:
-    verbose: ClassVar[bool] = False
-
     @classmethod
     def info(cls, message: str) -> None: ...
     @classmethod

@@ -18,7 +18,6 @@ import os
 def usage(out: TextIO) -> None:
     print("BuildIt CLI Usage:", file=out)
     print("    -h, --help display this message", file=out)
-    print("    --verbose show info messages", file=out)
     print(
         "    -j<number> specify the amount of commands it can run simultaneously, if no number is then it will be set to use 75% of your cores",
         file=out)
@@ -66,8 +65,6 @@ def handle_argv(argv = None):
             else:
                 Logger.error(f"unsupported amount of parameters for the unknown_argument callback")
         sys.exit(0)
-    if consume_arg(argv, "--verbose"):
-        Logger.verbose = True
     if consume_arg(argv, "--clangd"):
         generate_clangd_commands()
         sys.exit(0)

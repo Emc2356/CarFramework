@@ -4,12 +4,8 @@ import sys
 
 
 class Logger:
-    verbose = False
-
     @classmethod
     def info(cls, message):
-        if not cls.verbose:
-            return
         print(f"[INFO] {message}", file=sys.stdout)
 
     @classmethod

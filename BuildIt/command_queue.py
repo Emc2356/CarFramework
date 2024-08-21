@@ -10,6 +10,14 @@ import os
 import io
 
 
+
+def update_terminal(lines: list[str], number_of_lines_to_clear: int) -> None:
+    for _ in range(number_of_lines_to_clear):
+        print("\x1b[1A\x1b[2K", end="") # move up cursor and delete whole line
+    for line in lines:
+        print(line)
+
+
 # https://github.com/termcolor/termcolor/blob/main/src/termcolor/termcolor.py
 def _can_do_colour() -> bool:
     """Check env vars and for tty/dumb terminal"""
@@ -94,56 +102,103 @@ class CommandQueue:
         if len(cls.queue) == 0 or cls.gather_cmd_count == len(cls.queue):
             return
         
+        # command, proccess
         processes: list[tuple[Command, subprocess.Popen]] = []
         
-        current_count = 0
         all_cmd_count = len(cls.queue) - cls.gather_cmd_count
+        
+        terminal_lines_to_clear: int = 0
+        want_to_update_terminal: bool = False
+        tasks_completed: int = 0
         
         cls.gather_cmd_count = 0
         loop_running = True
+        should_exit = False
+        is_gathering = False
+        
+        perma_lines: list[str] = []
         while loop_running:
             done_tasks = []
             for i, (command, process) in enumerate(processes):
                 result = process.poll()
+                
                 if result is None:
                     continue
-                    
+                
+                possible_msg: str = process.stdout.read()
+                if possible_msg != "":
+                    perma_lines.append(f"[INFO] {command.message}\n")
+                    perma_lines.append(possible_msg)
+                
+                # process is done
                 if result != 0:
                     for _, process in processes:
                         process.terminate()
                     
+                    update_terminal([], terminal_lines_to_clear)
+                    
+                    for line in perma_lines:
+                        print(line, end="")
+                    perma_lines.clear()
+                    sys.stdout.flush()
+                
                     Logger.error(command.fail_message)
                 else:
                     done_tasks.append(i)
                     
             for i in reversed(done_tasks):
-                processes.pop(i)
-
-            while len(processes) < cls.size:
-                command = cls.aquire_next_command()
+                possible_msg: str = processes[i][1].stdout.read()
+                if possible_msg != "":
+                    perma_lines.append(f"[INFO] {processes[i][0].message}\n")
+                    perma_lines.append(possible_msg)
                 
-                if command == None:
-                    for command, process in processes:
-                        if process.wait() != 0:
-                            Logger.error(command.fail_message)
-
+                want_to_update_terminal = True
+                tasks_completed += 1
+                processes.pop(i)
+            
+            while len(processes) < cls.size:
+                if is_gathering:
+                    if len(processes) == 0:
+                        is_gathering = False
+                    else:
+                        break
+                
+                if should_exit:
                     loop_running = False
+                    break
+                        
+                command = cls.aquire_next_command()
+
+                if command == None:
+                    if should_exit:
+                        loop_running = False
+                    should_exit = True
+                    
+                    is_gathering = True
                     processes.clear()
                     break
                 elif command.cmd_type == CommandType.GATHER:
-                    for command, process in processes:
-                        if process.wait() != 0:
-                            Logger.error(command.fail_message)
-                    processes.clear()
+                    is_gathering = True
                 else:
-                    Logger.info(f"[{current_count + 1}/{all_cmd_count}] {command.message}")
-                    processes.append((command, subprocess.Popen(command.cmd)))            
-                    current_count += 1
+                    processes.append((command, subprocess.Popen(command.cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)))            
+                    want_to_update_terminal = True
             
-            # sleep 16ms to not max out the cpu
-            time.sleep(0.016)
-
-        # catch any struglers
-        for command, process in processes:
-                if process.wait() != 0:
-                    Logger.error(command.fail_message)
+            if want_to_update_terminal:
+                terminal_lines = []
+                for i, (cmd, process) in enumerate(processes):
+                    terminal_lines.append(f"[{tasks_completed + i + 1}/{all_cmd_count}] {cmd.message}")
+            
+                update_terminal([], terminal_lines_to_clear)
+                
+                for line in perma_lines:
+                    print(line, end="")
+                perma_lines.clear()
+                sys.stdout.flush()
+                
+                update_terminal(terminal_lines, 0)
+                terminal_lines_to_clear = len(terminal_lines)
+                
+                want_to_update_terminal = False
+            
+            # poll each process 20 times per second
+            time.sleep(0.05)
