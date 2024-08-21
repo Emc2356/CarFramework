@@ -15,7 +15,9 @@ constexpr bool gEnableValidationLayers = true;
 constexpr bool gEnableValidationLayers = false;
 #endif
 
-const std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+const std::vector<const char*> deviceExtensions
+
+= {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL crVkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                                                         VkDebugUtilsMessageTypeFlagsEXT messageType,
