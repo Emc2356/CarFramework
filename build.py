@@ -19,11 +19,6 @@ def pch() -> None:
     )
 
 
-@buildspec(BuildSpecFlags.ANY)
-def fmtlib() -> None:
-    BuildIt.add_include_directory("./vendor/fmt/include")
-
-
 @buildspec(BuildSpecFlags.ANY_TOOLCHAIN | BuildSpecFlags.LINUX)
 def glfw() -> None:
     BuildIt.StaticLibrary(
@@ -337,8 +332,12 @@ def core_win_posix() -> None:
     if not BuildIt.is_release():
         BuildIt.add_define("CR_DEBUG")
         BuildIt.add_define("CR_HAVE_SHADERC")
+        
+    if BuildIt.is_windows():
+        BuildIt.add_define("_CRT_SECURE_NO_WARNINGS")
 
     BuildIt.add_include_directory("./vendor/glm/")
+    BuildIt.add_include_directory("./vendor/fmt/include")
     BuildIt.add_include_directory("./vendor/debugbreak/")
     
     BuildIt.Executable(

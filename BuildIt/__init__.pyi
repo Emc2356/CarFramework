@@ -18,6 +18,7 @@ from .build import (
     find_if_file_changed_from_include_recursivly, 
     rebuild_if_includes_changed
 )
+from .platform import is_windows, is_linux, is_macos
 from .decorators import buildspec
 from .build_spec_flags import BuildSpecFlags
 from .cli import handle_argv, unknown_argument
@@ -46,5 +47,8 @@ __all__ = [
     "handle_argv",
     "unknown_argument",
     "exec_cmd",
-    "ExecResult"
+    "ExecResult",
+    "is_windows",
+    "is_linux",
+    "is_macos",
 ]

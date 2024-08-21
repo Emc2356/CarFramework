@@ -30,7 +30,7 @@ namespace Car {
     private:
         Ref<Texture2D> mTexture;
         uint32_t mHeight;
-        std::array<Character, 255> mCharacters;
+        std::vector<Font::Character> mCharacters;
 
         friend Renderer2D;
     };

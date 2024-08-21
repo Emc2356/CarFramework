@@ -16,6 +16,7 @@ namespace Car {
 
     Font::Font(const std::string& path, uint32_t height, const std::string& charsToLoad) {
         mHeight = height;
+        mCharacters.resize(255);
         if (!sFreeTypeInitialized) {
             CR_VERIFYN(FT_Init_FreeType(&sFt), "ERROR::FREETYPE: Could not init FreeType Library");
             sFreeTypeInitialized = true;
@@ -65,8 +66,8 @@ namespace Car {
                     pixelBuffer[posInBuf + 3] = 255 * cond;
                 }
             }
-            mCharacters[chr] = {{(float)curAdvance, (float)0, (float)face->glyph->bitmap.width, (float)mHeight},
-                                (uint32_t)face->glyph->advance.x >> 6};
+            mCharacters[chr].rect = {(float)curAdvance, (float)0, (float)face->glyph->bitmap.width, (float)mHeight};
+            mCharacters[chr].advance = (uint32_t)face->glyph->advance.x >> 6;
 
             curAdvance += face->glyph->bitmap.width;
         }
