@@ -29,17 +29,16 @@ namespace Car {
         // Enable Keyboard Controls
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
         // Enable Gamepad Controls
-        // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      
+        // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
         // Enable Docking
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         // for now i disabled multiple viewports as it doesnt look and feel that
         // good in linux maybe in the future if i figure out wtf is causing it to
-        // look so bad (looking at you plasma KDE) i will enable it 
+        // look so bad (looking at you plasma KDE) i will enable it
         // Enable Multi-Viewport / Platform Windows
         // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
         // io.ConfigViewportsNoAutoMerge = true;
         // io.ConfigViewportsNoTaskBarIcon = true;
-    
 
         // Setup Dear ImGui style
         ImGui::StyleColorsDark();
@@ -62,7 +61,8 @@ namespace Car {
         info.Instance = graphicsContext->getInstance();
         info.PhysicalDevice = graphicsContext->getPhysicalDevice();
         info.Device = graphicsContext->getDevice();
-        info.QueueFamily = graphicsContext->findQueueFamilies(graphicsContext->getPhysicalDevice()).graphicsFamily.value();
+        info.QueueFamily =
+            graphicsContext->findQueueFamilies(graphicsContext->getPhysicalDevice()).graphicsFamily.value();
         info.Queue = graphicsContext->getGraphicsQueue();
         info.DescriptorPool = graphicsContext->getDescriptorPool();
         info.RenderPass = graphicsContext->getRenderPass();
@@ -111,10 +111,9 @@ namespace Car {
         // Rendering
         ImGui::Render();
         ImGui_ImplVulkan_RenderDrawData(
-            ImGui::GetDrawData(), 
+            ImGui::GetDrawData(),
             reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get())->getCurrentRenderCommandBuffer(),
-            nullptr
-        );
+            nullptr);
 
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
             ImGui::UpdatePlatformWindows();

@@ -15,6 +15,9 @@
 !.gitignore
 !.gitmodules
 
+# github files
+!/.github/**
+
 # clang-format
 !.clang-format
 !.clang-format-ignore

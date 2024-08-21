@@ -421,17 +421,17 @@ def unknown_arg(arg: str) -> bool:
         print("Car build script:")
         print("    --deps fetchs all of the dependencies and it initializes them")
         print("    --format formats the code (requires clang-format)")
+        print("    --lint checks if the code is formatted (requires clang-format)")
         print("    --shaderc build shaderc (required to compile shaders on the fly)")
         print("    --examples builds the examples")
-    elif arg == "--format":
-        files = list(str(path) for path in Path("./Car").glob("**/*.cpp"))
-        files += list(str(path) for path in Path("./Car").glob("**/*.hpp"))
-        files += list(str(path) for path in Path("./SandBox").glob("**/*.hpp"))
-        files += list(str(path) for path in Path("./SandBox").glob("**/*.cpp"))
-        files += list(str(path) for path in Path("./examples").glob("**/*.hpp"))
-        files += list(str(path) for path in Path("./examples").glob("**/*.cpp"))
+    elif arg == "--format" or arg == "--lint":
+        files = list(str(path) for path in Path("./Car").glob("**/*.[ch]pp"))
+        files += list(str(path) for path in Path("./examples").glob("**/*.[ch]pp"))
         
-        exit(BuildIt.exec_cmd("clang-format", "-i", *files, "--verbose").returncode)
+        if arg == "--format":
+            exit(BuildIt.exec_cmd("clang-format", "-i", *files, "--verbose").returncode)
+        else:
+            exit(BuildIt.exec_cmd("clang-format", "--dry-run", "--Werror", "-i", *files).returncode)
     elif arg == "--shaderc":
         global build_shaderc
         build_shaderc = True

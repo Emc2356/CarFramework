@@ -47,7 +47,7 @@ public:
                               {(float)Car::Random::UInt(0, screenSize.x), (float)Car::Random::UInt(0, screenSize.y)}});
         }
     }
-    
+
     virtual void onRender() override {
         for (const auto& wall : mWalls) {
             Car::Renderer2D::DrawLine(wall.start, wall.end);

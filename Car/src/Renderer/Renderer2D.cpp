@@ -128,7 +128,7 @@ namespace Car {
         if (sData->currentBatchSize > 0) {
             CR_CORE_ERROR("Called Car::Renderer2D::Begin() without closing the last begin");
         }
-        
+
         sData->textureTextures.clear();
     }
 
