@@ -23,5 +23,5 @@ I recommend after cloning the repo to do `./build.py --help` for all of the opti
 git clone https://github.com/Emc2356/CarFramework --recursive
 cd CarFramework
 ./build.py --deps
-./build.py -j --verbose --shaderc
+./build.py -j --shaderc
 ```
