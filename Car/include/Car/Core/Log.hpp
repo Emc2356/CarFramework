@@ -1,5 +1,12 @@
 #pragma once
 
+#if !defined(__clang__)
+#ifdef CR_DEBUG
+#define HAD_CR_DEBUG
+#undef CR_DEBUG
+#endif
+#endif
+
 #if defined(CR_DEBUG)
 #define FMT_HEADER_ONLY
 #include <fmt/core.h>
@@ -55,4 +62,9 @@
 #define CR_ASSERT(x, message)
 #define CR_VERIFY(x, message) x
 #define CR_VERIFYN(x, message) x
+#endif
+
+#ifdef HAD_CR_DEBUG
+#define CR_DEBUG
+#undef HAD_CR_DEBUG
 #endif

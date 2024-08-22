@@ -20,6 +20,10 @@ import time
 import sys
 
 
+_GNU = 1
+_CLANG = 2
+
+
 class Functions:
     _instance = None
     _executed = False
@@ -154,9 +158,9 @@ def save_compile_commands(data: dict) -> None:
         f.write(json.dumps(data))
 
 
-def sort_static_libraries() -> list[StaticLibrary]:
-    libraries: list[str] = list(lib.name for lib in Register().static_libraries)
-    dependencies: dict[str, list[str]] = {lib.name: lib.depends_on for lib in Register().static_libraries}
+def sort_static_libraries(_libraries: list[StaticLibrary]) -> list[StaticLibrary]:
+    libraries: list[str] = list(lib.name for lib in _libraries)
+    dependencies: dict[str, list[str]] = {lib.name: lib.depends_on for lib in _libraries}
 
     for name, deps in dependencies.items():
         for dep in deps:
@@ -202,212 +206,36 @@ def sort_static_libraries() -> list[StaticLibrary]:
     return sorted_static_libraries
 
 
-def build_gnu() -> None:
-    changed_precompiled_headers: bool = False
-    changed_static_libraries: bool = False
-    changed_executables: bool = False
-
-    all_precompiled_headers = Register().precompiled_headers
-    all_static_libraries = Register().static_libraries
+def expand_static_libraries_from_strings(libraries: list[str]) -> list[StaticLibrary]:
+    ret: set[StaticLibrary] = set()
     
-    link_commands: list[Command] = []
-
-    if len(all_precompiled_headers) > 0 or any(len(lib.attached_precompiled_headers) > 0 for lib in all_static_libraries):
-        for header in all_precompiled_headers:
-            c_build_command, cxx_build_command = Compiler.construct_build_command(header, True)
-
-            if header.source.has_suffix(".hpp"):
-                build_command = cxx_build_command
-            elif header.source.has_suffix(".h"):
-                build_command = c_build_command
-            else:
-                Logger.warn(
-                    f"unrecognized file extension `{header.source.path.suffix}` for {header.source}, assuming C++")
-                build_command = cxx_build_command
-
-            if header.source.was_modified() or not Path(str(header.source) + ".gch").exists():
-                create_execute_command(
-                    build_command + [str(header.source), "-o", f"{str(header.source)}.gch"],
-                    f"compiling {header.source}",
-                    f"failed to compile {header.source}"
-                )
-                changed_precompiled_headers = True
-
-                LogFile.update(header.source)
-
-        for static_library in all_static_libraries:
-            c_build_command, cxx_build_command = Compiler.construct_build_command(static_library, True)
-            
-            for header_file in static_library.attached_precompiled_headers:
-                if static_library.is_forced_cxx:
-                    build_command = cxx_build_command
-                elif header_file.has_suffix(".hpp"):
-                    build_command = cxx_build_command
-                elif header_file.has_suffix(".h"):
-                    build_command = c_build_command
-                else:
-                    Logger.warn(
-                        f"unrecognized file extension `{header_file.path.suffix}` for {header_file}, assuming C++")
-                    build_command = cxx_build_command
-
-                if header_file.was_modified() or not Path(str(header_file) + ".gch").exists():
-                    create_execute_command(
-                        build_command + [str(header_file), "-o", f"{str(header_file)}.gch"],
-                        f"compiling {header_file}",
-                        f"failed to compile {header_file}"
-                    )
-                    changed_precompiled_headers = True
+    all_libraries = Register().static_libraries
     
-                    LogFile.update(header_file)
+    if not all_libraries:
+        Logger.error(f"no static libraries detected to link against")
+    
+    start = time.time()
+    while libraries:
+        strlib = libraries.pop()
         
-        create_gather_cmd()
-    
-    if len(all_static_libraries) > 0:
-        for library in all_static_libraries:
-            c_build_command, cxx_build_command = Compiler.construct_build_command(library)
-
-            object_files_in_static_library: list[Path] = []
-            needs_rebuilding: bool = False
-            for source_file in library.sources:
-                if source_file.has_suffix(".cpp") or source_file.has_suffix(".cc"):
-                    build_command = cxx_build_command
-                elif source_file.has_suffix(".c"):
-                    build_command = c_build_command
-                else:
-                    Logger.warn(
-                        f"unrecognized file extension `{source_file.path.suffix}` for {source_file}, assuming C++")
-                    build_command = cxx_build_command
-
-                object_file = source_file.to_object_filename()
-
-                # ensure that the compiler doesn't fail because the parent directory doesn't exist
-                object_file.parent.mkdir(parents=True, exist_ok=True)
-
-                # check if the object file is up-to-date
-                if not source_file.object_file_upto_date() or changed_precompiled_headers:
-                    create_execute_command(
-                        build_command + ["-o", str(object_file), str(source_file)],
-                        f"compiling {source_file}",
-                        f"failed to compile {source_file}"
-                    )
-
-                    # save the time
-                    LogFile.update(str(source_file))
-                    changed_static_libraries = True
-                    needs_rebuilding = True
-
-                object_files_in_static_library.append(object_file)
-
-            # make sure that the object files exist before the library is created
-            if needs_rebuilding or not (library.out_filepath / f"lib{library.name}.a").exists():
-                library.out_filepath.mkdir(parents=True, exist_ok=True)
-                link_commands.append(create_execute_command(
-                    ["ar", "rcs", "-o", str(library.out_filepath / f"lib{library.name}.a")] + list(
-                        str(path) for path in object_files_in_static_library),
-                    f"linking static library {library.out_filepath / f"lib{library.name}.a"}",
-                    f"failed to create static library {library.out_filepath / f"lib{library.name}.a"}",
-                    submit=False
-                ))
-
-    if len(Register().executables) > 0:
-        for executable in Register().executables:
-            c_build_command, cxx_build_command = Compiler.construct_build_command(executable)
-
-            for source_file in executable.sources:
-                if source_file.has_suffix(".cpp") or source_file.has_suffix(".cc"):
-                    build_command = cxx_build_command
-                elif source_file.has_suffix(".c"):
-                    build_command = c_build_command
-                else:
-                    Logger.warn(
-                        f"unrecognized file extension `{source_file.path.suffix}` for {source_file}, assuming C++")
-                    build_command = cxx_build_command
-
-                object_file = source_file.to_object_filename()
-
-                object_file.parent.mkdir(parents=True, exist_ok=True)
-
-                if not source_file.object_file_upto_date():
-                    create_execute_command(
-                        build_command + ["-o", str(object_file), str(source_file)],
-                        f"compiling {source_file}",
-                        f"failed to compile {source_file}"
-                    )
-
-                    LogFile.update(source_file)
-                    changed_executables = True
-
-        create_gather_cmd()
-        
-        for link_command in link_commands:
-            CommandQueue.add(link_command)
+        for tlib in all_libraries:
+            if tlib.name == strlib:
+                ret.add(tlib)
+                break
+        else:
+            Logger.error(f"static library {strlib} not found")
             
-        create_gather_cmd()
-
-        for executable in Register().executables:
-            command: list[str] = [Compiler.linker] + Compiler.link_flags + executable.extra_link_flags
-
-            static_library_directories: set = set()
-            for static_library in all_static_libraries:
-                static_library_directories.add(static_library.out_filepath)
-
-            for directory in static_library_directories:
-                command.append("-L")
-                command.append(str(directory))
-
-            command.append("-o")
-            command.append(executable.name)
-
-            for source_file in executable.sources:
-                command.append(str(source_file.to_object_filename()))
-
-            for lib in executable.libraries:
-                command.append("-l")
-                command.append(f"{lib}")
-
-            for static_library in sort_static_libraries()[::-1]:
-                command.append("-l")
-                command.append(f"{str(static_library.name)}")
-            
-            if not Path(executable.name).exists() or changed_executables or changed_static_libraries:
-                create_execute_command(
-                    command,
-                    f"creating executable `{executable.name}`",
-                    "linker failed"
-                )
-
-        create_gather_cmd()
+        # should never take 2 seconds
+        if time.time() - start > 2:
+            Logger.error("cyclical dependency detected in static libraries")
         
-    if len(all_precompiled_headers) > 0 or any(len(lib.attached_precompiled_headers) > 0 for lib in all_static_libraries):
-        for header in all_precompiled_headers:
-            find_if_file_changed_from_include_recursivly(header.source.path, is_gathering=True)
-
-        for static_library in all_static_libraries:
-            for header_file in static_library.attached_precompiled_headers:
-                find_if_file_changed_from_include_recursivly(header_file.path, is_gathering=True)
+        if tlib.depends_on:
+            libraries.extend(tlib.depends_on)
     
-    if len(all_static_libraries) > 0:
-        for library in all_static_libraries:
-            for source_file in library.sources:
-                find_if_file_changed_from_include_recursivly(source_file.path, is_gathering=True)
-
-    if len(Register().executables) > 0:
-        for executable in Register().executables:
-            for source_file in executable.sources:
-                find_if_file_changed_from_include_recursivly(source_file.path, is_gathering=True)
-    
-    start_time = time.time()
-    CommandQueue.execute()
-    total_time = time.time() - start_time
-    minutes = int(total_time // 60)
-    seconds = int(total_time - minutes * 60)
-    if minutes > 0:
-        Logger.info(f"compilation took {minutes}m {seconds}s")
-    else:
-        Logger.info(f"compilation took {seconds}s")
+    return list(ret)
 
 
-def build_clang() -> None:
+def build_shared(toolc: int) -> None:
     compile_commands = get_compile_commands()
     
     changed_precompiled_headers: bool = False
@@ -432,8 +260,20 @@ def build_clang() -> None:
                     f"unrecognized file extension `{header.source.path.suffix}` for {header.source}, assuming C++")
                 build_command = cxx_build_command
 
-            command = build_command + ["-Xclang", "-emit-pch", str(header.source), "-o", f"{str(header.source)}.pch"]
-            if header.source.was_modified() or not Path(str(header.source) + ".pch").exists() or (compile_commands.get(str(header.source), None) is None or compile_commands[str(header.source)] != command) or find_if_file_changed_from_include_recursivly(header.source.path):
+            if toolc == _CLANG:
+                pch_true_name = str(header.source) + ".pch"
+            elif toolc == _GNU:
+                pch_true_name = str(header.source) + ".gch"
+            else:
+                raise RuntimeError(toolc)
+            
+            if toolc == _CLANG:
+                command = build_command + ["-Xclang", "-emit-pch", str(header.source), "-o", pch_true_name]
+            elif toolc == _GNU:
+                command = build_command + [str(header.source), "-o", pch_true_name]
+            else:
+                raise RuntimeError(toolc)
+            if header.source.was_modified() or not Path(pch_true_name).exists() or (compile_commands.get(str(header.source), None) is None or compile_commands[str(header.source)] != command) or find_if_file_changed_from_include_recursivly(header.source.path):
                 create_execute_command(
                     command,
                     f"compiling {header.source}",
@@ -447,7 +287,7 @@ def build_clang() -> None:
             c_build_command, cxx_build_command = Compiler.construct_build_command(static_library, True)
             
             for header_file in static_library.attached_precompiled_headers:
-                if static_library.is_forced_cxx:
+                if static_library.is_forced_cxx and toolc == _CLANG:
                     build_command = cxx_build_command + ["-x", "c++-header"]
                 elif header_file.has_suffix(".hpp"):
                     build_command = cxx_build_command
@@ -458,8 +298,22 @@ def build_clang() -> None:
                         f"unrecognized file extension `{header_file.path.suffix}` for {header_file}, assuming C++")
                     build_command = cxx_build_command
 
-                command = build_command + ["-Xclang", "-emit-pch", str(header_file), "-o", f"{str(header_file)}.pch"]
-                if header_file.was_modified() or not Path(str(header_file) + ".pch").exists() or (compile_commands.get(str(header_file.path), None) is None or compile_commands[str(header_file.path)] != command) or find_if_file_changed_from_include_recursivly(header_file.path):
+
+                if toolc == _CLANG:
+                    pch_true_name = str(header_file) + ".pch"
+                elif toolc == _GNU:
+                    pch_true_name = str(header_file) + ".gch"
+                else:
+                    raise RuntimeError(toolc)
+                
+                if toolc == _CLANG:
+                    command = build_command + ["-Xclang", "-emit-pch", str(header_file), "-o", pch_true_name]
+                elif toolc == _GNU:
+                    command = build_command + [str(header_file), "-o", pch_true_name]
+                else:
+                    raise RuntimeError(toolc)
+
+                if header_file.was_modified() or not Path(pch_true_name).exists() or (compile_commands.get(str(header_file.path), None) is None or compile_commands[str(header_file.path)] != command) or find_if_file_changed_from_include_recursivly(header_file.path):
                     create_execute_command(
                         command,
                         f"compiling {header_file}",
@@ -577,7 +431,7 @@ def build_clang() -> None:
                 command.append("-l")
                 command.append(f"{lib}")
 
-            for static_library in sort_static_libraries()[::-1]:
+            for static_library in sort_static_libraries(expand_static_libraries_from_strings(executable.static_libraries))[::-1]:
                 command.append("-l")
                 command.append(f"{str(static_library.name)}")
             
@@ -627,9 +481,9 @@ def build() -> None:
     Functions.execute()
     try:
         if Compiler.toolchain == Toolchain.GNU:
-            return build_gnu()
+            return build_shared(_GNU)
         elif Compiler.toolchain == Toolchain.CLANG:
-            return build_clang()
+            return build_shared(_CLANG)
         else:
             Logger.error(f"unrecognized toolchain `{Compiler.toolchain}`, build.py")
     except KeyboardInterrupt:

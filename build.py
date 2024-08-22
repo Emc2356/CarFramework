@@ -10,15 +10,6 @@ build_examples = False
 build_shaderc = False
 
 
-@buildspec(BuildSpecFlags.ANY)
-def pch() -> None:
-    BuildIt.PreCompiledHeader(
-        source="./Car/include/Car/Core/crpch.hpp",
-        extra_build_flags=[],
-        extra_defines=[]
-    )
-
-
 @buildspec(BuildSpecFlags.ANY_TOOLCHAIN | BuildSpecFlags.LINUX)
 def glfw() -> None:
     BuildIt.StaticLibrary(
@@ -279,7 +270,7 @@ def spirv_cross() -> None:
 
 @buildspec(BuildSpecFlags.ANY)
 def carlib() -> None:
-    carlib = BuildIt.StaticLibrary(
+    BuildIt.StaticLibrary(
         name="Car",
         out_filepath="./libraries/",
         sources=[
@@ -297,6 +288,15 @@ def carlib() -> None:
             "./Car/src/Renderer/Renderer2D.cpp",
             "./Car/src/Renderer/Font.cpp",
             "./Car/src/Renderer/GraphicsContext.cpp",
+            "./Car/src/internal/Vulkan/Renderer.cpp",
+            "./Car/src/internal/Vulkan/GraphicsContext.cpp",
+            "./Car/src/internal/Vulkan/Shader.cpp",
+            "./Car/src/internal/Vulkan/IndexBuffer.cpp",
+            "./Car/src/internal/Vulkan/VertexBuffer.cpp",
+            "./Car/src/internal/Vulkan/SSBO.cpp",
+            "./Car/src/internal/Vulkan/VertexArray.cpp",
+            "./Car/src/internal/Vulkan/UniformBuffer.cpp",
+            "./Car/src/internal/Vulkan/Texture2D.cpp",
         ],
         extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
         extra_defines=[
@@ -307,23 +307,14 @@ def carlib() -> None:
             "ImGui", "glad", "stb", "glfw", "freetype", "shaderc", "spirv_cross"
         ],
         include_directories=[],
-    )
-    carlib.add_sources(
-        "./Car/src/internal/Vulkan/Renderer.cpp",
-        "./Car/src/internal/Vulkan/GraphicsContext.cpp",
-        "./Car/src/internal/Vulkan/Shader.cpp",
-        "./Car/src/internal/Vulkan/IndexBuffer.cpp",
-        "./Car/src/internal/Vulkan/VertexBuffer.cpp",
-        "./Car/src/internal/Vulkan/SSBO.cpp",
-        "./Car/src/internal/Vulkan/VertexArray.cpp",
-        "./Car/src/internal/Vulkan/UniformBuffer.cpp",
-        "./Car/src/internal/Vulkan/Texture2D.cpp",
+    ).attach_precompiled_headers(
+        "./Car/include/Car/Core/crpch.hpp"
     )
     BuildIt.add_include_directory("./Car/include/")
 
 
 @buildspec(BuildSpecFlags.CORE | BuildSpecFlags.ANY_PLATFORM, __name__ == "__main__")
-def core_win_posix() -> None:
+def core() -> None:
     BuildIt.set_toolchain(BuildIt.Toolchain.CLANG)
     BuildIt.set_c_standard(99)
     BuildIt.set_cxx_standard(17)
@@ -345,10 +336,7 @@ def core_win_posix() -> None:
         sources=[
             "SandBox/src/main.cpp",
         ],
-        # TODO: Implement this system
-        static_libraries=[
-            "Car",
-        ],
+        static_libraries=["Car"],
         extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
         extra_link_flags=[],
         include_directories=[],
@@ -364,9 +352,7 @@ def core_win_posix() -> None:
             sources=[
                 "examples/RayCasting.cpp"
             ],
-            static_libraries=[
-                "Car"
-            ],
+            static_libraries=["Car"],
             extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
             extra_link_flags=[],
             include_directories=[],
