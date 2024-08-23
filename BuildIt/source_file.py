@@ -7,12 +7,17 @@ import os
 
 class SourceFile:
     __slots__ = ("path", "watches")
+    
+    _mtimes: dict[Path, float] = {}
 
     def __init__(self, path, watches=None) -> None:
         if watches is None:
             watches = []
         self.path = Path(path)
         self.watches = SourceFile.from_list(watches)
+        
+        if self.path not in SourceFile._mtimes:
+            SourceFile._mtimes[path] = os.path.getmtime(str(self.path))
 
         if not self.path.exists():
             Logger.error(f"file `{str(self.path)}` does not exist")
@@ -22,6 +27,10 @@ class SourceFile:
 
     def __repr__(self):
         return str(self.path)
+
+    @property
+    def mtime(self) -> float:
+        return SourceFile._mtimes[self.path]
 
     def read(self):
         return self.path.read_text()

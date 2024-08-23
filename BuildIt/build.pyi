@@ -1,6 +1,6 @@
 from typing import Callable, Any, ClassVar, Optional
 
-from .build_spec_flags import BuildSpecFlags
+from .buildspec import BuildSpecFlags
 
 
 class Functions:
@@ -12,7 +12,3 @@ class Functions:
     def execute() -> None: ...
 
 def build() -> None: ...
-
-
-# not really fast as it needs to recursivly check all of the files
-def rebuild_if_includes_changed() -> None: ...

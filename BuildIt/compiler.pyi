@@ -7,7 +7,6 @@ import os
 
 from .static_library import StaticLibrary
 from .executable import Executable
-from .precompiled_header import PreCompiledHeader
 
 
 class Toolchain(enum.IntEnum):
@@ -45,19 +44,19 @@ class Compiler:
     @classmethod
     def construct_build_command_gnu(
         cls,
-        other: Union[StaticLibrary, Executable, PreCompiledHeader],
+        other: Union[StaticLibrary, Executable],
         ignore_pch: bool
     ) -> tuple[list[str], list[str]]: ...
     @classmethod
     def construct_build_command_clang(
         cls,
-        other: Union[StaticLibrary, Executable, PreCompiledHeader],
+        other: Union[StaticLibrary, Executable],
         ignore_pch: bool
     ) -> tuple[list[str], list[str]]: ...
     @classmethod
     def construct_build_command(
         cls,
-        other: Union[StaticLibrary, Executable, PreCompiledHeader],
+        other: Union[StaticLibrary, Executable],
         ignore_pch: bool=False
     ) -> tuple[list[str], list[str]]: ...
 

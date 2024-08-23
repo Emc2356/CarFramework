@@ -20,7 +20,6 @@ class LogFile:
             cls.load()
             cls.is_loaded = True
         cls.data[name] = time
-        cls.save()
 
     @classmethod
     def get(cls, name):
@@ -43,7 +42,7 @@ class LogFile:
             cls.data[lines[i]] = float(lines[j])
 
     @classmethod
-    def save(cls) :
+    def save(cls):
         with cls.log_file.open("w") as f:
             for name, time in cls.data.items():
                 f.write(f"{name}\n{time}\n")

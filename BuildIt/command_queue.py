@@ -18,35 +18,6 @@ def update_terminal(lines: list[str], number_of_lines_to_clear: int) -> None:
         print(line)
 
 
-# https://github.com/termcolor/termcolor/blob/main/src/termcolor/termcolor.py
-def _can_do_colour() -> bool:
-    """Check env vars and for tty/dumb terminal"""
-    # First check overrides:
-    # "User-level configuration files and per-instance command-line arguments should
-    # override $NO_COLOR. A user should be able to export $NO_COLOR in their shell
-    # configuration file as a default, but configure a specific program in its
-    # configuration file to specifically enable color."
-    # https://no-color.org
-    if "ANSI_COLORS_DISABLED" in os.environ:
-        return False
-    if "NO_COLOR" in os.environ:
-        return False
-    if "FORCE_COLOR" in os.environ:
-        return True
-
-    # Then check system:
-    if os.environ.get("TERM") == "dumb":
-        return False
-    if not hasattr(sys.stdout, "fileno"):
-        return False
-
-    try:
-        return os.isatty(sys.stdout.fileno())
-    except io.UnsupportedOperation:
-        return sys.stdout.isatty()
-
-
-
 class CommandType(enum.Enum):
     NONE = 0
     EXECUTE = enum.auto()
@@ -97,9 +68,13 @@ class CommandQueue:
         return cls.queue.pop(0)
 
     @classmethod
+    def holds_any_execute_commands(cls) -> bool:
+        return not (len(cls.queue) == 0 or cls.gather_cmd_count == len(cls.queue))
+
+    @classmethod
     def execute(cls) -> None:
-        # exit(_can_do_colour())
         if len(cls.queue) == 0 or cls.gather_cmd_count == len(cls.queue):
+            cls.queue.clear()
             return
         
         # command, proccess

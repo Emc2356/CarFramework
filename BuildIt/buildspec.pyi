@@ -1,4 +1,7 @@
+from typing import Callable, Any, overload
+
 import enum
+
 
 class BuildSpecFlags(enum.IntFlag):
     NONE: BuildSpecFlags
@@ -23,3 +26,13 @@ class BuildSpecFlags(enum.IntFlag):
     CORE: BuildSpecFlags
 
     def to_str(self) -> str: ...
+
+
+@overload
+def buildspec(flags: BuildSpecFlags) -> Callable: ...
+@overload
+def buildspec(func: Callable[[], Any]) -> Callable[[Callable[[], Any]], Any]: ...
+@overload
+def buildspec(flags: BuildSpecFlags, condition: bool) -> Callable[[Callable[[], Any]], Any]: ...
+@overload
+def buildspec(flags: BuildSpecFlags, condition_callback: Callable[[], bool]) -> Callable[[Callable[[], Any]], Any]: ...

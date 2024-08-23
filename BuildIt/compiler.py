@@ -7,7 +7,6 @@ from .register import Register
 from .logger import Logger
 from .static_library import StaticLibrary
 from .executable import Executable
-from .precompiled_header import PreCompiledHeader
 
 
 class Toolchain(enum.IntEnum):
@@ -81,13 +80,6 @@ class Compiler:
         command_cxx.extend(common)
 
         if not ignore_pch:
-            for precompiled_header in Register().precompiled_headers:
-                command_cxx.append("-include")
-                command_cxx.append(f"{precompiled_header.source}")
-
-                if precompiled_header.source.has_suffix(".h"):
-                    command_c.append("-include")
-                    command_c.append(f"{precompiled_header.source}")
             if hasattr(other, "attached_precompiled_headers"):
                 for header_soure in other.attached_precompiled_headers:
                     command_cxx.append("-include")
@@ -152,13 +144,6 @@ class Compiler:
         command_cxx.extend(common)
 
         if not ignore_pch:
-            for precompiled_header in Register().precompiled_headers:
-                command_cxx.append("-include-pch")
-                command_cxx.append(f"{precompiled_header.source}.pch")
-
-                if precompiled_header.source.has_suffix(".h"):
-                    command_c.append("-include-pch")
-                    command_c.append(f"{precompiled_header.source}.pch")
             if hasattr(other, "attached_precompiled_headers"):
                 for header_soure in other.attached_precompiled_headers:
                     command_cxx.append("-include-pch")

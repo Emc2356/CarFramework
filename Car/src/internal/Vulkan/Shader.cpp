@@ -695,6 +695,7 @@ namespace Car {
         if (!std::filesystem::exists(vertCacheFile)) {
 #ifdef CR_HAVE_SHADERC
             std::filesystem::create_directories(vertCacheFile.parent_path());
+            CR_CORE_DEBUG("compiling vertex shader {}", vertPath);
             vertexBinary = crVkCompileSingleShader(vertPath, shaderc_vertex_shader);
 
             writeToFile(vertCacheFile, reinterpret_cast<const uint8_t*>(vertexBinary.data()), vertexBinary.size());
@@ -702,7 +703,7 @@ namespace Car {
             CR_CORE_ERROR("Can not online compile shaders without shaderc");
 #endif // CR_HAVE_SHADERC
         } else {
-            CR_CORE_DEBUG("Loading pre-compiled SPIRV vertex shader");
+            CR_CORE_DEBUG("Loading pre-compiled SPIRV vertex shader from {}", (std::string)vertCacheFile);
             std::string data = readFile(vertCacheFile);
             vertexBinary = {data.cbegin(), data.cend()};
         }
@@ -710,6 +711,7 @@ namespace Car {
         if (!std::filesystem::exists(fragCacheFile)) {
 #ifdef CR_HAVE_SHADERC
             std::filesystem::create_directories(fragCacheFile.parent_path());
+            CR_CORE_DEBUG("compiling fragmeant shader {}", fragPath);
             fragmeantBinary = crVkCompileSingleShader(fragPath, shaderc_fragment_shader);
 
             writeToFile(fragCacheFile, reinterpret_cast<const uint8_t*>(fragmeantBinary.data()),
@@ -718,7 +720,7 @@ namespace Car {
             CR_CORE_ERROR("Can not online compile shaders without shaderc");
 #endif // CR_HAVE_SHADERC
         } else {
-            CR_CORE_DEBUG("Loading pre-compiled SPIRV fragmeant shader");
+            CR_CORE_DEBUG("Loading pre-compiled SPIRV fragmeant shader from {}", (std::string)fragCacheFile);
             std::string data = readFile(fragCacheFile);
             fragmeantBinary = {data.cbegin(), data.cend()};
         }

@@ -4,12 +4,11 @@ from .logger import Logger
 
 if TYPE_CHECKING:
     from .static_library import StaticLibrary
-    from .precompiled_header import PreCompiledHeader
     from .executable import Executable
 
 
 class Register:
-    __slots__ = ("precompiled_headers", "static_libraries", "executables")
+    __slots__ = ("static_libraries", "executables")
 
     _instance = None
 
@@ -20,20 +19,16 @@ class Register:
         return cls._instance
 
     def __init(self) -> None:
-        self.precompiled_headers = []
         self.static_libraries = []
         self.executables = []
 
     @staticmethod
     def submit(other):
         from BuildIt.static_library import StaticLibrary
-        from BuildIt.precompiled_header import PreCompiledHeader
         from BuildIt.executable import Executable
 
         if isinstance(other, StaticLibrary):
             Register().static_libraries.append(other)
-        elif isinstance(other, PreCompiledHeader):
-            Register().precompiled_headers.append(other)
         elif isinstance(other, Executable):
             Register().executables.append(other)
         else:

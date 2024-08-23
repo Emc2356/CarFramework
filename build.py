@@ -6,7 +6,6 @@ from pathlib import Path
 
 
 build_examples = False
-
 build_shaderc = False
 
 
@@ -318,7 +317,6 @@ def core() -> None:
     BuildIt.set_toolchain(BuildIt.Toolchain.CLANG)
     BuildIt.set_c_standard(99)
     BuildIt.set_cxx_standard(17)
-    # BuildIt.rebuild_if_includes_changed()
 
     if not BuildIt.is_release():
         BuildIt.add_define("CR_DEBUG")
