@@ -1,23 +1,33 @@
 #include "Car/Application.hpp"
+#include "Car/Core/Log.hpp"
 #include "Car/ResourceManager.hpp"
 #include "Car/Renderer/Renderer2D.hpp"
 #include "Car/Random.hpp"
 #include "Car/Renderer/Renderer.hpp"
 #include "Car/Time.hpp"
+#include <chrono>
 
 namespace Car {
     Application* sInstance = nullptr;
     static Application::Specification sSpec;
 
-    void Application::SetSpecification(const Application::Specification& spec) { sSpec = spec; }
+    void Application::SetSpecification(const Application::Specification& spec) {
+        if (sInstance != nullptr) {
+            CR_CORE_ERROR("the Application Specification can not be set after the application has been created");
+        }
+        if (spec.targetFPS <= 0 && spec.targetFPS != -1) {
+            CR_CORE_ERROR("targetFPS can either be a positive integer or -1");
+        }
+        sSpec = spec;
+    }
 
     Application::Application() {
         CR_ASSERT(sInstance == nullptr, "Application already exists");
         CR_CORE_DEBUG("Application created");
         sInstance = this;
 
-        Window::Specification windowSpec = {sSpec.width, sSpec.height,    sSpec.title,
-                                            sSpec.vsync, sSpec.resizable, CR_BIND_FN1(Car::Application::onEvent)};
+        Window::Specification windowSpec = {sSpec.width, sSpec.height,    sSpec.title, 
+                                            sSpec.resizable, CR_BIND_FN1(Car::Application::onEvent)};
 
         mWindow = createRef<Car::Window>(windowSpec);
         mWindow->init();
@@ -45,15 +55,22 @@ namespace Car {
         if (sSpec.useImGui) {
             mImGuiLayer.onAttach();
         }
+        double lastFrameTime = 0.0;
         while (isRunning) {
-            double time = Time::Get();
-            Timestep dt = time - mLastFrameTime;
-            mLastFrameTime = time;
-
-            onUpdate((double)dt);
+            double dt;
+            if (lastFrameTime == 0) {
+                dt = 1.0 / 60.0;
+                lastFrameTime = (double)Time::GetMicro() / 1000.0;
+            } else {
+                double time = (double)Time::GetMicro() / 1000.0;
+                dt = (time - lastFrameTime) / 1000.0;
+                lastFrameTime = time;
+            }
+            
+            onUpdate(dt);
 
             for (Layer* layer : mLayerStack) {
-                layer->onUpdate((double)dt);
+                layer->onUpdate(dt);
             }
 
             Renderer::BeginRecording();
@@ -66,15 +83,24 @@ namespace Car {
             if (sSpec.useImGui) {
                 mImGuiLayer.begin();
                 for (Layer* layer : mLayerStack) {
-                    layer->onImGuiRender((double)dt);
+                    layer->onImGuiRender(dt);
                 }
-                onImGuiRender((double)dt);
+                onImGuiRender(dt);
                 mImGuiLayer.end();
             }
             Car::Renderer2D::End();
             Renderer::EndRecording();
 
             mWindow->onUpdate();
+            
+            // TODO: This
+            // if (sSpec.targetFPS != -1) {
+            //     int64_t timeToSleep = int64_t(1000.0 / (double)sSpec.targetFPS - dt * 1000);
+            //     CR_CORE_INFO("sleeping for {} {}", timeToSleep, dt * 1000);
+            //     if (timeToSleep > 0) {
+            //         std::this_thread::sleep_for(std::chrono::microseconds(timeToSleep * 1000));
+            //     }
+            // }
         }
         if (sSpec.useImGui) {
             mImGuiLayer.onDetach();

@@ -113,6 +113,31 @@ namespace Car {
     }
 
     void VulkanShader::setInput(uint32_t set, uint32_t binding, bool applyToAll, Ref<UniformBuffer> ub) {
+        CR_IF (set > mCompiledShader.sets.size()) {
+            CR_CORE_ERROR("set {0} binding {1} does not exist", set, binding);
+            CR_DEBUGBREAK();
+            return;
+        }
+        CR_IF (1) {
+            bool exists = false;
+            for (const Binding& binding_ : mCompiledShader.sets[set]) {
+                if (binding_.binding == binding) {
+                    if (binding_.descriptorType != DescriptorType::UniformBuffer) {
+                        CR_CORE_ERROR("set {0} binding {1} is not a uniformbuffer", set, binding);
+                        CR_DEBUGBREAK();
+                        return;
+                    }
+                    exists = true;
+                }
+            }
+            
+            if (!exists) {
+                CR_CORE_ERROR("set {0} binding {1} does not exist", set, binding);
+                CR_DEBUGBREAK();
+                return;
+            }
+        }
+        
         VkDevice device = mGraphicsContext->getDevice();
         if (applyToAll) {
             for (size_t i = 0; i < mGraphicsContext->getMaxFramesInFlight(); i++) {
@@ -152,6 +177,30 @@ namespace Car {
     }
 
     void VulkanShader::setInput(uint32_t set, uint32_t binding, bool applyToAll, Ref<Texture2D> texture) {
+        CR_IF (set > mCompiledShader.sets.size()) {
+                CR_CORE_ERROR("set {0} binding {1} does not exist", set, binding);
+                CR_DEBUGBREAK();
+                return;
+            }
+            CR_IF (1) {
+                bool exists = false;
+                for (const Binding& binding_ : mCompiledShader.sets[set]) {
+                    if (binding_.binding == binding) {
+                        if (binding_.descriptorType != DescriptorType::Sampler2D) {
+                            CR_CORE_ERROR("set {0} binding {1} is not a sampler2D", set, binding);
+                            CR_DEBUGBREAK();
+                            return;
+                        }
+                        exists = true;
+                    }
+                }
+                
+                if (!exists) {
+                    CR_CORE_ERROR("set {0} binding {1} does not exist", set, binding);
+                    CR_DEBUGBREAK();
+                    return;
+                }
+            }
         VkDevice device = mGraphicsContext->getDevice();
         if (applyToAll) {
             for (size_t i = 0; i < mGraphicsContext->getMaxFramesInFlight(); i++) {

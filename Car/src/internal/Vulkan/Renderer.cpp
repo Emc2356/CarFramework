@@ -36,6 +36,7 @@ namespace Car {
 
         VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();
         VkDevice device = sGraphicsContext->getDevice();
+        VkExtent2D swapChainExtent = sGraphicsContext->getSwapChainExtent();
 
         VkFence inFlightFence = sGraphicsContext->getCurrentInFlightFence();
         vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
@@ -62,23 +63,7 @@ namespace Car {
         renderPassInfo.pClearValues = &clearColor;
 
         vkCmdBeginRenderPass(cmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-    }
-
-    void VulkanRenderer::EndRecordingImpl() {
-        VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();
-
-        vkCmdEndRenderPass(cmdBuffer);
-        if (vkEndCommandBuffer(cmdBuffer) != VK_SUCCESS) {
-            throw std::runtime_error("failed to end recording of command buffer");
-        }
-    }
-
-    void VulkanRenderer::DrawCommandImpl(const Ref<VertexArray> va, uint32_t indicesCount) {
-        va->bind();
-
-        VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();
-        VkExtent2D swapChainExtent = sGraphicsContext->getSwapChainExtent();
-
+        
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
@@ -92,6 +77,47 @@ namespace Car {
         scissor.offset = {0, 0};
         scissor.extent = swapChainExtent;
         vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
+    }
+
+    void VulkanRenderer::EndRecordingImpl() {
+        VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();
+
+        vkCmdEndRenderPass(cmdBuffer);
+        if (vkEndCommandBuffer(cmdBuffer) != VK_SUCCESS) {
+            throw std::runtime_error("failed to end recording of command buffer");
+        }
+    }
+    
+    void VulkanRenderer::SetViewportImpl(float x, float y, float width, float height, float minDepth, float maxDepth) {
+        VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();
+        
+        VkViewport viewport{};
+        viewport.x = x;
+        viewport.y = y;
+        viewport.width = width;
+        viewport.height = height;
+        viewport.minDepth = minDepth;
+        viewport.maxDepth = maxDepth;
+        
+        vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+    }
+    
+    void VulkanRenderer::SetScissorImpl(int32_t x, int32_t y, int32_t width, int32_t height) {
+        VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();
+        
+        VkRect2D scissor{};
+        scissor.offset.x = x;
+        scissor.offset.y = y;
+        scissor.extent.width = width;
+        scissor.extent.height = height;
+
+        vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
+    }
+
+    void VulkanRenderer::DrawCommandImpl(const Ref<VertexArray> va, uint32_t indicesCount) {
+        va->bind();
+
+        VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();
 
         vkCmdDrawIndexed(cmdBuffer, indicesCount, 1, 0, 0, 0);
     }

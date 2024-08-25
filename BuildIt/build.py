@@ -282,7 +282,6 @@ def build_shared(toolc: int) -> None:
 
     compile_commands = load_compile_commands()
 
-    changed_precompiled_headers: bool = False
     changed_static_libraries: bool = False
     changed_executables: bool = False
 
@@ -327,7 +326,6 @@ def build_shared(toolc: int) -> None:
                         f"compiling {header_file}",
                         f"failed to compile {header_file}"
                     )
-                    changed_precompiled_headers = True
                     LogFile.update(header_file)
                     compile_commands[str(header_file.path)] = command
 

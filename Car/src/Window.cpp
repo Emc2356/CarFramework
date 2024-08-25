@@ -48,7 +48,6 @@ namespace Car {
 
     void Window::init() {
         mGraphicsContext->init();
-        setVSync(mSpec.vsync);
 
         // Event Handling
         glfwSetWindowUserPointer(mHandle, &mSpec);
@@ -157,12 +156,5 @@ namespace Car {
         }
 
         return ret;
-    }
-
-    void Window::setVSync(bool vsync) {
-        // TOOD: Vsync
-#if defined(CR_VULKAN)
-        UNUSED(vsync);
-#endif
     }
 } // namespace Car

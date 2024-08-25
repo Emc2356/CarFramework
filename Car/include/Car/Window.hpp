@@ -16,7 +16,6 @@ namespace Car {
             uint32_t width;
             uint32_t height;
             std::string title;
-            bool vsync;
             bool resizable;
             eventCallbackFn eventCallback;
         };
@@ -33,9 +32,6 @@ namespace Car {
         uint32_t getHeight() const { return mSpec.height; }
         float getAspectRation() const { return (float)mSpec.width / (float)mSpec.height; }
         const std::string getTitle() const { return mSpec.title; }
-        bool isVSync() const { return mSpec.vsync; }
-
-        void setVSync(bool enabled);
 
         GLFWwindow* getWindowHandle() const { return mHandle; }
 

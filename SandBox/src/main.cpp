@@ -118,7 +118,7 @@ Car::Application* Car::createApplication() {
     spec.width = 1280;
     spec.height = 720;
     spec.title = "Ray Casting";
-    spec.vsync = false;
+    spec.targetFPS = 60;
     spec.resizable = true;
     spec.useImGui = true;
     Car::Application::SetSpecification(spec);

@@ -27,6 +27,10 @@ namespace Car {
             sInstance->DrawCommandImpl(va, indicesCount);
         }
 
+        static void SetViewport(float x, float y, float width, float height, float minDepth=0.0f, float maxDepth=1.0f) { sInstance->SetViewportImpl(x, y, width, height, minDepth, maxDepth); }
+        static void SetScissor(int32_t x, int32_t y, int32_t width, int32_t height) { sInstance->SetScissorImpl(x, y, width, height); }
+
+        // implementation detail
         static void BeginRecording() { sInstance->BeginRecordingImpl(); }
         static void EndRecording() { sInstance->EndRecordingImpl(); }
 
@@ -35,6 +39,8 @@ namespace Car {
         virtual void ShutdownImpl() = 0;
         virtual void ClearColorImpl(float r, float g, float b, float a) = 0;
         virtual void DrawCommandImpl(const Ref<VertexArray> va, uint32_t indicesCount) = 0;
+        virtual void SetViewportImpl(float x, float y, float width, float height, float minDepth, float maxDepth) = 0;
+        virtual void SetScissorImpl(int32_t x, int32_t y, int32_t width, int32_t height) = 0;
         virtual void BeginRecordingImpl() = 0;
         virtual void EndRecordingImpl() = 0;
 

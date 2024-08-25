@@ -17,7 +17,7 @@ namespace Car {
             uint32_t width = 1280;
             uint32_t height = 720;
             std::string title = "Vroom";
-            bool vsync = true;
+            int32_t targetFPS = 60; // -1 is unlimited
             bool resizable = true;
             bool useImGui = true;
         };
@@ -66,7 +66,6 @@ namespace Car {
         Ref<Car::Window> mWindow;
         Car::ImGuiLayer mImGuiLayer;
         Car::LayerStack mLayerStack;
-        double mLastFrameTime = 0.0;
     };
 
     // To be defined in CLIENT
