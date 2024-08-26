@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Car/Core/Core.hpp"
+#include "Car/Core/Log.hpp"
+#include <sstream>
 
 namespace Car {
     enum class DescriptorType : uint8_t {
@@ -15,88 +17,80 @@ namespace Car {
         Combined = VertexShader | FragmeantShader
     };
 
-    struct Binding {
+    struct Descriptor {
         uint8_t binding;
         Car::DescriptorType descriptorType;
         Car::DescriptorStage stageFlags;
     };
 
-    // .crsh file format
+    // .crss format
     // setCount: u8
-    //     bindingCount: u8
+    //     descriptorCount: u8
     //         binding: u8
     //         descriptorType: u8
-    //         stageFlags: u8
-    // vertexShaderSize: u32
-    // fragmeantShaderSize: u32
-    // vertexShaderCode: char[]
-    // fragmeantShaderCode: char[]
-    struct CompiledShader {
-        std::vector<std::vector<Binding>> sets;
-        std::string vertexShader;
-        std::string fragmeantShader;
+    // shaderLen: u32
+    // shaderCode: char[shaderLen]
+    struct SingleCompiledShader {
+        std::vector<std::vector<Descriptor>> sets;
+        std::string shader;
 
-        std::string toString() {
-            std::stringstream stream;
-
-            stream << (uint8_t)sets.size();
-
-            for (uint32_t i = 0; i < sets.size(); i++) {
-                stream << (uint8_t)sets[i].size();
-
-                for (uint32_t j = 0; j < sets[i].size(); j++) {
-                    stream << (uint8_t)sets[i][j].binding;
-                    stream << (uint8_t)sets[i][j].descriptorType;
-                    stream << (uint8_t)sets[i][j].stageFlags;
+        std::vector<uint8_t> toBytes() {
+            uint32_t totalSize = sizeof(uint8_t);
+            for (const auto& set : sets) {
+                totalSize += sizeof(uint8_t);
+                for (const auto& descriptor : set) {
+                    UNUSED(descriptor);
+                    totalSize += sizeof(uint8_t) * 2;
                 }
             }
 
-            stream << (uint32_t)vertexShader.size();
-            stream << (uint32_t)fragmeantShader.size();
+            totalSize += sizeof(uint32_t);
+            totalSize += shader.size();
 
-            stream.write(vertexShader.data(), vertexShader.size());
-            stream.write(fragmeantShader.data(), fragmeantShader.size());
+            std::vector<uint8_t> bytes(totalSize);
 
-            return stream.str();
+            uint32_t pos = 0;
+            bytes[pos++] = (uint8_t)sets.size();
+
+            for (const auto& set : sets) {
+                bytes[pos++] = (uint8_t)set.size();
+                for (const auto& descriptor : set) {
+                    bytes[pos++] = (uint8_t)descriptor.binding;
+                    bytes[pos++] = (uint8_t)descriptor.descriptorType;
+                }
+            }
+            *(uint32_t*)(&bytes.data()[pos]) = shader.size();
+            pos += sizeof(uint32_t);
+            std::memcpy(&bytes[pos], shader.data(), shader.size());
+
+            return bytes;
         }
 
-        static CompiledShader fromString(const std::string& str) {
-            CompiledShader ret;
+        static SingleCompiledShader fromBytes(std::vector<uint8_t> bytes) {
+            SingleCompiledShader ret;
+            uint32_t pos = 0;
 
-            std::stringstream stream(str);
-            uint8_t setCount;
-
-            stream >> setCount;
-            ret.sets.resize(setCount);
-
-            for (uint32_t i = 0; i < setCount; i++) {
-                uint8_t bindingCount;
-                stream >> bindingCount;
-                if (bindingCount == 0) {
-                    // error goes here
-                }
-                ret.sets[i].resize(bindingCount);
-                for (uint32_t j = 0; j < bindingCount; j++) {
-                    uint8_t descriptorType;
-                    uint8_t stageFlags;
-                    stream >> ret.sets[i][j].binding;
-                    stream >> descriptorType;
-                    stream >> stageFlags;
-                    ret.sets[i][j].descriptorType = (Car::DescriptorType)descriptorType;
-                    ret.sets[i][j].stageFlags = (Car::DescriptorStage)stageFlags;
+            ret.sets.resize(bytes[pos++]);
+            for (uint32_t i = 0; i < ret.sets.size(); i++) {
+                ret.sets[i].resize(bytes[pos++]);
+                for (uint32_t j = 0; j < ret.sets[i].size(); j++) {
+                    ret.sets[i][j].binding = bytes[pos++];
+                    ret.sets[i][j].descriptorType = (Car::DescriptorType)bytes[pos++];
                 }
             }
-            uint32_t vertexShaderSize;
-            uint32_t fragmeantShaderSize;
-            stream >> vertexShaderSize;
-            stream >> fragmeantShaderSize;
-
-            ret.vertexShader.resize(vertexShaderSize);
-            ret.fragmeantShader.resize(fragmeantShaderSize);
-            stream.get(ret.vertexShader.data(), vertexShaderSize);
-            stream.get(ret.fragmeantShader.data(), fragmeantShaderSize);
+            
+            uint32_t codeSize = *(uint32_t*)&bytes[pos];
+            pos += 4;
+            ret.shader.resize(codeSize);
+            std::memcpy(ret.shader.data(), &bytes[pos], codeSize);
 
             return ret;
         }
+    };
+
+    struct CompiledShader {
+        std::vector<std::vector<Descriptor>> sets;
+        std::string vertexShader;
+        std::string fragmeantShader;
     };
 } // namespace Car

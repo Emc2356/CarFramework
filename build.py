@@ -206,15 +206,6 @@ def freetype() -> None:
 @buildspec(BuildSpecFlags.ANY)
 def shaderc() -> None:
     if not build_shaderc:
-        BuildIt.StaticLibrary(
-            name="shaderc",
-            out_filepath="./libraries/",
-            sources=[],
-            depends_on=[],
-            extra_build_flags=[],
-            extra_defines=[],
-            include_directories=[]
-        )
         return
     BuildIt.StaticLibrary(
         name="shaderc",
@@ -252,6 +243,8 @@ def shaderc() -> None:
 
 @buildspec(BuildSpecFlags.ANY)
 def spirv_cross() -> None:
+    if not build_shaderc:
+        return
     BuildIt.StaticLibrary(
         name="spirv_cross",
         out_filepath="./libraries/",
@@ -269,7 +262,7 @@ def spirv_cross() -> None:
 
 @buildspec(BuildSpecFlags.ANY)
 def carlib() -> None:
-    BuildIt.StaticLibrary(
+    carlib = BuildIt.StaticLibrary(
         name="Car",
         out_filepath="./libraries/",
         sources=[
@@ -303,13 +296,18 @@ def carlib() -> None:
             ("CR_VULKAN",),
         ],
         depends_on=[
-            "ImGui", "glad", "stb", "glfw", "freetype", "shaderc", "spirv_cross"
+            "ImGui", "glad", "stb", "glfw", "freetype"
         ],
         include_directories=[],
     ).attach_precompiled_headers(
         "./Car/include/Car/Core/crpch.hpp"
     )
     BuildIt.add_include_directory("./Car/include/")
+    if build_shaderc:
+        carlib.depends_on.append("shaderc")
+        carlib.depends_on.append("spirv_cross")
+        carlib.add_define("CR_HAVE_SHADERC")
+        carlib.add_define("CR_HAVE_SPIRV_CROSS")
 
 
 @buildspec(BuildSpecFlags.CORE | BuildSpecFlags.ANY_PLATFORM, __name__ == "__main__")
@@ -320,7 +318,6 @@ def core() -> None:
 
     if not BuildIt.is_release():
         BuildIt.add_define("CR_DEBUG")
-        BuildIt.add_define("CR_HAVE_SHADERC")
         
     if BuildIt.is_windows():
         BuildIt.add_define("_CRT_SECURE_NO_WARNINGS")
@@ -405,7 +402,7 @@ def unknown_arg(arg: str) -> bool:
         print("    --deps fetchs all of the dependencies and it initializes them")
         print("    --format formats the code (requires clang-format)")
         print("    --lint checks if the code is formatted (requires clang-format)")
-        print("    --shaderc build shaderc (required to compile shaders on the fly)")
+        print("    --shaderc build shaderc and spirv-cross (required to compile shaders on the fly)")
         print("    --examples builds the examples")
     elif arg == "--format" or arg == "--lint":
         files = list(str(path) for path in Path("./Car").glob("**/*.[ch]pp"))

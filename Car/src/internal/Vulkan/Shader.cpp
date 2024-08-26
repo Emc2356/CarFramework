@@ -12,9 +12,12 @@
 #include "Car/internal/Vulkan/UniformBuffer.hpp"
 
 #include <glad/vulkan.h>
-#include <spirv_cross/spirv_cross.hpp>
 #include <stdexcept>
-#include <string>
+
+#ifdef CR_HAVE_SPIRV_CROSS
+#include <spirv_cross/spirv_cross.hpp>
+#endif
+
 #ifdef CR_HAVE_SHADERC
 #include <shaderc/shaderc.hpp>
 
@@ -105,6 +108,7 @@ namespace Car {
     void VulkanShader::bind() const {
         VkCommandBuffer cmdBuffer = mGraphicsContext->getCurrentRenderCommandBuffer();
         if (mCompiledShader.sets.size()) {
+            // maybe it shouldnt bind it if it doesnt changes
             vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0,
                                     mDescriptorSets[mGraphicsContext->getCurrentFrameIndex()].size(),
                                     mDescriptorSets[mGraphicsContext->getCurrentFrameIndex()].data(), 0, nullptr);
@@ -120,9 +124,9 @@ namespace Car {
         }
         CR_IF (1) {
             bool exists = false;
-            for (const Binding& binding_ : mCompiledShader.sets[set]) {
-                if (binding_.binding == binding) {
-                    if (binding_.descriptorType != DescriptorType::UniformBuffer) {
+            for (const Descriptor& descriptor : mCompiledShader.sets[set]) {
+                if (descriptor.binding == binding) {
+                    if (descriptor.descriptorType != DescriptorType::UniformBuffer) {
                         CR_CORE_ERROR("set {0} binding {1} is not a uniformbuffer", set, binding);
                         CR_DEBUGBREAK();
                         return;
@@ -130,14 +134,14 @@ namespace Car {
                     exists = true;
                 }
             }
-            
+
             if (!exists) {
                 CR_CORE_ERROR("set {0} binding {1} does not exist", set, binding);
                 CR_DEBUGBREAK();
                 return;
             }
         }
-        
+
         VkDevice device = mGraphicsContext->getDevice();
         if (applyToAll) {
             for (size_t i = 0; i < mGraphicsContext->getMaxFramesInFlight(); i++) {
@@ -178,29 +182,30 @@ namespace Car {
 
     void VulkanShader::setInput(uint32_t set, uint32_t binding, bool applyToAll, Ref<Texture2D> texture) {
         CR_IF (set > mCompiledShader.sets.size()) {
+            CR_CORE_ERROR("set {0} binding {1} does not exist", set, binding);
+            CR_DEBUGBREAK();
+            return;
+        }
+        CR_IF (1) {
+            bool exists = false;
+            for (const Descriptor& descriptor : mCompiledShader.sets[set]) {
+                if (descriptor.binding == binding) {
+                    if (descriptor.descriptorType != DescriptorType::Sampler2D) {
+                        CR_CORE_ERROR("set {0} binding {1} is not a sampler2D", set, binding);
+                        CR_DEBUGBREAK();
+                        return;
+                    }
+                    exists = true;
+                }
+            }
+
+            if (!exists) {
                 CR_CORE_ERROR("set {0} binding {1} does not exist", set, binding);
                 CR_DEBUGBREAK();
                 return;
             }
-            CR_IF (1) {
-                bool exists = false;
-                for (const Binding& binding_ : mCompiledShader.sets[set]) {
-                    if (binding_.binding == binding) {
-                        if (binding_.descriptorType != DescriptorType::Sampler2D) {
-                            CR_CORE_ERROR("set {0} binding {1} is not a sampler2D", set, binding);
-                            CR_DEBUGBREAK();
-                            return;
-                        }
-                        exists = true;
-                    }
-                }
-                
-                if (!exists) {
-                    CR_CORE_ERROR("set {0} binding {1} does not exist", set, binding);
-                    CR_DEBUGBREAK();
-                    return;
-                }
-            }
+        }
+
         VkDevice device = mGraphicsContext->getDevice();
         if (applyToAll) {
             for (size_t i = 0; i < mGraphicsContext->getMaxFramesInFlight(); i++) {
@@ -619,118 +624,109 @@ namespace Car {
 
         return shaderModule;
     }
-
-    static void fillSetField(CompiledShader* pCompiledShader) {
-        pCompiledShader->sets.resize(0);
-        spirv_cross::Compiler vertCompiler((uint32_t*)pCompiledShader->vertexShader.data(),
-                                           pCompiledShader->vertexShader.size() / 4);
-        spirv_cross::ShaderResources vertResources(vertCompiler.get_shader_resources());
-        spirv_cross::Compiler fragCompiler((uint32_t*)pCompiledShader->fragmeantShader.data(),
-                                           pCompiledShader->fragmeantShader.size() / 4);
-        spirv_cross::ShaderResources fragResources(fragCompiler.get_shader_resources());
+    
+#if defined(CR_HAVE_SPIRV_CROSS)
+    static void fillSetField(SingleCompiledShader* pSCS) {
+        pSCS->sets.resize(0);
+        spirv_cross::Compiler compiler((uint32_t*)pSCS->shader.data(),
+                                           pSCS->shader.size() / 4);
+        spirv_cross::ShaderResources resources(compiler.get_shader_resources());
 
         uint32_t maxDescriptorSetCount = 0;
-        for (const auto& uniformBuffer : vertResources.uniform_buffers) {
-            maxDescriptorSetCount = MAX(vertCompiler.get_decoration(uniformBuffer.id, spv::DecorationDescriptorSet) + 1,
+        for (const auto& uniformBuffer : resources.uniform_buffers) {
+            maxDescriptorSetCount = MAX(compiler.get_decoration(uniformBuffer.id, spv::DecorationDescriptorSet) + 1,
                                         maxDescriptorSetCount);
         }
-        for (const auto& uniformBuffer : vertResources.sampled_images) {
-            maxDescriptorSetCount = MAX(vertCompiler.get_decoration(uniformBuffer.id, spv::DecorationDescriptorSet) + 1,
+        for (const auto& uniformBuffer : resources.sampled_images) {
+            maxDescriptorSetCount = MAX(compiler.get_decoration(uniformBuffer.id, spv::DecorationDescriptorSet) + 1,
                                         maxDescriptorSetCount);
         }
-        for (const auto& uniformBuffer : fragResources.uniform_buffers) {
-            maxDescriptorSetCount = MAX(fragCompiler.get_decoration(uniformBuffer.id, spv::DecorationDescriptorSet) + 1,
-                                        maxDescriptorSetCount);
-        }
-        for (const auto& uniformBuffer : fragResources.sampled_images) {
-            maxDescriptorSetCount = MAX(fragCompiler.get_decoration(uniformBuffer.id, spv::DecorationDescriptorSet) + 1,
-                                        maxDescriptorSetCount);
-        }
+
         if (maxDescriptorSetCount > 4) {
             throw std::runtime_error("A shader can have max of 4 sets per the vulkan spec");
         }
 
-        pCompiledShader->sets.resize(maxDescriptorSetCount);
+        pSCS->sets.resize(maxDescriptorSetCount);
 
-        for (const auto& resource : vertResources.uniform_buffers) {
-            uint32_t set = vertCompiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            uint8_t binding = vertCompiler.get_decoration(resource.id, spv::DecorationBinding);
-            pCompiledShader->sets[set].push_back({
+        for (const auto& resource : resources.uniform_buffers) {
+            uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+            uint8_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+            pSCS->sets[set].push_back({
                 binding,
                 Car::DescriptorType::UniformBuffer,
                 Car::DescriptorStage::VertexShader,
             });
         }
 
-        for (const auto& resource : vertResources.sampled_images) {
-            uint32_t set = vertCompiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            uint8_t binding = vertCompiler.get_decoration(resource.id, spv::DecorationBinding);
-            pCompiledShader->sets[set].push_back({
+        for (const auto& resource : resources.sampled_images) {
+            uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+            uint8_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+            pSCS->sets[set].push_back({
                 binding,
                 Car::DescriptorType::Sampler2D,
                 Car::DescriptorStage::VertexShader,
             });
         }
-
-        for (const auto& resource : fragResources.uniform_buffers) {
-            uint32_t set = fragCompiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            uint8_t binding = fragCompiler.get_decoration(resource.id, spv::DecorationBinding);
-            bool shouldPush = true;
-            for (auto& binding_ : pCompiledShader->sets[set]) {
-                if (binding == binding_.binding) {
-                    if (binding_.descriptorType == Car::DescriptorType::UniformBuffer) {
-                        binding_.stageFlags = Car::DescriptorStage::Combined;
-                        shouldPush = false;
-                    } else {
-                        throw std::runtime_error("Descriptor missmatch between two shader in set " +
-                                                 std::to_string(set) + "and in binding " + std::to_string(binding));
-                    }
-                }
-            }
-            if (shouldPush) {
-                pCompiledShader->sets[set].push_back({
-                    binding,
-                    Car::DescriptorType::UniformBuffer,
-                    Car::DescriptorStage::FragmeantShader,
+    }
+#endif
+    
+    static CompiledShader combineSingleShaders(SingleCompiledShader* vertShader, SingleCompiledShader* fragShader) {
+        CompiledShader ret;
+        ret.vertexShader = std::string(vertShader->shader);
+        ret.fragmeantShader = std::string(fragShader->shader);
+        ret.sets.resize(MAX(vertShader->sets.size(), fragShader->sets.size()));
+        
+        for (uint32_t i = 0; i < vertShader->sets.size(); i++) {
+            std::vector<Descriptor>& set = vertShader->sets[i];
+            for (const Descriptor& descriptor : set) {
+                ret.sets[i].push_back({
+                    descriptor.binding,
+                    descriptor.descriptorType,
+                    DescriptorStage::VertexShader,
                 });
             }
         }
-
-        for (const auto& resource : fragResources.sampled_images) {
-            uint32_t set = fragCompiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            uint8_t binding = fragCompiler.get_decoration(resource.id, spv::DecorationBinding);
-            bool shouldPush = true;
-            for (auto& binding_ : pCompiledShader->sets[set]) {
-                if (binding == binding_.binding) {
-                    if (binding_.descriptorType == Car::DescriptorType::Sampler2D) {
-                        binding_.stageFlags = Car::DescriptorStage::Combined;
+        
+        for (uint32_t i = 0; i < fragShader->sets.size(); i++) {
+            std::vector<Descriptor>& set = fragShader->sets[i];
+            for (const Descriptor& descriptor : set) {
+                bool shouldPush = true;
+                
+                for (auto& otherDescriptor : ret.sets[i]) {
+                    if (descriptor.binding == otherDescriptor.binding) {
                         shouldPush = false;
-                    } else {
-                        throw std::runtime_error("Descriptor missmatch between two shader in set " +
-                                                 std::to_string(set) + "and in binding " + std::to_string(binding));
+                        
+                        if (descriptor.descriptorType != otherDescriptor.descriptorType) {
+                            throw std::runtime_error("descriptor missmatch");
+                        }
+                        
+                        otherDescriptor.stageFlags = DescriptorStage::Combined;
                     }
                 }
-            }
-            if (shouldPush) {
-                pCompiledShader->sets[set].push_back({
-                    binding,
-                    Car::DescriptorType::Sampler2D,
-                    Car::DescriptorStage::FragmeantShader,
-                });
+                
+                if (shouldPush) {
+                    ret.sets[i].push_back({
+                        descriptor.binding,
+                        descriptor.descriptorType,
+                        DescriptorStage::FragmeantShader,
+                    });
+                }
             }
         }
-
-        for (const auto& set : pCompiledShader->sets) {
+        
+        for (const auto& set : ret.sets) {
             if (set.size() == 0) {
                 throw std::runtime_error("can not have an empty set in a shader");
             }
         }
+        
+        return ret;
     }
 
     Ref<Shader> Shader::Create(const std::string& vertexShaderName, const std::string& fragmeantShaderName,
                                const ShaderLayoutInput& inputLayout, const Shader::Specification* pSpec) {
-        std::string vertexBinary;
-        std::string fragmeantBinary;
+        SingleCompiledShader vertCompiledShader;
+        SingleCompiledShader fragCompiledShader;
 
         std::filesystem::path shadersPath =
             (std::filesystem::path)ResourceManager::getResourceDirectory() / ResourceManager::getShadersSubdirectory();
@@ -738,48 +734,45 @@ namespace Car {
 
         std::string vertPath = shadersPath / vertexShaderName;
         std::string fragPath = shadersPath / fragmeantShaderName;
-        std::filesystem::path vertCacheFile = std::string(cacheShaderDir / vertexShaderName) + ".spv";
-        std::filesystem::path fragCacheFile = std::string(cacheShaderDir / fragmeantShaderName) + ".spv";
+        std::filesystem::path vertCacheFile = std::string(cacheShaderDir / vertexShaderName) + ".crss";
+        std::filesystem::path fragCacheFile = std::string(cacheShaderDir / fragmeantShaderName) + ".crss";
 
         if (!std::filesystem::exists(vertCacheFile)) {
-#ifdef CR_HAVE_SHADERC
+#if defined(CR_HAVE_SHADERC) && defined(CR_HAVE_SPIRV_CROSS)
             std::filesystem::create_directories(vertCacheFile.parent_path());
             CR_CORE_DEBUG("compiling vertex shader {}", vertPath);
-            vertexBinary = crVkCompileSingleShader(vertPath, shaderc_vertex_shader);
-
-            writeToFile(vertCacheFile, reinterpret_cast<const uint8_t*>(vertexBinary.data()), vertexBinary.size());
+            vertCompiledShader.shader = crVkCompileSingleShader(vertPath, shaderc_vertex_shader);
+            fillSetField(&vertCompiledShader);
+            
+            writeToFile(vertCacheFile, vertCompiledShader.toBytes());
 #else
-            CR_CORE_ERROR("Can not online compile shaders without shaderc");
+            CR_CORE_ERROR("Can not online compile shaders without shaderc and spirv-cross");
 #endif // CR_HAVE_SHADERC
         } else {
-            CR_CORE_DEBUG("Loading pre-compiled SPIRV vertex shader from {}", (std::string)vertCacheFile);
+            CR_CORE_DEBUG("Loading pre-processed vertex shader from {}", (std::string)vertCacheFile);
             std::string data = readFile(vertCacheFile);
-            vertexBinary = {data.cbegin(), data.cend()};
+            vertCompiledShader = SingleCompiledShader::fromBytes({data.begin(), data.end()});
         }
 
         if (!std::filesystem::exists(fragCacheFile)) {
-#ifdef CR_HAVE_SHADERC
+#if defined(CR_HAVE_SHADERC) && defined(CR_HAVE_SPIRV_CROSS)
             std::filesystem::create_directories(fragCacheFile.parent_path());
             CR_CORE_DEBUG("compiling fragmeant shader {}", fragPath);
-            fragmeantBinary = crVkCompileSingleShader(fragPath, shaderc_fragment_shader);
-
-            writeToFile(fragCacheFile, reinterpret_cast<const uint8_t*>(fragmeantBinary.data()),
-                        fragmeantBinary.size() * sizeof(fragmeantBinary[0]));
+            fragCompiledShader.shader = crVkCompileSingleShader(fragPath, shaderc_fragment_shader);
+            fillSetField(&fragCompiledShader);
+            
+            writeToFile(fragCacheFile, fragCompiledShader.toBytes());
 #else
-            CR_CORE_ERROR("Can not online compile shaders without shaderc");
+            CR_CORE_ERROR("Can not online compile shaders without shaderc and spirv-cross");
 #endif // CR_HAVE_SHADERC
         } else {
-            CR_CORE_DEBUG("Loading pre-compiled SPIRV fragmeant shader from {}", (std::string)fragCacheFile);
+            CR_CORE_DEBUG("Loading pre-processed fragmeant shader from {}", (std::string)fragCacheFile);
             std::string data = readFile(fragCacheFile);
-            fragmeantBinary = {data.cbegin(), data.cend()};
+            fragCompiledShader = SingleCompiledShader::fromBytes({data.begin(), data.end()});
         }
 
-        CompiledShader compiledShader;
-
-        compiledShader.vertexShader = vertexBinary;
-        compiledShader.fragmeantShader = fragmeantBinary;
-        fillSetField(&compiledShader);
-
+        CompiledShader compiledShader = combineSingleShaders(&vertCompiledShader, &fragCompiledShader);
+        
         return createRef<VulkanShader>(compiledShader, inputLayout, pSpec);
     }
 } // namespace Car

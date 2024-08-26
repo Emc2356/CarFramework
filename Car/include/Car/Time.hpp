@@ -9,4 +9,4 @@ namespace Car {
         static uint64_t GetMicro();
         static uint64_t GetNano();
     };
-}
+} // namespace Car

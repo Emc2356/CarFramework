@@ -63,7 +63,7 @@ namespace Car {
         renderPassInfo.pClearValues = &clearColor;
 
         vkCmdBeginRenderPass(cmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-        
+
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
@@ -87,10 +87,10 @@ namespace Car {
             throw std::runtime_error("failed to end recording of command buffer");
         }
     }
-    
+
     void VulkanRenderer::SetViewportImpl(float x, float y, float width, float height, float minDepth, float maxDepth) {
         VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();
-        
+
         VkViewport viewport{};
         viewport.x = x;
         viewport.y = y;
@@ -98,13 +98,13 @@ namespace Car {
         viewport.height = height;
         viewport.minDepth = minDepth;
         viewport.maxDepth = maxDepth;
-        
+
         vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
     }
-    
+
     void VulkanRenderer::SetScissorImpl(int32_t x, int32_t y, int32_t width, int32_t height) {
         VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();
-        
+
         VkRect2D scissor{};
         scissor.offset.x = x;
         scissor.offset.y = y;

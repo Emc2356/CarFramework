@@ -33,12 +33,12 @@ namespace Car {
         CompiledShader mCompiledShader;
 
         ShaderLayoutInput mInputLayout;
-        // TODO: Support multiple sets in the future
+
         std::vector<VkDescriptorSetLayout> mDescriptorSetLayouts;
         std::vector<std::vector<VkDescriptorSet>> mDescriptorSets;
 
-        VkPipelineLayout mPipelineLayout = VK_NULL_HANDLE;
-        VkPipeline mGraphicsPipeline = VK_NULL_HANDLE;
+        VkPipelineLayout mPipelineLayout;
+        VkPipeline mGraphicsPipeline;
 
         Ref<VulkanGraphicsContext> mGraphicsContext;
     };

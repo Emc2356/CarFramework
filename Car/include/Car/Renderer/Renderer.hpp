@@ -27,8 +27,13 @@ namespace Car {
             sInstance->DrawCommandImpl(va, indicesCount);
         }
 
-        static void SetViewport(float x, float y, float width, float height, float minDepth=0.0f, float maxDepth=1.0f) { sInstance->SetViewportImpl(x, y, width, height, minDepth, maxDepth); }
-        static void SetScissor(int32_t x, int32_t y, int32_t width, int32_t height) { sInstance->SetScissorImpl(x, y, width, height); }
+        static void SetViewport(float x, float y, float width, float height, float minDepth = 0.0f,
+                                float maxDepth = 1.0f) {
+            sInstance->SetViewportImpl(x, y, width, height, minDepth, maxDepth);
+        }
+        static void SetScissor(int32_t x, int32_t y, int32_t width, int32_t height) {
+            sInstance->SetScissorImpl(x, y, width, height);
+        }
 
         // implementation detail
         static void BeginRecording() { sInstance->BeginRecordingImpl(); }

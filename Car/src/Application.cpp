@@ -26,8 +26,8 @@ namespace Car {
         CR_CORE_DEBUG("Application created");
         sInstance = this;
 
-        Window::Specification windowSpec = {sSpec.width, sSpec.height,    sSpec.title, 
-                                            sSpec.resizable, CR_BIND_FN1(Car::Application::onEvent)};
+        Window::Specification windowSpec = {sSpec.width, sSpec.height, sSpec.title, sSpec.resizable,
+                                            CR_BIND_FN1(Car::Application::onEvent)};
 
         mWindow = createRef<Car::Window>(windowSpec);
         mWindow->init();
@@ -66,7 +66,7 @@ namespace Car {
                 dt = (time - lastFrameTime) / 1000.0;
                 lastFrameTime = time;
             }
-            
+
             onUpdate(dt);
 
             for (Layer* layer : mLayerStack) {
@@ -92,7 +92,7 @@ namespace Car {
             Renderer::EndRecording();
 
             mWindow->onUpdate();
-            
+
             // TODO: This
             // if (sSpec.targetFPS != -1) {
             //     int64_t timeToSleep = int64_t(1000.0 / (double)sSpec.targetFPS - dt * 1000);
