@@ -43,10 +43,10 @@ namespace Car {
             throw std::runtime_error("error occured at writing time! " + path);
         }
     }
-    
+
     void writeToFile(const std::string& path, const std::vector<uint8_t>& data) {
         std::ofstream wf(path, std::ios::out | std::ios::trunc);
-    
+
         if (!wf) {
             throw std::runtime_error("failed to open file: " + path);
         }

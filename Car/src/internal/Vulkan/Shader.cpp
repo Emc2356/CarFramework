@@ -624,22 +624,21 @@ namespace Car {
 
         return shaderModule;
     }
-    
+
 #if defined(CR_HAVE_SPIRV_CROSS)
     static void fillSetField(SingleCompiledShader* pSCS) {
         pSCS->sets.resize(0);
-        spirv_cross::Compiler compiler((uint32_t*)pSCS->shader.data(),
-                                           pSCS->shader.size() / 4);
+        spirv_cross::Compiler compiler((uint32_t*)pSCS->shader.data(), pSCS->shader.size() / 4);
         spirv_cross::ShaderResources resources(compiler.get_shader_resources());
 
         uint32_t maxDescriptorSetCount = 0;
         for (const auto& uniformBuffer : resources.uniform_buffers) {
-            maxDescriptorSetCount = MAX(compiler.get_decoration(uniformBuffer.id, spv::DecorationDescriptorSet) + 1,
-                                        maxDescriptorSetCount);
+            maxDescriptorSetCount =
+                MAX(compiler.get_decoration(uniformBuffer.id, spv::DecorationDescriptorSet) + 1, maxDescriptorSetCount);
         }
         for (const auto& uniformBuffer : resources.sampled_images) {
-            maxDescriptorSetCount = MAX(compiler.get_decoration(uniformBuffer.id, spv::DecorationDescriptorSet) + 1,
-                                        maxDescriptorSetCount);
+            maxDescriptorSetCount =
+                MAX(compiler.get_decoration(uniformBuffer.id, spv::DecorationDescriptorSet) + 1, maxDescriptorSetCount);
         }
 
         if (maxDescriptorSetCount > 4) {
@@ -669,13 +668,13 @@ namespace Car {
         }
     }
 #endif
-    
+
     static CompiledShader combineSingleShaders(SingleCompiledShader* vertShader, SingleCompiledShader* fragShader) {
         CompiledShader ret;
         ret.vertexShader = std::string(vertShader->shader);
         ret.fragmeantShader = std::string(fragShader->shader);
         ret.sets.resize(MAX(vertShader->sets.size(), fragShader->sets.size()));
-        
+
         for (uint32_t i = 0; i < vertShader->sets.size(); i++) {
             std::vector<Descriptor>& set = vertShader->sets[i];
             for (const Descriptor& descriptor : set) {
@@ -686,24 +685,24 @@ namespace Car {
                 });
             }
         }
-        
+
         for (uint32_t i = 0; i < fragShader->sets.size(); i++) {
             std::vector<Descriptor>& set = fragShader->sets[i];
             for (const Descriptor& descriptor : set) {
                 bool shouldPush = true;
-                
+
                 for (auto& otherDescriptor : ret.sets[i]) {
                     if (descriptor.binding == otherDescriptor.binding) {
                         shouldPush = false;
-                        
+
                         if (descriptor.descriptorType != otherDescriptor.descriptorType) {
                             throw std::runtime_error("descriptor missmatch");
                         }
-                        
+
                         otherDescriptor.stageFlags = DescriptorStage::Combined;
                     }
                 }
-                
+
                 if (shouldPush) {
                     ret.sets[i].push_back({
                         descriptor.binding,
@@ -713,13 +712,13 @@ namespace Car {
                 }
             }
         }
-        
+
         for (const auto& set : ret.sets) {
             if (set.size() == 0) {
                 throw std::runtime_error("can not have an empty set in a shader");
             }
         }
-        
+
         return ret;
     }
 
@@ -743,7 +742,7 @@ namespace Car {
             CR_CORE_DEBUG("compiling vertex shader {}", vertPath);
             vertCompiledShader.shader = crVkCompileSingleShader(vertPath, shaderc_vertex_shader);
             fillSetField(&vertCompiledShader);
-            
+
             writeToFile(vertCacheFile, vertCompiledShader.toBytes());
 #else
             CR_CORE_ERROR("Can not online compile shaders without shaderc and spirv-cross");
@@ -760,7 +759,7 @@ namespace Car {
             CR_CORE_DEBUG("compiling fragmeant shader {}", fragPath);
             fragCompiledShader.shader = crVkCompileSingleShader(fragPath, shaderc_fragment_shader);
             fillSetField(&fragCompiledShader);
-            
+
             writeToFile(fragCacheFile, fragCompiledShader.toBytes());
 #else
             CR_CORE_ERROR("Can not online compile shaders without shaderc and spirv-cross");
@@ -772,7 +771,7 @@ namespace Car {
         }
 
         CompiledShader compiledShader = combineSingleShaders(&vertCompiledShader, &fragCompiledShader);
-        
+
         return createRef<VulkanShader>(compiledShader, inputLayout, pSpec);
     }
 } // namespace Car

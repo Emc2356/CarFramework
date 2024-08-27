@@ -145,7 +145,7 @@ namespace Car {
 
     void VulkanGraphicsContext::init() {
         if (!gladLoaderLoadVulkan(nullptr, nullptr, nullptr)) {
-            throw std::runtime_error("Car: Failed to initialize glad");
+            throw std::runtime_error("Car: Failed to load base vulkan, it might not be able to locate the dll");
         }
 
         createInstance();
@@ -315,7 +315,7 @@ namespace Car {
         }
 
         if (!gladLoaderLoadVulkan(mInstance, nullptr, nullptr)) {
-            throw std::runtime_error("Car: Failed to initialize glad");
+            throw std::runtime_error("Car: Failed to load vulkan instance extensions");
         }
     }
 
@@ -371,7 +371,7 @@ namespace Car {
         mPhysicalDevice = physicalDevice;
 
         if (!gladLoaderLoadVulkan(mInstance, mPhysicalDevice, nullptr)) {
-            throw std::runtime_error("Car: Failed to initialize glad");
+            throw std::runtime_error("Car: Failed to load vulkan physical device extensions");
         }
 
         vkGetPhysicalDeviceProperties(physicalDevice, &mPhysicalDeviceProperties);
@@ -425,7 +425,7 @@ namespace Car {
         vkGetDeviceQueue(mDevice, indices.transferFamily.value(), 0, &mTransferQueue);
 
         if (!gladLoaderLoadVulkan(mInstance, mPhysicalDevice, mDevice)) {
-            throw std::runtime_error("Car: Failed to initialize glad");
+            throw std::runtime_error("Car: Failed to load vulkan device extensions");
         }
     }
 

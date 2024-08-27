@@ -78,7 +78,7 @@ namespace Car {
                     ret.sets[i][j].descriptorType = (Car::DescriptorType)bytes[pos++];
                 }
             }
-            
+
             uint32_t codeSize = *(uint32_t*)&bytes[pos];
             pos += 4;
             ret.shader.resize(codeSize);
