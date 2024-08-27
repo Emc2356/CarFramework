@@ -15,6 +15,7 @@ class StaticLibrary:
     include_directories: list[str]
     attached_precompiled_headers: list[SourceFile]
     is_forced_cxx: bool
+    is_optimized: bool
     
     def __init__(
         self,
@@ -30,3 +31,5 @@ class StaticLibrary:
     def add_define(self, name: str, value: str | None=None) -> Self: ...
     def attach_precompiled_headers(self, *paths) -> Self: ...
     def force_language_cxx(self) -> Self: ...
+    def always_optimize(self) -> Self: ...
+    

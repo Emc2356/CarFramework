@@ -21,8 +21,11 @@ namespace Car {
             CR_VERIFY(glfwInit(), "Failed to initialize GLFW");
 
 #if defined(CR_DEBUG)
-            glfwSetErrorCallback(
-                [](int error, const char* description) { CR_CORE_ERROR("GLFW Error ({0}): {1}", error, description); });
+            glfwSetErrorCallback([](int error, const char* description) {
+                UNUSED(error);
+                UNUSED(description);
+                CR_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
+            });
 #endif
 
 #if defined(CR_VULKAN)

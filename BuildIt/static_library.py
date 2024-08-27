@@ -6,7 +6,7 @@ from .register import Register
 class StaticLibrary:
     __slots__ = (
         "name", "out_filepath", "sources", "extra_build_flags", "extra_defines", "depends_on", "include_directories",
-        "attached_precompiled_headers", "is_forced_cxx"
+        "attached_precompiled_headers", "is_forced_cxx", "is_optimized"
     )
 
     def __init__(self, name, out_filepath, sources,
@@ -28,7 +28,9 @@ class StaticLibrary:
         self.depends_on = depends_on
         self.include_directories = include_directories
         self.attached_precompiled_headers = []
+        
         self.is_forced_cxx = False
+        self.is_optimized = False
         
         Register.submit(self)
         
@@ -48,5 +50,10 @@ class StaticLibrary:
         
     def attach_precompiled_headers(self, *paths):
         self.attached_precompiled_headers.extend(SourceFile.from_list(paths))
+        
+        return self
+    
+    def always_optimize(self):
+        self.is_optimized = True
         
         return self

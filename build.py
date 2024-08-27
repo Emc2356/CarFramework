@@ -10,7 +10,7 @@ build_shaderc = False
 
 
 @buildspec(BuildSpecFlags.ANY_TOOLCHAIN | BuildSpecFlags.LINUX)
-def glfw() -> None:
+def glfw_linux() -> None:
     BuildIt.StaticLibrary(
         name="glfw",
         out_filepath="./libraries/",
@@ -46,12 +46,12 @@ def glfw() -> None:
         ],
         include_directories=[],
         depends_on=[]
-    )
+    ).always_optimize()
     BuildIt.add_include_directory("./vendor/glfw/include")
 
 
 @buildspec(BuildSpecFlags.ANY_TOOLCHAIN | BuildSpecFlags.WINDOWS)
-def glfw_windows_gnu_clang() -> None:
+def glfw_windows() -> None:
     BuildIt.StaticLibrary(
         name="glfw",
         out_filepath="./libraries/",
@@ -84,7 +84,7 @@ def glfw_windows_gnu_clang() -> None:
         ],
         include_directories=[],
         depends_on=[]
-    )
+    ).always_optimize()
     BuildIt.add_include_directory("./vendor/glfw/include")
 
 
@@ -97,7 +97,7 @@ def glad() -> None:
             "./vendor/glad/src/vulkan.c",
         ],
         include_directories=[],
-    )
+    ).always_optimize()
     BuildIt.add_include_directory("./vendor/glad/include")
 
 
@@ -110,7 +110,7 @@ def stb() -> None:
             "./vendor/stb/src/stb_image.c"
         ],
         include_directories=[],
-    )
+    ).always_optimize()
     BuildIt.add_include_directory("./vendor/stb/include")
 
 
@@ -136,7 +136,7 @@ def imgui() -> None:
         depends_on=[
             "glad"
         ]
-    )
+    ).always_optimize()
     BuildIt.add_include_directory("./vendor/imgui")
 
 
@@ -199,7 +199,7 @@ def freetype() -> None:
         ],
         depends_on=[],
         include_directories=[],
-    )
+    ).always_optimize()
     BuildIt.add_include_directory("./vendor/freetype/include")
 
 
@@ -231,7 +231,7 @@ def shaderc() -> None:
         include_directories=[
             "./"
         ]
-    )
+    ).always_optimize()
     
     BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-tools/")
     BuildIt.add_include_directory("./vendor/shaderc/libshaderc_util/include/")
@@ -251,12 +251,10 @@ def spirv_cross() -> None:
         sources=[
             "./vendor/unity_builds/spirv_cross.cpp"
         ],
-        extra_defines=[
-            
-        ],
+        extra_defines=[],
         include_directories=["./"],
         depends_on=[]
-    )
+    ).always_optimize()
     BuildIt.add_include_directory("vendor/spirv_cross")
 
 
@@ -312,7 +310,6 @@ def carlib() -> None:
 
 @buildspec(BuildSpecFlags.CORE | BuildSpecFlags.ANY_PLATFORM, __name__ == "__main__")
 def core() -> None:
-    BuildIt.set_toolchain(BuildIt.Toolchain.CLANG)
     BuildIt.set_c_standard(99)
     BuildIt.set_cxx_standard(17)
 

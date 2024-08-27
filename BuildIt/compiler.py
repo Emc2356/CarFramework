@@ -42,8 +42,8 @@ class Compiler:
         ]
 
         common: list[str] = ["-c"] + other.extra_build_flags + cls.build_flags
-
-        if cls.is_release:
+        
+        if cls.is_release or (hasattr(other, "is_optimized") and other.is_optimized):
             common.append("-O3")
         else:
             common.append("-ggdb")
@@ -107,7 +107,7 @@ class Compiler:
 
         common: list[str] = ["-c"] + other.extra_build_flags + cls.build_flags
 
-        if cls.is_release:
+        if cls.is_release or (hasattr(other, "is_optimized") and other.is_optimized):
             common.append("-O3")
         else:
             common.append("-ggdb")

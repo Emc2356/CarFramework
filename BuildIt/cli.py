@@ -4,9 +4,11 @@ from pathlib import Path
 from inspect import signature
 import shutil
 
+from BuildIt.platform import is_linux, is_macos, is_windows
+
 from .logger import Logger
 from .command_queue import CommandQueue
-from .compiler import Compiler
+from .compiler import Compiler, Toolchain, set_toolchain
 from .source_file import SourceFile
 from .register import Register
 from .clangd import generate_clangd_commands
@@ -18,9 +20,10 @@ import os
 def usage(out: TextIO) -> None:
     print("BuildIt CLI Usage:", file=out)
     print("    -h, --help display this message", file=out)
-    print(
-        "    -j<number> specify the amount of commands it can run simultaneously, if no number is then it will be set to use 75% of your cores",
-        file=out)
+    print("    -j<number> specify the amount of commands it can run simultaneously, if no number is then it will be set to use 75% of your cores", file=out)
+    print("    --clang sets the toolchain to clang (default on macos)", file=out)
+    print("    --gnu sets the toolchain to gnu (default on linux)", file=out)
+    print("    --msvc sets the toolchain to msvc (default on windows)", file=out)
     print("    --release uses optimization flags for the compiler that will be used", file=out)
     print("    --clangd generates the compile_commands.json file for clangd lsp", file=out)
     print("    --force force rebuilds everything", file=out)
@@ -53,6 +56,14 @@ def unknown_argument(func):
 
 
 def handle_argv(argv = None):
+    if is_windows():
+        # not great
+        set_toolchain(Toolchain.GNU)
+    if is_linux():
+        set_toolchain(Toolchain.GNU)
+    if is_macos():
+        set_toolchain(Toolchain.CLANG)
+        
     if argv is None:
         argv = sys.argv[1:]
     if consume_arg(argv, ["-h", "--help"]):
@@ -68,6 +79,12 @@ def handle_argv(argv = None):
     if consume_arg(argv, "--clangd"):
         generate_clangd_commands()
         sys.exit(0)
+    if consume_arg(argv, "--clang"):
+        set_toolchain(Toolchain.CLANG)
+    if consume_arg(argv, "--gnu"):
+        set_toolchain(Toolchain.GNU)
+    if consume_arg(argv, "--msvc"):
+        set_toolchain(Toolchain.MSVC)
     if consume_arg(argv, "--force"):
         # dynamic languages have their positives :D
         # probably bad way to do this, but it works :/
@@ -78,33 +95,21 @@ def handle_argv(argv = None):
         from .build import Functions
         Functions.execute()
 
-        Logger.info(f"cleaning project")
-
         for executable in Register().executables:
             Logger.info(f"removing {executable.name}")
             Path(executable.name).unlink(missing_ok=True)
 
-        Logger.info(f"removing build directory")
         try:
             shutil.rmtree("./build")
         except FileNotFoundError:
             pass
 
-        Logger.info(f"removing compile_commands.json")
         Path("./compile_commands.json").unlink(missing_ok=True)
-
-        Logger.info(f"removing pre-compiled headers")
-        for precompiled_header in Register().precompiled_headers:
-            # TODO: this is gnu specific
-            Path(str(precompiled_header.source.path) + ".gch").unlink(missing_ok=True)
-            # TODO: this is clang specific
-            Path(str(precompiled_header.source.path) + ".pch").unlink(missing_ok=True)
 
         for filepath in set(
                 str(static_library.out_filepath)
                 for static_library in Register().static_libraries
         ):
-            Logger.info(f"removing {filepath}")
             shutil.rmtree(filepath, ignore_errors=True)
 
         Logger.info("Done")

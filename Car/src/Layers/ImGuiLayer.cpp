@@ -41,12 +41,14 @@ namespace Car {
         // io.ConfigViewportsNoTaskBarIcon = true;
 
         // Setup Dear ImGui style
+        ImGuiStyle& style = ImGui::GetStyle();
+
         ImGui::StyleColorsDark();
+        // style.Colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.94f);
         // ImGui::StyleColorsClassic();
 
         // When viewports are enabled we tweak WindowRounding/WindowBg so platform
         // windows can look identical to regular ones.
-        ImGuiStyle& style = ImGui::GetStyle();
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
             style.WindowRounding = 0.0f;
             style.Colors[ImGuiCol_WindowBg].w = 1.0f;
