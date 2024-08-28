@@ -120,6 +120,7 @@ def save_compile_commands(data: dict) -> None:
 
 
 def sort_static_libraries(_libraries: list[StaticLibrary]) -> list[StaticLibrary]:
+    _libraries = _libraries[:]
     libraries: list[str] = list(lib.name for lib in _libraries)
     dependencies: dict[str, list[str]] = {lib.name: lib.depends_on for lib in _libraries}
 
@@ -168,6 +169,7 @@ def sort_static_libraries(_libraries: list[StaticLibrary]) -> list[StaticLibrary
 
 
 def expand_static_libraries_from_strings(libraries: list[str]) -> list[StaticLibrary]:
+    libraries = libraries[:]
     ret: set[StaticLibrary] = set()
 
     all_libraries = Register().static_libraries
@@ -273,8 +275,12 @@ def find_if_file_changed_from_include_recursivly(target_file: Path | str, extra_
 
 def need_to_rebuild_source_file(source_file: SourceFile, compile_commands: dict[str, list[str]], compile_command: list[str], extra_include_directories: list[str]=[]) -> bool:
     aligns_with_compile_commands = compile_commands.get(str(source_file.path), None) is not None and compile_commands[str(source_file)] == compile_command
+    # find_if_file_changed_from_include_recursivly is kind of heavy and slow
+    # so it skips it if it can
+    if not aligns_with_compile_commands:
+        return True
     includes_changed = find_if_file_changed_from_include_recursivly(str(source_file), extra_include_directories, False)
-    return (not aligns_with_compile_commands) or includes_changed
+    return includes_changed
 
 
 def build_shared(toolc: int) -> None:
@@ -282,8 +288,8 @@ def build_shared(toolc: int) -> None:
 
     compile_commands = load_compile_commands()
 
-    changed_static_libraries: bool = False
-    changed_executables: bool = False
+    changed_static_libraries: dict[str, bool] = {}
+    changed_precompiled_headers: dict[str, bool] = {}
 
     all_static_libraries = Register().static_libraries
 
@@ -295,7 +301,9 @@ def build_shared(toolc: int) -> None:
 
             for header_file in static_library.attached_precompiled_headers:
                 if static_library.is_forced_cxx and toolc == _CLANG:
-                    build_command = cxx_build_command + ["-x", "c++-header"]
+                    build_command = cxx_build_command
+                    if toolc == _CLANG:
+                        build_command.extend(["-x", "c++-header"])
                 elif header_file.has_suffix(".hpp"):
                     build_command = cxx_build_command
                 elif header_file.has_suffix(".h"):
@@ -337,6 +345,7 @@ def build_shared(toolc: int) -> None:
 
             object_files_in_static_library: list[Path] = []
             needs_rebuilding: bool = False
+            changed_static_libraries[library.name] = False
             for source_file in library.sources:
                 if source_file.has_suffix(".cpp") or source_file.has_suffix(".cc"):
                     build_command = cxx_build_command
@@ -363,7 +372,7 @@ def build_shared(toolc: int) -> None:
 
                     # save the time
                     LogFile.update(str(source_file))
-                    changed_static_libraries = True
+                    changed_static_libraries[library.name] = True
                     needs_rebuilding = True
                     compile_commands[str(source_file.path)] = command
 
@@ -382,7 +391,7 @@ def build_shared(toolc: int) -> None:
     if len(Register().executables) > 0:
         for executable in Register().executables:
             c_build_command, cxx_build_command = Compiler.construct_build_command(executable)
-
+            executable_changed = False
             for source_file in executable.sources:
                 if source_file.has_suffix(".cpp") or source_file.has_suffix(".cc"):
                     build_command = cxx_build_command
@@ -406,47 +415,46 @@ def build_shared(toolc: int) -> None:
                     )
 
                     LogFile.update(source_file)
-                    changed_executables = True
+                    executable_changed = True
                     compile_commands[str(source_file.path)] = command
+
+            changed_static_libraries_ = any(changed_static_libraries[_lib.name] for _lib in expand_static_libraries_from_strings(executable.static_libraries))
+            if executable_changed or not Path(executable.name).exists() or changed_static_libraries_:
+                command: list[str] = [Compiler.linker] + Compiler.link_flags + executable.extra_link_flags
+    
+                static_library_directories: set = set()
+                for static_library in all_static_libraries:
+                    static_library_directories.add(static_library.out_filepath)
+    
+                for directory in static_library_directories:
+                    command.append("-L")
+                    command.append(str(directory))
+    
+                command.append("-o")
+                command.append(executable.name)
+    
+                for source_file in executable.sources:
+                    command.append(str(source_file.to_object_filename()))
+    
+                for lib in executable.libraries:
+                    command.append("-l")
+                    command.append(f"{lib}")
+                
+                for static_library in sort_static_libraries(expand_static_libraries_from_strings(executable.static_libraries))[::-1]:
+                    command.append("-l")
+                    command.append(f"{str(static_library.name)}")
+    
+                link_commands.append(create_execute_command(
+                    command,
+                    f"creating executable `{executable.name}`",
+                    "linker failed",
+                    submit=False
+                ))
 
         create_gather_cmd()
 
         for link_command in link_commands:
             CommandQueue.add(link_command)
-
-        create_gather_cmd()
-
-        for executable in Register().executables:
-            command: list[str] = [Compiler.linker] + Compiler.link_flags + executable.extra_link_flags
-
-            static_library_directories: set = set()
-            for static_library in all_static_libraries:
-                static_library_directories.add(static_library.out_filepath)
-
-            for directory in static_library_directories:
-                command.append("-L")
-                command.append(str(directory))
-
-            command.append("-o")
-            command.append(executable.name)
-
-            for source_file in executable.sources:
-                command.append(str(source_file.to_object_filename()))
-
-            for lib in executable.libraries:
-                command.append("-l")
-                command.append(f"{lib}")
-
-            for static_library in sort_static_libraries(expand_static_libraries_from_strings(executable.static_libraries))[::-1]:
-                command.append("-l")
-                command.append(f"{str(static_library.name)}")
-
-            if not Path(executable.name).exists() or changed_executables or changed_static_libraries:
-                create_execute_command(
-                    command,
-                    f"creating executable `{executable.name}`",
-                    "linker failed"
-                )
 
         create_gather_cmd()
         
