@@ -1,12 +1,15 @@
 #include "Car/internal/Vulkan/GraphicsContext.hpp"
 #include "Car/Core/Core.hpp"
+#include "Car/Renderer/GraphicsContext.hpp"
 #include "Car/Utils.hpp"
 #include "Car/Application.hpp"
 #include "Car/Core/Log.hpp"
+#include "Car/Window.hpp"
 
 // include glad before glfw so `VK_VERSION_1_0` is defined
 #include <glad/vulkan.h>
 #include <GLFW/glfw3.h>
+#include <vulkan/vulkan_core.h>
 
 const std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
 #if defined(CR_DEBUG)
@@ -21,6 +24,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL crVkDebugCallback(VkDebugUtilsMessageSever
                                                         VkDebugUtilsMessageTypeFlagsEXT messageType,
                                                         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
                                                         void* pUserData) {
+    UNUSED(messageSeverity);
+    UNUSED(messageType);
+    UNUSED(pCallbackData);
     UNUSED(pUserData);
     std::string msgType;
 
@@ -107,6 +113,8 @@ bool crCheckValidationLayerSupport() {
 }
 
 namespace Car {
+    static Ref<GraphicsContext> sInstance = nullptr;
+
     CrQueueFamilyIndices VulkanGraphicsContext::findQueueFamilies(VkPhysicalDevice device) {
         CrQueueFamilyIndices indices;
 
@@ -141,6 +149,7 @@ namespace Car {
 
     VulkanGraphicsContext::VulkanGraphicsContext(GLFWwindow* windowHandle) : mWindowHandle(windowHandle) {
         CR_ASSERT(windowHandle, "Interal Error: null window handle sent to vulkan graphics context");
+        CR_ASSERT(sInstance, "an instance of the graphics context already exists, use the Get method");
     }
 
     void VulkanGraphicsContext::init() {
@@ -336,7 +345,7 @@ namespace Car {
     void VulkanGraphicsContext::createSurface() {
         CR_CORE_DEBUG("creating Vulkan surface");
 
-        if (glfwCreateWindowSurface(mInstance, mWindowHandle, nullptr, &mSurface) != VK_SUCCESS) {
+        if (Window::Get()->createVulkanSurface(mInstance, nullptr, &mSurface) != VK_SUCCESS) {
             throw std::runtime_error("failed to create window surface!");
         }
     }
@@ -671,6 +680,8 @@ namespace Car {
     }
 
     VulkanGraphicsContext::~VulkanGraphicsContext() {
+        sInstance = nullptr;
+
         vkDeviceWaitIdle(mDevice);
 
         vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
@@ -1012,10 +1023,12 @@ namespace Car {
         vkFreeCommandBuffers(mDevice, cmdPool, 1, &cmdBuffer);
     }
 
+    Ref<GraphicsContext> GraphicsContext::Get() { return sInstance; }
+
     Ref<GraphicsContext> GraphicsContext::Create(GLFWwindow* windowHandle) {
         Ref<GraphicsContext> context = createRef<VulkanGraphicsContext>(windowHandle);
 
-        GraphicsContext::Set(context);
+        sInstance = context;
 
         return context;
     }

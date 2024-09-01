@@ -11,6 +11,57 @@ build_examples = False
 build_shaderc = False
 
 
+@buildspec(BuildSpecFlags.ANY)
+def shaderc() -> None:
+    BuildIt.StaticLibrary(
+        name="shaderc",
+        out_filepath="./libraries/",
+        sources=[
+            "./vendor/unity_builds/shaderc.cpp",
+            "./vendor/unity_builds/glslang1.cpp",
+            "./vendor/unity_builds/glslang2.cpp",
+            "./vendor/unity_builds/spv_tools1.cpp",
+            "./vendor/unity_builds/spv_tools2.cpp",
+            "./vendor/unity_builds/spv_tools3.cpp",
+            "./vendor/unity_builds/spv_tools4.cpp",
+            "./vendor/unity_builds/spv_tools5.cpp",
+            "./vendor/unity_builds/spv_tools6.cpp",
+            "./vendor/unity_builds/spv_tools7.cpp",
+            "./vendor/unity_builds/spv_tools8.cpp",
+        ],
+        depends_on=[],
+        extra_build_flags=[],
+        extra_defines=[
+            ("ENABLE_HLSL",),
+        ],
+        include_directories=[
+            "./"
+        ]
+    ).always_optimize()
+    
+    BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-tools/")
+    BuildIt.add_include_directory("./vendor/shaderc/libshaderc_util/include/")
+    BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-headers/include/")
+    BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-tools/include/")
+    BuildIt.add_include_directory("./vendor/shaderc/third_party/glslang/")
+    BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-headers/include/binary")
+
+
+@buildspec(BuildSpecFlags.ANY)
+def spirv_cross() -> None:
+    BuildIt.StaticLibrary(
+        name="spirv_cross",
+        out_filepath="./libraries/",
+        sources=[
+            "./vendor/unity_builds/spirv_cross.cpp"
+        ],
+        extra_defines=[],
+        include_directories=["./"],
+        depends_on=[]
+    ).always_optimize()
+    BuildIt.add_include_directory("vendor/spirv_cross")
+
+
 @buildspec(BuildSpecFlags.ANY_TOOLCHAIN | BuildSpecFlags.LINUX)
 def glfw_linux() -> None:
     BuildIt.StaticLibrary(
@@ -206,57 +257,6 @@ def freetype() -> None:
 
 
 @buildspec(BuildSpecFlags.ANY)
-def shaderc() -> None:
-    BuildIt.StaticLibrary(
-        name="shaderc",
-        out_filepath="./libraries/",
-        sources=[
-            "./vendor/unity_builds/shaderc.cpp",
-            "./vendor/unity_builds/glslang1.cpp",
-            "./vendor/unity_builds/glslang2.cpp",
-            "./vendor/unity_builds/spv_tools1.cpp",
-            "./vendor/unity_builds/spv_tools2.cpp",
-            "./vendor/unity_builds/spv_tools3.cpp",
-            "./vendor/unity_builds/spv_tools4.cpp",
-            "./vendor/unity_builds/spv_tools5.cpp",
-            "./vendor/unity_builds/spv_tools6.cpp",
-            "./vendor/unity_builds/spv_tools7.cpp",
-            "./vendor/unity_builds/spv_tools8.cpp",
-        ],
-        depends_on=[],
-        extra_build_flags=[],
-        extra_defines=[
-            ("ENABLE_HLSL",),
-        ],
-        include_directories=[
-            "./"
-        ]
-    ).always_optimize()
-    
-    BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-tools/")
-    BuildIt.add_include_directory("./vendor/shaderc/libshaderc_util/include/")
-    BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-headers/include/")
-    BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-tools/include/")
-    BuildIt.add_include_directory("./vendor/shaderc/third_party/glslang/")
-    BuildIt.add_include_directory("./vendor/shaderc/third_party/spirv-headers/include/binary")
-
-
-@buildspec(BuildSpecFlags.ANY)
-def spirv_cross() -> None:
-    BuildIt.StaticLibrary(
-        name="spirv_cross",
-        out_filepath="./libraries/",
-        sources=[
-            "./vendor/unity_builds/spirv_cross.cpp"
-        ],
-        extra_defines=[],
-        include_directories=["./"],
-        depends_on=[]
-    ).always_optimize()
-    BuildIt.add_include_directory("vendor/spirv_cross")
-
-
-@buildspec(BuildSpecFlags.ANY)
 def carlib() -> None:
     carlib = BuildIt.StaticLibrary(
         name="Car",
@@ -275,7 +275,6 @@ def carlib() -> None:
             "./Car/src/Renderer/Buffer.cpp",
             "./Car/src/Renderer/Renderer2D.cpp",
             "./Car/src/Renderer/Font.cpp",
-            "./Car/src/Renderer/GraphicsContext.cpp",
             "./Car/src/internal/Vulkan/Renderer.cpp",
             "./Car/src/internal/Vulkan/GraphicsContext.cpp",
             "./Car/src/internal/Vulkan/Shader.cpp",
@@ -304,6 +303,8 @@ def carlib() -> None:
         carlib.depends_on.append("spirv_cross")
         carlib.add_define("CR_HAVE_SHADERC")
         carlib.add_define("CR_HAVE_SPIRV_CROSS")
+    if not BuildIt.is_release():
+        carlib.add_define("CR_DEBUG")
         
         
 @buildspec(BuildSpecFlags.ANY_PLATFORM | BuildSpecFlags.ANY_TOOLCHAIN)
@@ -325,9 +326,6 @@ def tools() -> None:
 def core() -> None:
     BuildIt.set_c_standard(99)
     BuildIt.set_cxx_standard(17)
-
-    if not BuildIt.is_release():
-        BuildIt.add_define("CR_DEBUG")
         
     if BuildIt.is_windows():
         BuildIt.add_define("_CRT_SECURE_NO_WARNINGS")

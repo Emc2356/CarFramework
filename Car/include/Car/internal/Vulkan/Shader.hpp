@@ -26,8 +26,9 @@ namespace Car {
 
         VkShaderModule createShaderModule(const std::string& code);
 
-        void createGraphicsPipeline(const Specification* pSpec);
         void createDescriptors();
+        void createPipelineLayout();
+        void createGraphicsPipeline();
 
     private:
         CompiledShader mCompiledShader;
@@ -41,5 +42,7 @@ namespace Car {
         VkPipeline mGraphicsPipeline;
 
         Ref<VulkanGraphicsContext> mGraphicsContext;
+
+        Specification mSpec;
     };
 } // namespace Car

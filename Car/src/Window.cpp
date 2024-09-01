@@ -8,11 +8,14 @@
 
 namespace Car {
     static bool sIsGLFWInitialized = false;
+    static Window* sInstance = nullptr;
 
     void Window::onUpdate() {
         mGraphicsContext->swapBuffers();
         glfwPollEvents();
     }
+
+    Window* Window::Get() { return sInstance; }
 
     Window::Window(const Car::Window::Specification& spec) {
         mSpec = spec;
@@ -28,15 +31,12 @@ namespace Car {
             });
 #endif
 
-#if defined(CR_VULKAN)
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-#else
-#error not implemented yet
-#endif
-
             glfwWindowHint(GLFW_RESIZABLE, spec.resizable ? GLFW_TRUE : GLFW_FALSE);
 
             sIsGLFWInitialized = true;
+
+            sInstance = this;
         }
 
         mHandle = glfwCreateWindow(spec.width, spec.height, spec.title.c_str(), nullptr, nullptr);
@@ -160,4 +160,10 @@ namespace Car {
 
         return ret;
     }
+
+    VkResult Window::createVulkanSurface(VkInstance instance, const VkAllocationCallbacks* pAllocator,
+                                         VkSurfaceKHR* pSurface) {
+        return glfwCreateWindowSurface(instance, mHandle, pAllocator, pSurface);
+    }
+
 } // namespace Car

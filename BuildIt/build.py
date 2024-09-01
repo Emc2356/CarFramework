@@ -274,7 +274,7 @@ def find_if_file_changed_from_include_recursivly(target_file: Path | str, extra_
 
 
 def need_to_rebuild_source_file(source_file: SourceFile, compile_commands: dict[str, list[str]], compile_command: list[str], extra_include_directories: list[str]=[]) -> bool:
-    aligns_with_compile_commands = compile_commands.get(str(source_file.path), None) is not None and compile_commands[str(source_file)] == compile_command
+    aligns_with_compile_commands = compile_commands.get(str(source_file.path), None) is not None and len(compile_commands[str(source_file)]) == len(compile_command) and set(compile_commands[str(source_file)]) == set(compile_command)
     # find_if_file_changed_from_include_recursivly is kind of heavy and slow
     # so it skips it if it can
     if not aligns_with_compile_commands:
@@ -293,7 +293,8 @@ def build_shared(toolc: int) -> None:
 
     all_static_libraries = Register().static_libraries
 
-    link_commands: list[Command] = []
+    # stage 1, stage 2
+    link_commands: tuple[list[Command]] = ([], [])
 
     if any(len(lib.attached_precompiled_headers) > 0 for lib in all_static_libraries):
         for static_library in all_static_libraries:
@@ -380,7 +381,7 @@ def build_shared(toolc: int) -> None:
 
             if needs_rebuilding or not (library.out_filepath / f"lib{library.name}.a").exists():
                 library.out_filepath.mkdir(parents=True, exist_ok=True)
-                link_commands.append(create_execute_command(
+                link_commands[0].append(create_execute_command(
                     ["ar", "rcs", "-o", str(library.out_filepath / f"lib{library.name}.a")] + list(
                         str(path) for path in object_files_in_static_library),
                     f"linking static library {library.out_filepath / f"lib{library.name}.a"}",
@@ -417,7 +418,7 @@ def build_shared(toolc: int) -> None:
                     LogFile.update(source_file)
                     executable_changed = True
                     compile_commands[str(source_file.path)] = command
-
+                    
             changed_static_libraries_ = any(changed_static_libraries[_lib.name] for _lib in expand_static_libraries_from_strings(executable.static_libraries))
             if executable_changed or not Path(executable.name).exists() or changed_static_libraries_:
                 command: list[str] = [Compiler.linker] + Compiler.link_flags + executable.extra_link_flags
@@ -443,8 +444,8 @@ def build_shared(toolc: int) -> None:
                 for static_library in sort_static_libraries(expand_static_libraries_from_strings(executable.static_libraries))[::-1]:
                     command.append("-l")
                     command.append(f"{str(static_library.name)}")
-    
-                link_commands.append(create_execute_command(
+                
+                link_commands[1].append(create_execute_command(
                     command,
                     f"creating executable `{executable.name}`",
                     "linker failed",
@@ -453,8 +454,10 @@ def build_shared(toolc: int) -> None:
 
         create_gather_cmd()
 
-        for link_command in link_commands:
-            CommandQueue.add(link_command)
+        for stage in link_commands:
+            for link_command in stage:
+                CommandQueue.add(link_command)
+            create_gather_cmd()
 
         create_gather_cmd()
         

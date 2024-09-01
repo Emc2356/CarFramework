@@ -132,8 +132,7 @@ namespace Car {
                 }
                 }
             } else {
-                vkDestroyBuffer(device, mBuffer, nullptr);
-                vkFreeMemory(device, mBufferMemory, nullptr);
+                releaseDeviceObjects();
                 mSize = size;
                 VkDeviceSize bufferSize = size;
 
@@ -263,7 +262,7 @@ namespace Car {
                 case Buffer::Usage::StaticDraw: {
                     throw std::runtime_error(
                         "Car::VertexBuffer::updateData(data, size, offset), if the VertexBuffer was created with the "
-                        "static usage the internal buffer can not be resized if (offset > 0 && ffset + size > mSize). "
+                        "static usage the internal buffer can not be resized if (offset > 0 && offset + size > mSize). "
                         "Consider allocating more memory ahead of time");
                     break;
                 }

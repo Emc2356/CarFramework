@@ -15,8 +15,6 @@ namespace Car {
 
         static Ref<GraphicsContext> Create(GLFWwindow* windowHandle);
 
-        // internal functions
-        static void Set(Ref<GraphicsContext>);
         static Ref<GraphicsContext> Get();
     };
 } // namespace Car

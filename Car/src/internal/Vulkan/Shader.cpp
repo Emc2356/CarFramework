@@ -85,11 +85,12 @@ namespace Car {
 
     VulkanShader::VulkanShader(const CompiledShader& compiledShader, const ShaderLayoutInput& inputLayout,
                                const Specification* pSpec)
-        : mCompiledShader(compiledShader), mInputLayout(inputLayout) {
+        : mCompiledShader(compiledShader), mInputLayout(inputLayout), mSpec(*pSpec) {
         mGraphicsContext = reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get());
 
         createDescriptors();
-        createGraphicsPipeline(pSpec);
+        createPipelineLayout();
+        createGraphicsPipeline();
     }
 
     VulkanShader::~VulkanShader() {
@@ -100,6 +101,8 @@ namespace Car {
         for (const VkDescriptorSetLayout& descriptorSetLayout : mDescriptorSetLayouts) {
             vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
         }
+
+        // vkFreeDescriptorSets
 
         vkDestroyPipeline(device, mGraphicsPipeline, nullptr);
         vkDestroyPipelineLayout(device, mPipelineLayout, nullptr);
@@ -301,7 +304,7 @@ namespace Car {
                     break;
                 }
                 case Car::DescriptorType::NONE: {
-                    throw std::runtime_error("internal error in VulkanShader.cpp in createGraphicsPipeline");
+                    throw std::runtime_error("internal error in VulkanShader.cpp in createDescriptors");
                 }
                 }
             }
@@ -334,7 +337,29 @@ namespace Car {
         }
     }
 
-    void VulkanShader::createGraphicsPipeline(const Specification* pSpec) {
+    void VulkanShader::createPipelineLayout() {
+        VkDevice device = mGraphicsContext->getDevice();
+
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        if (mDescriptorSetLayouts.size() > 0) {
+            pipelineLayoutInfo.setLayoutCount = mDescriptorSetLayouts.size();
+            pipelineLayoutInfo.pSetLayouts = mDescriptorSetLayouts.data();
+        } else {
+            pipelineLayoutInfo.setLayoutCount = 0;
+            pipelineLayoutInfo.pSetLayouts = nullptr;
+        }
+
+        // i dont think i want to support push_constant
+        pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
+        pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+
+        if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &mPipelineLayout) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create pipeline layout!");
+        }
+    }
+
+    void VulkanShader::createGraphicsPipeline() {
         VkDevice device = mGraphicsContext->getDevice();
 
         VkShaderModule vertShaderModule = createShaderModule(mCompiledShader.vertexShader);
@@ -344,13 +369,13 @@ namespace Car {
         vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
         vertShaderStageInfo.module = vertShaderModule;
-        vertShaderStageInfo.pName = pSpec->vertexShaderEntryName.c_str();
+        vertShaderStageInfo.pName = mSpec.vertexShaderEntryName.c_str();
 
         VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
         fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
         fragShaderStageInfo.module = fragShaderModule;
-        fragShaderStageInfo.pName = pSpec->fragmentShaderEntryName.c_str();
+        fragShaderStageInfo.pName = mSpec.fragmentShaderEntryName.c_str();
 
         VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
@@ -364,14 +389,13 @@ namespace Car {
         VkVertexInputBindingDescription bindingDescription{};
         bindingDescription.binding = 0;
         bindingDescription.stride = mInputLayout.getTotalSize();
-        switch (pSpec->vertexInputRate) {
+        switch (mSpec.vertexInputRate) {
         case Shader::VertexInputRate::VERTEX: {
             bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
             break;
         }
         default: {
-            throw std::runtime_error("unrecognized VertexInputRate " +
-                                     std::to_string((uint32_t)pSpec->vertexInputRate));
+            throw std::runtime_error("unrecognized VertexInputRate " + std::to_string((uint32_t)mSpec.vertexInputRate));
             break;
         }
         }
@@ -398,7 +422,7 @@ namespace Car {
 
         VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
         inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-        switch (pSpec->primitiveTopology) {
+        switch (mSpec.primitiveTopology) {
         case Shader::PrimitiveTopology::POINT_LIST: {
             inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
             break;
@@ -445,19 +469,19 @@ namespace Car {
         }
         default: {
             throw std::runtime_error("unrecognized primitive topology " +
-                                     std::to_string((uint32_t)pSpec->primitiveTopology));
+                                     std::to_string((uint32_t)mSpec.primitiveTopology));
             break;
         }
         }
-        inputAssembly.primitiveRestartEnable = pSpec->primitiveRestartEnable ? VK_TRUE : VK_FALSE;
+        inputAssembly.primitiveRestartEnable = mSpec.primitiveRestartEnable ? VK_TRUE : VK_FALSE;
 
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
         viewport.width = (float)mGraphicsContext->getSwapChainExtent().width;
         viewport.height = (float)mGraphicsContext->getSwapChainExtent().height;
-        viewport.minDepth = pSpec->minDepth;
-        viewport.maxDepth = pSpec->maxDepth;
+        viewport.minDepth = mSpec.minDepth;
+        viewport.maxDepth = mSpec.maxDepth;
 
         VkRect2D scissor{};
         scissor.offset = {0, 0};
@@ -474,7 +498,7 @@ namespace Car {
         rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         rasterizer.depthClampEnable = VK_FALSE;
         rasterizer.rasterizerDiscardEnable = VK_FALSE;
-        switch (pSpec->polygonMode) {
+        switch (mSpec.polygonMode) {
         case Shader::PolygonMode::FILL: {
             rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
             break;
@@ -488,12 +512,12 @@ namespace Car {
             break;
         }
         default: {
-            throw std::runtime_error("unrecognized polygon mode " + std::to_string((uint32_t)pSpec->polygonMode));
+            throw std::runtime_error("unrecognized polygon mode " + std::to_string((uint32_t)mSpec.polygonMode));
             break;
         }
         }
         rasterizer.lineWidth = 1.0f;
-        switch (pSpec->cullMode) {
+        switch (mSpec.cullMode) {
         case Shader::CullMode::NONE: {
             rasterizer.cullMode = VK_CULL_MODE_NONE;
             break;
@@ -511,11 +535,11 @@ namespace Car {
             break;
         }
         default: {
-            throw std::runtime_error("unrecognized cull mode " + std::to_string((uint32_t)pSpec->cullMode));
+            throw std::runtime_error("unrecognized cull mode " + std::to_string((uint32_t)mSpec.cullMode));
             break;
         }
         }
-        switch (pSpec->frontFace) {
+        switch (mSpec.frontFace) {
         case Shader::FrontFace::CLOCKWISE: {
             rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
             break;
@@ -525,7 +549,7 @@ namespace Car {
             break;
         }
         default: {
-            throw std::runtime_error("unrecognized front face " + std::to_string((uint32_t)pSpec->frontFace));
+            throw std::runtime_error("unrecognized front face " + std::to_string((uint32_t)mSpec.frontFace));
             break;
         }
         }
@@ -534,6 +558,7 @@ namespace Car {
         rasterizer.depthBiasClamp = 0.0f;          // Optional
         rasterizer.depthBiasSlopeFactor = 0.0f;    // Optional
 
+        // TODO: MultiSampling
         VkPipelineMultisampleStateCreateInfo multisampling{};
         multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multisampling.sampleShadingEnable = VK_FALSE;
@@ -544,44 +569,355 @@ namespace Car {
         multisampling.alphaToOneEnable = VK_FALSE;      // Optional
 
         VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-        colorBlendAttachment.colorWriteMask =
-            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        colorBlendAttachment.blendEnable = VK_TRUE;
-        colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-        colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-        colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-        colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-        colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-        colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+        colorBlendAttachment.blendEnable = mSpec.colorBlendAttachmeant.enable ? VK_TRUE : VK_FALSE;
+        colorBlendAttachment.colorWriteMask = 0;
+        if ((uint8_t)mSpec.colorBlendAttachmeant.writeMask & (uint8_t)ColorComponent::R) {
+            colorBlendAttachment.colorWriteMask |= VK_COLOR_COMPONENT_R_BIT;
+        }
+        if ((uint8_t)mSpec.colorBlendAttachmeant.writeMask & (uint8_t)ColorComponent::G) {
+            colorBlendAttachment.colorWriteMask |= VK_COLOR_COMPONENT_G_BIT;
+        }
+        if ((uint8_t)mSpec.colorBlendAttachmeant.writeMask & (uint8_t)ColorComponent::B) {
+            colorBlendAttachment.colorWriteMask |= VK_COLOR_COMPONENT_B_BIT;
+        }
+        if ((uint8_t)mSpec.colorBlendAttachmeant.writeMask & (uint8_t)ColorComponent::A) {
+            colorBlendAttachment.colorWriteMask |= VK_COLOR_COMPONENT_A_BIT;
+        }
+        switch (mSpec.colorBlendAttachmeant.srcColorBlendFactor) {
+        case BlendFactor::ZERO:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+            break;
+        case BlendFactor::ONE:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+            break;
+        case BlendFactor::SRC_COLOR:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_SRC_COLOR:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+            break;
+        case BlendFactor::DST_COLOR:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_DST_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_DST_COLOR:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+            break;
+        case BlendFactor::SRC_ALPHA:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_SRC_ALPHA:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            break;
+        case BlendFactor::DST_ALPHA:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_DST_ALPHA:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+            break;
+        case BlendFactor::CONSTANT_COLOR:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_CONSTANT_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_CONSTANT_COLOR:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
+            break;
+        case BlendFactor::CONSTANT_ALPHA:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_CONSTANT_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_CONSTANT_ALPHA:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
+            break;
+        case BlendFactor::SRC_ALPHA_SATURATE:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+            break;
+        case BlendFactor::SRC1_COLOR:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC1_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_SRC1_COLOR:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
+            break;
+        case BlendFactor::SRC1_ALPHA:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC1_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_SRC1_ALPHA:
+            colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+            break;
+        }
+        switch (mSpec.colorBlendAttachmeant.dstColorBlendFactor) {
+        case BlendFactor::ZERO:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+            break;
+        case BlendFactor::ONE:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+            break;
+        case BlendFactor::SRC_COLOR:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_SRC_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_SRC_COLOR:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+            break;
+        case BlendFactor::DST_COLOR:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_DST_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_DST_COLOR:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+            break;
+        case BlendFactor::SRC_ALPHA:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_SRC_ALPHA:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            break;
+        case BlendFactor::DST_ALPHA:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_DST_ALPHA:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+            break;
+        case BlendFactor::CONSTANT_COLOR:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_CONSTANT_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_CONSTANT_COLOR:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
+            break;
+        case BlendFactor::CONSTANT_ALPHA:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_CONSTANT_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_CONSTANT_ALPHA:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
+            break;
+        case BlendFactor::SRC_ALPHA_SATURATE:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+            break;
+        case BlendFactor::SRC1_COLOR:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_SRC1_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_SRC1_COLOR:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
+            break;
+        case BlendFactor::SRC1_ALPHA:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_SRC1_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_SRC1_ALPHA:
+            colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+            break;
+        }
+        switch (mSpec.colorBlendAttachmeant.colorBlendOp) {
+        case BlendOp::ADD:
+            colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+            break;
+        case BlendOp::SUBTRACT:
+            colorBlendAttachment.colorBlendOp = VK_BLEND_OP_SUBTRACT;
+            break;
+        case BlendOp::REVERSE_SUBTRACT:
+            colorBlendAttachment.colorBlendOp = VK_BLEND_OP_REVERSE_SUBTRACT;
+            break;
+        case BlendOp::MIN:
+            colorBlendAttachment.colorBlendOp = VK_BLEND_OP_MIN;
+            break;
+        case BlendOp::MAX:
+            colorBlendAttachment.colorBlendOp = VK_BLEND_OP_MAX;
+            break;
+        }
+        switch (mSpec.colorBlendAttachmeant.alphaBlendOp) {
+        case BlendOp::ADD:
+            colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+            break;
+        case BlendOp::SUBTRACT:
+            colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_SUBTRACT;
+            break;
+        case BlendOp::REVERSE_SUBTRACT:
+            colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_REVERSE_SUBTRACT;
+            break;
+        case BlendOp::MIN:
+            colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_MIN;
+            break;
+        case BlendOp::MAX:
+            colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_MAX;
+            break;
+        }
+        switch (mSpec.colorBlendAttachmeant.srcAlphaBlendFactor) {
+        case BlendFactor::ZERO:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+            break;
+        case BlendFactor::ONE:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            break;
+        case BlendFactor::SRC_COLOR:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_SRC_COLOR:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+            break;
+        case BlendFactor::DST_COLOR:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_DST_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_DST_COLOR:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+            break;
+        case BlendFactor::SRC_ALPHA:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_SRC_ALPHA:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            break;
+        case BlendFactor::DST_ALPHA:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_DST_ALPHA:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+            break;
+        case BlendFactor::CONSTANT_COLOR:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_CONSTANT_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_CONSTANT_COLOR:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
+            break;
+        case BlendFactor::CONSTANT_ALPHA:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_CONSTANT_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_CONSTANT_ALPHA:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
+            break;
+        case BlendFactor::SRC_ALPHA_SATURATE:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+            break;
+        case BlendFactor::SRC1_COLOR:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC1_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_SRC1_COLOR:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
+            break;
+        case BlendFactor::SRC1_ALPHA:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC1_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_SRC1_ALPHA:
+            colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+            break;
+        }
+        switch (mSpec.colorBlendAttachmeant.dstAlphaBlendFactor) {
+        case BlendFactor::ZERO:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+            break;
+        case BlendFactor::ONE:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            break;
+        case BlendFactor::SRC_COLOR:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_SRC_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_SRC_COLOR:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+            break;
+        case BlendFactor::DST_COLOR:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_DST_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_DST_COLOR:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+            break;
+        case BlendFactor::SRC_ALPHA:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_SRC_ALPHA:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            break;
+        case BlendFactor::DST_ALPHA:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_DST_ALPHA:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+            break;
+        case BlendFactor::CONSTANT_COLOR:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_CONSTANT_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_CONSTANT_COLOR:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
+            break;
+        case BlendFactor::CONSTANT_ALPHA:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_CONSTANT_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_CONSTANT_ALPHA:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
+            break;
+        case BlendFactor::SRC_ALPHA_SATURATE:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+            break;
+        case BlendFactor::SRC1_COLOR:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_SRC1_COLOR;
+            break;
+        case BlendFactor::ONE_MINUS_SRC1_COLOR:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
+            break;
+        case BlendFactor::SRC1_ALPHA:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_SRC1_ALPHA;
+            break;
+        case BlendFactor::ONE_MINUS_SRC1_ALPHA:
+            colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+            break;
+        }
 
         VkPipelineColorBlendStateCreateInfo colorBlending{};
         colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-        colorBlending.logicOpEnable = VK_FALSE;
-        colorBlending.logicOp = VK_LOGIC_OP_COPY; // Optional
-        colorBlending.attachmentCount = 1;
-        colorBlending.pAttachments = &colorBlendAttachment;
-        colorBlending.blendConstants[0] = 0.0f; // Optional
-        colorBlending.blendConstants[1] = 0.0f; // Optional
-        colorBlending.blendConstants[2] = 0.0f; // Optional
-        colorBlending.blendConstants[3] = 0.0f; // Optional
-
-        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        if (mDescriptorSetLayouts.size() > 0) {
-            pipelineLayoutInfo.setLayoutCount = mDescriptorSetLayouts.size();
-            pipelineLayoutInfo.pSetLayouts = mDescriptorSetLayouts.data();
+        colorBlending.logicOpEnable = mSpec.colorBlendAttachmeant.enableLogicOp ? VK_TRUE : VK_FALSE;
+        switch (mSpec.colorBlendAttachmeant.logicOp) {
+        case LogicOp::CLEAR:
+            colorBlending.logicOp = VK_LOGIC_OP_CLEAR;
+            break;
+        case LogicOp::AND:
+            colorBlending.logicOp = VK_LOGIC_OP_AND;
+            break;
+        case LogicOp::AND_REVERSE:
+            colorBlending.logicOp = VK_LOGIC_OP_AND_REVERSE;
+            break;
+        case LogicOp::COPY:
+            colorBlending.logicOp = VK_LOGIC_OP_COPY;
+            break;
+        case LogicOp::AND_INVERTED:
+            colorBlending.logicOp = VK_LOGIC_OP_AND_INVERTED;
+            break;
+        case LogicOp::NO_OP:
+            colorBlending.logicOp = VK_LOGIC_OP_NO_OP;
+            break;
+        case LogicOp::XOR:
+            colorBlending.logicOp = VK_LOGIC_OP_XOR;
+            break;
+        case LogicOp::OR:
+            colorBlending.logicOp = VK_LOGIC_OP_OR;
+            break;
+        case LogicOp::NOR:
+            colorBlending.logicOp = VK_LOGIC_OP_NOR;
+            break;
+        case LogicOp::EQUIVALENT:
+            colorBlending.logicOp = VK_LOGIC_OP_EQUIVALENT;
+            break;
+        case LogicOp::INVERT:
+            colorBlending.logicOp = VK_LOGIC_OP_INVERT;
+            break;
+        case LogicOp::OR_REVERSE:
+            colorBlending.logicOp = VK_LOGIC_OP_OR_REVERSE;
+            break;
+        case LogicOp::COPY_INVERTED:
+            colorBlending.logicOp = VK_LOGIC_OP_COPY_INVERTED;
+            break;
+        case LogicOp::OR_INVERTED:
+            colorBlending.logicOp = VK_LOGIC_OP_OR_INVERTED;
+            break;
+        case LogicOp::NAND:
+            colorBlending.logicOp = VK_LOGIC_OP_NAND;
+            break;
+        case LogicOp::SET:
+            colorBlending.logicOp = VK_LOGIC_OP_SET;
+            break;
+        }
+        if (mSpec.colorBlendAttachmeant.enable) {
+            colorBlending.attachmentCount = 1;
+            colorBlending.pAttachments = &colorBlendAttachment;
         } else {
-            pipelineLayoutInfo.setLayoutCount = 0;
-            pipelineLayoutInfo.pSetLayouts = nullptr;
+            colorBlending.attachmentCount = 0;
+            colorBlending.pAttachments = nullptr;
         }
-
-        // i dont think i want to support push_constant
-        pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
-        pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-
-        if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &mPipelineLayout) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create pipeline layout!");
-        }
+        colorBlending.blendConstants[0] = mSpec.colorBlendAttachmeant.blendConstant.r;
+        colorBlending.blendConstants[1] = mSpec.colorBlendAttachmeant.blendConstant.g;
+        colorBlending.blendConstants[2] = mSpec.colorBlendAttachmeant.blendConstant.b;
+        colorBlending.blendConstants[3] = mSpec.colorBlendAttachmeant.blendConstant.a;
 
         VkGraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;

@@ -1,5 +1,7 @@
 #pragma once
 
+// include vulkan first so glfw knows to define vulkan functions
+#include <glad/vulkan.h>
 #include <GLFW/glfw3.h>
 
 #include "Car/Core/Core.hpp"
@@ -24,6 +26,8 @@ namespace Car {
         Window(const Window::Specification&);
         ~Window();
 
+        static Window* Get();
+
         void init();
 
         void onUpdate();
@@ -34,6 +38,9 @@ namespace Car {
         const std::string getTitle() const { return mSpec.title; }
 
         GLFWwindow* getWindowHandle() const { return mHandle; }
+
+        VkResult createVulkanSurface(VkInstance instance, const VkAllocationCallbacks* allocator,
+                                     VkSurfaceKHR* surface);
 
         const Ref<GraphicsContext> getGraphicsContext() const { return mGraphicsContext; }
 
