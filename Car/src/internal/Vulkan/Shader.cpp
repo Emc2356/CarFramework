@@ -1,7 +1,6 @@
 #include "Car/internal/Vulkan/Shader.hpp"
 #include "Car/Core/Log.hpp"
 #include "Car/Core/Ref.hpp"
-#include "Car/Renderer/BufferLayout.hpp"
 #include "Car/Renderer/UniformBuffer.hpp"
 #include "Car/internal/Vulkan/CompiledShader.hpp"
 #include "Car/internal/Vulkan/GraphicsContext.hpp"
@@ -14,78 +13,65 @@
 #include <glad/vulkan.h>
 #include <stdexcept>
 
-#ifdef CR_HAVE_SPIRV_CROSS
+#if defined(CR_HAVE_SPIRV_CROSS) && defined(CR_HAVE_SHADERC)
 #include <spirv_cross/spirv_cross.hpp>
-#endif
-
-#ifdef CR_HAVE_SHADERC
 #include <shaderc/shaderc.hpp>
+#define CR_CAN_COMPILE_SHADER 1
+#else
+#define CR_CAN_COMPILE_SHADER 0
+#endif // defined(CR_HAVE_SPIRV_CROSS) && defined(CR_HAVE_SHADERC)
 
-static std::string crVkCompileSingleShader(const std::string& path, const shaderc_shader_kind kind) {
-    std::string sourceCode = Car::readFile(path);
-    shaderc::CompileOptions options;
-    shaderc::Compiler compiler;
-    options.SetOptimizationLevel(shaderc_optimization_level_performance);
-    options.SetSourceLanguage(shaderc_source_language_glsl);
-
-    options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
-
-    shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(sourceCode, kind, path.c_str(), options);
-    if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-        throw std::runtime_error(result.GetErrorMessage());
-    }
-
-    std::vector<uint32_t> res(result.cbegin(), result.cend());
-
-    return std::string(reinterpret_cast<char*>(res.data()), res.size() * sizeof(uint32_t));
-}
-#endif // CR_HAVE_SHADERC
 
 namespace Car {
-    CR_FORCE_INLINE VkFormat BufferLayoutDataTypeToVulkanType(ShaderLayoutInput::DataType type) {
+    using VertexInputLayout = Shader::VertexInputLayout;
+    
+    CR_FORCE_INLINE VkFormat BufferLayoutDataTypeToVulkanType(VertexInputLayout::DataType type) {
         switch (type) {
-        case ShaderLayoutInput::DataType::Float:
+        case VertexInputLayout::DataType::Float:
             return VK_FORMAT_R32_SFLOAT;
-        case ShaderLayoutInput::DataType::Float2:
+        case VertexInputLayout::DataType::Float2:
             return VK_FORMAT_R32G32_SFLOAT;
-        case ShaderLayoutInput::DataType::Float3:
+        case VertexInputLayout::DataType::Float3:
             return VK_FORMAT_R32G32B32_SFLOAT;
-        case ShaderLayoutInput::DataType::Float4:
+        case VertexInputLayout::DataType::Float4:
             return VK_FORMAT_R32G32B32A32_SFLOAT;
-        case ShaderLayoutInput::DataType::Mat3:
-            CR_CORE_ERROR("ShaderLayoutInput::DataType::Mat3 not supported as vulkan vertex attribute");
-            CR_DEBUGBREAK();
-            return VK_FORMAT_UNDEFINED;
-        case ShaderLayoutInput::DataType::Mat4:
-            CR_CORE_ERROR("ShaderLayoutInput::DataType::Mat4 not supported as vulkan vertex attribute");
-            CR_DEBUGBREAK();
-            return VK_FORMAT_UNDEFINED;
-        case ShaderLayoutInput::DataType::Int:
+        case VertexInputLayout::DataType::NormByte:
+            return VK_FORMAT_R8_UNORM;
+        case VertexInputLayout::DataType::NormByte2:
+            return VK_FORMAT_R8G8_UNORM;
+        case VertexInputLayout::DataType::NormByte3:
+            return VK_FORMAT_R8G8B8_UNORM;
+        case VertexInputLayout::DataType::NormByte4:
+            return VK_FORMAT_R8G8B8A8_UNORM;
+        case VertexInputLayout::DataType::Int:
             return VK_FORMAT_R32_SINT;
-        case ShaderLayoutInput::DataType::Int2:
+        case VertexInputLayout::DataType::Int2:
             return VK_FORMAT_R32G32_SINT;
-        case ShaderLayoutInput::DataType::Int3:
+        case VertexInputLayout::DataType::Int3:
             return VK_FORMAT_R32G32B32_SINT;
-        case ShaderLayoutInput::DataType::Int4:
+        case VertexInputLayout::DataType::Int4:
             return VK_FORMAT_R32G32B32A32_SINT;
-        case ShaderLayoutInput::DataType::UInt:
+        case VertexInputLayout::DataType::UInt:
             return VK_FORMAT_R32_UINT;
-        case ShaderLayoutInput::DataType::UInt2:
+        case VertexInputLayout::DataType::UInt2:
             return VK_FORMAT_R32G32_UINT;
-        case ShaderLayoutInput::DataType::UInt3:
+        case VertexInputLayout::DataType::UInt3:
             return VK_FORMAT_R32G32B32_UINT;
-        case ShaderLayoutInput::DataType::UInt4:
+        case VertexInputLayout::DataType::UInt4:
             return VK_FORMAT_R32G32B32A32_UINT;
         default:
-            CR_CORE_ERROR("Unrecognized ShaderLayoutInput::DataType: {0}", static_cast<uint32_t>(type));
+            CR_CORE_ERROR("Unrecognized VertexInputLayout::DataType: {0}", static_cast<uint32_t>(type));
             CR_DEBUGBREAK();
             return VK_FORMAT_UNDEFINED;
         }
     }
+    
+    /////////////////////////////////////////
+    /////// Constructor & Destructor ////////
+    /////////////////////////////////////////
 
-    VulkanShader::VulkanShader(const CompiledShader& compiledShader, const ShaderLayoutInput& inputLayout,
-                               const Specification* pSpec)
-        : mCompiledShader(compiledShader), mInputLayout(inputLayout), mSpec(*pSpec) {
+    VulkanShader::VulkanShader(const CompiledShader& compiledShader, const Specification* pSpec)
+        : mCompiledShader(compiledShader), mSpec(*pSpec) {
         mGraphicsContext = reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get());
 
         createDescriptors();
@@ -107,17 +93,10 @@ namespace Car {
         vkDestroyPipeline(device, mGraphicsPipeline, nullptr);
         vkDestroyPipelineLayout(device, mPipelineLayout, nullptr);
     }
-
-    void VulkanShader::bind() const {
-        VkCommandBuffer cmdBuffer = mGraphicsContext->getCurrentRenderCommandBuffer();
-        if (mCompiledShader.sets.size()) {
-            // maybe it shouldnt bind it if it doesnt changes
-            vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0,
-                                    mDescriptorSets[mGraphicsContext->getCurrentFrameIndex()].size(),
-                                    mDescriptorSets[mGraphicsContext->getCurrentFrameIndex()].data(), 0, nullptr);
-        }
-        vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
-    }
+    
+    /////////////////////////////////////////
+    /////////////// Public API //////////////
+    /////////////////////////////////////////
 
     void VulkanShader::setInput(uint32_t set, uint32_t binding, bool applyToAll, Ref<UniformBuffer> ub) {
         CR_IF (set > mCompiledShader.sets.size()) {
@@ -245,6 +224,21 @@ namespace Car {
             vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
         }
     }
+    
+    void VulkanShader::bind() const {
+        VkCommandBuffer cmdBuffer = mGraphicsContext->getCurrentRenderCommandBuffer();
+        if (mCompiledShader.sets.size()) {
+            // maybe it shouldnt bind it if it doesnt changes
+            vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0,
+                                    mDescriptorSets[mGraphicsContext->getCurrentFrameIndex()].size(),
+                                    mDescriptorSets[mGraphicsContext->getCurrentFrameIndex()].data(), 0, nullptr);
+        }
+        vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
+    }
+    
+    /////////////////////////////////////////
+    //////////// Object Creation ////////////
+    /////////////////////////////////////////
 
     void VulkanShader::createDescriptors() {
         VkDevice device = mGraphicsContext->getDevice();
@@ -380,7 +374,7 @@ namespace Car {
         VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
         std::vector<VkDynamicState> dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-
+        
         VkPipelineDynamicStateCreateInfo dynamicState{};
         dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
         dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
@@ -388,7 +382,7 @@ namespace Car {
 
         VkVertexInputBindingDescription bindingDescription{};
         bindingDescription.binding = 0;
-        bindingDescription.stride = mInputLayout.getTotalSize();
+        bindingDescription.stride = mSpec.vertexInputLayout.getTotalSize();
         switch (mSpec.vertexInputRate) {
         case Shader::VertexInputRate::VERTEX: {
             bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
@@ -402,7 +396,7 @@ namespace Car {
 
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 
-        const std::vector<ShaderLayoutInput::Element>& elements = mInputLayout.getElements();
+        const std::vector<VertexInputLayout::Element>& elements = mSpec.vertexInputLayout.getElements();
         attributeDescriptions.resize(elements.size());
 
         for (uint32_t i = 0; i < attributeDescriptions.size(); i++) {
@@ -480,8 +474,8 @@ namespace Car {
         viewport.y = 0.0f;
         viewport.width = (float)mGraphicsContext->getSwapChainExtent().width;
         viewport.height = (float)mGraphicsContext->getSwapChainExtent().height;
-        viewport.minDepth = mSpec.minDepth;
-        viewport.maxDepth = mSpec.maxDepth;
+        viewport.minDepth = -1.0f;
+        viewport.maxDepth = 1.0f;
 
         VkRect2D scissor{};
         scissor.offset = {0, 0};
@@ -949,7 +943,6 @@ namespace Car {
     VkShaderModule VulkanShader::createShaderModule(const std::string& code) {
         VkShaderModuleCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        // questionable code sadly
         createInfo.codeSize = code.size();
         createInfo.pCode = reinterpret_cast<const uint32_t*>(code.c_str());
 
@@ -961,7 +954,7 @@ namespace Car {
         return shaderModule;
     }
 
-#if defined(CR_HAVE_SPIRV_CROSS)
+#if CR_CAN_COMPILE_SHADER
     static void fillSetField(SingleCompiledShader* pSCS) {
         pSCS->sets.resize(0);
         spirv_cross::Compiler compiler((uint32_t*)pSCS->shader.data(), pSCS->shader.size() / 4);
@@ -1002,6 +995,25 @@ namespace Car {
                 Car::DescriptorStage::VertexShader,
             });
         }
+    }
+    
+    static std::string crVkCompileSingleShader(const std::string& path, const shaderc_shader_kind kind) {
+        std::string sourceCode = Car::readFile(path);
+        shaderc::CompileOptions options;
+        shaderc::Compiler compiler;
+        options.SetOptimizationLevel(shaderc_optimization_level_performance);
+        options.SetSourceLanguage(shaderc_source_language_glsl);
+    
+        options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
+    
+        shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(sourceCode, kind, path.c_str(), options);
+        if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
+            throw std::runtime_error(result.GetErrorMessage());
+        }
+    
+        std::vector<uint32_t> res(result.cbegin(), result.cend());
+    
+        return std::string(reinterpret_cast<char*>(res.data()), res.size() * sizeof(uint32_t));
     }
 #endif
 
@@ -1059,7 +1071,7 @@ namespace Car {
     }
 
     Ref<Shader> Shader::Create(const std::string& vertexShaderName, const std::string& fragmeantShaderName,
-                               const ShaderLayoutInput& inputLayout, const Shader::Specification* pSpec) {
+                               const Shader::Specification* pSpec) {
         SingleCompiledShader vertCompiledShader;
         SingleCompiledShader fragCompiledShader;
 
@@ -1073,7 +1085,7 @@ namespace Car {
         std::filesystem::path fragCacheFile = std::string(cacheShaderDir / fragmeantShaderName) + ".crss";
 
         if (!std::filesystem::exists(vertCacheFile)) {
-#if defined(CR_HAVE_SHADERC) && defined(CR_HAVE_SPIRV_CROSS)
+#if CR_CAN_COMPILE_SHADER
             std::filesystem::create_directories(vertCacheFile.parent_path());
             CR_CORE_DEBUG("compiling vertex shader {}", vertPath);
             vertCompiledShader.shader = crVkCompileSingleShader(vertPath, shaderc_vertex_shader);
@@ -1082,7 +1094,7 @@ namespace Car {
             writeToFile(vertCacheFile, vertCompiledShader.toBytes());
 #else
             CR_CORE_ERROR("Can not online compile shaders without shaderc and spirv-cross");
-#endif // CR_HAVE_SHADERC
+#endif // CR_CAN_COMPILE_SHADER
         } else {
             CR_CORE_DEBUG("Loading pre-processed vertex shader from {}", (std::string)vertCacheFile);
             std::string data = readFile(vertCacheFile);
@@ -1090,7 +1102,7 @@ namespace Car {
         }
 
         if (!std::filesystem::exists(fragCacheFile)) {
-#if defined(CR_HAVE_SHADERC) && defined(CR_HAVE_SPIRV_CROSS)
+#if CR_CAN_COMPILE_SHADER
             std::filesystem::create_directories(fragCacheFile.parent_path());
             CR_CORE_DEBUG("compiling fragmeant shader {}", fragPath);
             fragCompiledShader.shader = crVkCompileSingleShader(fragPath, shaderc_fragment_shader);
@@ -1099,7 +1111,7 @@ namespace Car {
             writeToFile(fragCacheFile, fragCompiledShader.toBytes());
 #else
             CR_CORE_ERROR("Can not online compile shaders without shaderc and spirv-cross");
-#endif // CR_HAVE_SHADERC
+#endif // CR_CAN_COMPILE_SHADER
         } else {
             CR_CORE_DEBUG("Loading pre-processed fragmeant shader from {}", (std::string)fragCacheFile);
             std::string data = readFile(fragCacheFile);
@@ -1108,6 +1120,6 @@ namespace Car {
 
         CompiledShader compiledShader = combineSingleShaders(&vertCompiledShader, &fragCompiledShader);
 
-        return createRef<VulkanShader>(compiledShader, inputLayout, pSpec);
+        return createRef<VulkanShader>(compiledShader, pSpec);
     }
 } // namespace Car

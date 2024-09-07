@@ -10,13 +10,10 @@
 namespace Car {
     class VulkanShader : public Shader {
     public:
-        VulkanShader(const CompiledShader& compiledShader, const ShaderLayoutInput& inputLayout,
-                     const Specification* pSpec);
+        VulkanShader(const CompiledShader& compiledShader, const Specification* pSpec);
         virtual ~VulkanShader() override;
 
         virtual void bind() const override;
-
-        virtual const ShaderLayoutInput& getInputLayout() const override { return mInputLayout; }
 
         VkPipelineLayout getPipelineLayout() const { return mPipelineLayout; }
         VkPipeline getGraphicsPipeline() const { return mGraphicsPipeline; }
@@ -32,8 +29,6 @@ namespace Car {
 
     private:
         CompiledShader mCompiledShader;
-
-        ShaderLayoutInput mInputLayout;
 
         std::vector<VkDescriptorSetLayout> mDescriptorSetLayouts;
         std::vector<std::vector<VkDescriptorSet>> mDescriptorSets;

@@ -10,13 +10,13 @@ namespace Car {
 
         virtual void bind() const = 0;
 
-        virtual void updateData(void* data, uint32_t size, uint32_t offset) = 0;
+        virtual void updateData(void* data, uint64_t size, uint64_t offset) = 0;
 
-        virtual uint32_t getCount() const = 0;
-        virtual uint32_t getSize() const = 0;
+        virtual uint64_t getCount() const = 0;
+        virtual uint64_t getSize() const = 0;
         virtual Buffer::Usage getUsage() const = 0;
         virtual Buffer::Type getType() const = 0;
 
-        static Ref<IndexBuffer> Create(void* data, uint32_t size, Buffer::Usage usage, Buffer::Type type);
+        static Ref<IndexBuffer> Create(void* data, uint64_t size, Buffer::Usage usage, Buffer::Type type);
     };
 } // namespace Car

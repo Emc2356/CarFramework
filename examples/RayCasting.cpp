@@ -12,7 +12,6 @@ public:
     RayCastingLayer() : Car::Layer("RayCasting Layer") {}
 
     virtual void onAttach() override {
-        Car::Renderer::EnableBlending();
         Car::Renderer::ClearColor(0.1f);
 
         mWallCount = 5;
@@ -105,15 +104,11 @@ private:
 class RayCastingApplication : public Car::Application {
 public:
     RayCastingApplication() {
-        mSandboxLayer = new RayCastingLayer();
-        pushLayer(mSandboxLayer);
+        pushLayer(new RayCastingLayer());
     }
     virtual ~RayCastingApplication() override {}
 
-    virtual void onRender() override { Car::Renderer::Clear(); }
-
 private:
-    RayCastingLayer* mSandboxLayer;
 };
 
 Car::Application* Car::createApplication() {
@@ -121,7 +116,7 @@ Car::Application* Car::createApplication() {
     spec.width = 1280;
     spec.height = 720;
     spec.title = "Ray Casting";
-    spec.vsync = false;
+    spec.targetFPS = 60;
     spec.resizable = true;
     spec.useImGui = true;
     Car::Application::SetSpecification(spec);

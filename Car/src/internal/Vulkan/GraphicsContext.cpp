@@ -1,7 +1,6 @@
 #include "Car/internal/Vulkan/GraphicsContext.hpp"
 #include "Car/Core/Core.hpp"
 #include "Car/Renderer/GraphicsContext.hpp"
-#include "Car/Utils.hpp"
 #include "Car/Application.hpp"
 #include "Car/Core/Log.hpp"
 #include "Car/Window.hpp"
@@ -149,7 +148,7 @@ namespace Car {
 
     VulkanGraphicsContext::VulkanGraphicsContext(GLFWwindow* windowHandle) : mWindowHandle(windowHandle) {
         CR_ASSERT(windowHandle, "Interal Error: null window handle sent to vulkan graphics context");
-        CR_ASSERT(sInstance, "an instance of the graphics context already exists, use the Get method");
+        CR_ASSERT(!sInstance, "an instance of the graphics context already exists, use the Get method");
     }
 
     void VulkanGraphicsContext::init() {
@@ -310,10 +309,11 @@ namespace Car {
         if (gEnableValidationLayers) {
             createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
             createInfo.ppEnabledLayerNames = validationLayers.data();
-
-            VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-            crPopulateDebugMessagerCreateInfo(&debugCreateInfo, nullptr);
-            createInfo.pNext = static_cast<void*>(&debugCreateInfo);
+            
+            createInfo.pNext = nullptr;
+            // VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+            // crPopulateDebugMessagerCreateInfo(&debugCreateInfo, nullptr);
+            // createInfo.pNext = static_cast<void*>(&debugCreateInfo);
         } else {
             createInfo.enabledLayerCount = 0;
             createInfo.pNext = nullptr;
@@ -409,12 +409,9 @@ namespace Car {
 
         VkDeviceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-
         createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
-
         createInfo.pEnabledFeatures = &deviceFeatures;
-
         createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
         createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
@@ -720,6 +717,7 @@ namespace Car {
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
             // dont really know what i think about this.
             // Recreating a semaphore so it can be not signlated is kind of sketchy.
+            // only if there was vkResetSemaphores
             vkDestroySemaphore(mDevice, getCurrentImageAvailableSemaphore(), nullptr);
 
             VkSemaphoreCreateInfo semaphoreInfo{};
@@ -740,19 +738,17 @@ namespace Car {
     }
 
     void VulkanGraphicsContext::swapBuffers() {
-        VkSubmitInfo submitInfo{};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
         VkSemaphore waitSemaphores[] = {mImageAvailableSemaphores[mCurrentFrame]};
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+        VkSemaphore signalSemaphores[] = {mRenderFinishedSemaphores[mCurrentFrame]};
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.waitSemaphoreCount = 1;
         submitInfo.pWaitSemaphores = waitSemaphores;
         submitInfo.pWaitDstStageMask = waitStages;
-
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &mRenderCommandBuffers[mCurrentFrame];
-
-        VkSemaphore signalSemaphores[] = {mRenderFinishedSemaphores[mCurrentFrame]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
@@ -762,14 +758,10 @@ namespace Car {
 
         VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;
-
-        VkSwapchainKHR swapChains[] = {mSwapChain};
         presentInfo.swapchainCount = 1;
-        presentInfo.pSwapchains = swapChains;
-
+        presentInfo.pSwapchains = &mSwapChain;
         presentInfo.pImageIndices = &mImageIndex;
 
         vkQueuePresentKHR(mPresentQueue, &presentInfo);
@@ -947,8 +939,8 @@ namespace Car {
     }
 
     void VulkanGraphicsContext::copyBufferToImage2D(VkBuffer* pBuffer, VkImage* pImage, uint32_t width, uint32_t height,
-                                                    uint32_t srcOffset /*=0*/, uint32_t dstOffsetX /*=0*/,
-                                                    uint32_t dstOffsetY /*=0*/) {
+                                                    uint64_t srcOffset /*=0*/, uint64_t dstOffsetX /*=0*/,
+                                                    uint64_t dstOffsetY /*=0*/) {
         VkCommandBuffer commandBuffer = beginSingleTimeCommands(mTransferCommandPool);
 
         VkBufferImageCopy region{};

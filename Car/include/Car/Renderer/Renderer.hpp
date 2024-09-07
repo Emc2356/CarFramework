@@ -23,7 +23,7 @@ namespace Car {
         static void DrawCommand(const Ref<VertexArray> va) {
             sInstance->DrawCommandImpl(va, va->getIndexBuffer()->getCount());
         }
-        static void DrawCommand(const Ref<VertexArray> va, uint32_t indicesCount) {
+        static void DrawCommand(const Ref<VertexArray> va, uint64_t indicesCount) {
             sInstance->DrawCommandImpl(va, indicesCount);
         }
 
@@ -43,7 +43,7 @@ namespace Car {
         virtual void InitImpl() = 0;
         virtual void ShutdownImpl() = 0;
         virtual void ClearColorImpl(float r, float g, float b, float a) = 0;
-        virtual void DrawCommandImpl(const Ref<VertexArray> va, uint32_t indicesCount) = 0;
+        virtual void DrawCommandImpl(const Ref<VertexArray> va, uint64_t indicesCount) = 0;
         virtual void SetViewportImpl(float x, float y, float width, float height, float minDepth, float maxDepth) = 0;
         virtual void SetScissorImpl(int32_t x, int32_t y, int32_t width, int32_t height) = 0;
         virtual void BeginRecordingImpl() = 0;

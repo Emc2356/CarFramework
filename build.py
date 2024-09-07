@@ -303,8 +303,8 @@ def carlib() -> None:
         carlib.depends_on.append("spirv_cross")
         carlib.add_define("CR_HAVE_SHADERC")
         carlib.add_define("CR_HAVE_SPIRV_CROSS")
-    if not BuildIt.is_release():
-        carlib.add_define("CR_DEBUG")
+    # if not BuildIt.is_release():
+    carlib.add_define("CR_DEBUG")
         
         
 @buildspec(BuildSpecFlags.ANY_PLATFORM | BuildSpecFlags.ANY_TOOLCHAIN)
@@ -346,6 +346,7 @@ def core() -> None:
         libraries=[],
         extra_defines=[
             ("GLFW_INCLUDE_NONE",),
+            ("CR_DEBUG",)
         ]
     )
     
@@ -362,26 +363,10 @@ def core() -> None:
             libraries=[],
             extra_defines=[
                 ("GLFW_INCLUDE_NONE",),
+                ("CR_DEBUG",)
             ]
         )
         
-        BuildIt.Executable(
-            name="Maze.out",
-            sources=[
-                "examples/Maze.cpp"
-            ],
-            static_libraries=[
-                "Car"
-            ],
-            extra_build_flags=["-Wall", "-Wextra", "-Werror", "-pedantic"],
-            extra_link_flags=[],
-            include_directories=[],
-            libraries=[],
-            extra_defines=[
-                ("GLFW_INCLUDE_NONE",),
-            ]
-        )
-
 
 @BuildIt.unknown_argument
 def unknown_arg(arg: str) -> bool:

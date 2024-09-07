@@ -33,7 +33,6 @@
 #include "Car/Renderer/Texture2D.hpp"
 #include "Car/Renderer/VertexBuffer.hpp"
 #include "Car/Renderer/IndexBuffer.hpp"
-#include "Car/Renderer/BufferLayout.hpp"
 #include "Car/Renderer/SSBO.hpp"
 
 /////////////////////////////////////////

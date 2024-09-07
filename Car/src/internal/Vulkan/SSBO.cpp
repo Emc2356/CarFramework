@@ -1,17 +1,20 @@
 #include "Car/internal/Vulkan/SSBO.hpp"
 
 #include <glad/vulkan.h>
+#include <stdexcept>
 
 namespace Car {
-    VulkanSSBO::VulkanSSBO(void* data, uint32_t size, Buffer::Usage usage) {
+    VulkanSSBO::VulkanSSBO(void* data, uint64_t size, Buffer::Usage usage) {
         UNUSED(data);
         UNUSED(usage);
         mSize = size;
+        
+        throw std::runtime_error("Vulkan SSBO not implemented yet");
     }
 
     VulkanSSBO::~VulkanSSBO() {}
 
-    void VulkanSSBO::updateBuffer(void* data, uint32_t size) {
+    void VulkanSSBO::updateBuffer(void* data, uint64_t size) {
         UNUSED(data);
         UNUSED(size);
     }
@@ -20,7 +23,7 @@ namespace Car {
 
     void VulkanSSBO::unbind() const {}
 
-    Ref<SSBO> SSBO::Create(void* data, uint32_t size, Buffer::Usage usage) {
+    Ref<SSBO> SSBO::Create(void* data, uint64_t size, Buffer::Usage usage) {
         return createRef<VulkanSSBO>(data, size, usage);
     }
 } // namespace Car

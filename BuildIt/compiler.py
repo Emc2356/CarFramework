@@ -46,7 +46,7 @@ class Compiler:
         if cls.is_release or (hasattr(other, "is_optimized") and other.is_optimized):
             common.append("-O3")
         else:
-            common.append("-ggdb")
+            common.append("-g3")
 
         for name, value in cls.defines.items():
             common.append("-D")
@@ -110,7 +110,7 @@ class Compiler:
         if cls.is_release or (hasattr(other, "is_optimized") and other.is_optimized):
             common.append("-O3")
         else:
-            common.append("-ggdb")
+            common.append("-g3")
 
         for name, value in cls.defines.items():
             common.append("-D")

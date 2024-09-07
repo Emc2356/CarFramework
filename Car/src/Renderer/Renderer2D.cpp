@@ -3,7 +3,6 @@
 #include "Car/Application.hpp"
 #include "Car/Core/Core.hpp"
 #include "Car/Renderer/Buffer.hpp"
-#include "Car/Renderer/BufferLayout.hpp"
 #include "Car/Renderer/IndexBuffer.hpp"
 #include "Car/Renderer/Shader.hpp"
 #include "Car/Renderer/Texture2D.hpp"
@@ -53,29 +52,28 @@ namespace Car {
     void Renderer2D::Init() {
         sData = new Renderer2DData();
 
-        ShaderLayoutInput layout = {
-            {"iPos", ShaderLayoutInput::DataType::Float2},
-            {"iSourceUV", ShaderLayoutInput::DataType::Float2},
-            {"iTint", ShaderLayoutInput::DataType::Float3},
-            {"iTextureID", ShaderLayoutInput::DataType::UInt},
+        Shader::VertexInputLayout layout = {
+            {"iPos", Shader::VertexInputLayout::DataType::Float2},
+            {"iSourceUV", Shader::VertexInputLayout::DataType::Float2},
+            {"iTint", Shader::VertexInputLayout::DataType::Float3},
+            {"iTextureID", Shader::VertexInputLayout::DataType::UInt},
         };
 
         assert(sizeof(Renderer2DVertex) == layout.getTotalSize());
 
         Shader::Specification spec{};
+        spec.vertexInputLayout = layout;
         spec.vertexInputRate = Shader::VertexInputRate::VERTEX;
         spec.polygonMode = Shader::PolygonMode::FILL;
         spec.cullMode = Shader::CullMode::BACK;
         spec.frontFace = Shader::FrontFace::CLOCKWISE;
         spec.primitiveTopology = Shader::PrimitiveTopology::TRIANGLE_LIST;
         spec.primitiveRestartEnable = false;
-        spec.minDepth = -1.0f;
-        spec.maxDepth = 1.0f;
         spec.vertexShaderEntryName = "main";
         spec.fragmentShaderEntryName = "main";
         // internal use only so no reason to register with the ResourceManager
-        sData->shader = Shader::Create("builtin/Renderer2D.vert", "builtin/Renderer2D.frag", layout, &spec);
-        sData->ubo = UniformBuffer::Create(sizeof(glm::mat4), 0, Buffer::Usage::DynamicDraw);
+        sData->shader = Shader::Create("builtin/Renderer2D.vert", "builtin/Renderer2D.frag", &spec);
+        sData->ubo = UniformBuffer::Create(sizeof(glm::mat4), Buffer::Usage::DynamicDraw);
 
         uint32_t nullTextureData = 0xFFFFFFFF;
         sData->nullTexture = Car::Texture2D::Create(1, 1, &nullTextureData);

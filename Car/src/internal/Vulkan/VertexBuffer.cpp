@@ -1,6 +1,5 @@
 #include "Car/internal/Vulkan/VertexBuffer.hpp"
 #include "Car/Core/Core.hpp"
-#include "Car/Renderer/BufferLayout.hpp"
 #include "Car/Renderer/Shader.hpp"
 #include "Car/internal/Vulkan/GraphicsContext.hpp"
 
@@ -9,8 +8,7 @@
 #include <stdexcept>
 
 namespace Car {
-
-    VulkanVertexBuffer::VulkanVertexBuffer(void* data, uint32_t size, Buffer::Usage usage) {
+    VulkanVertexBuffer::VulkanVertexBuffer(void* data, uint64_t size, Buffer::Usage usage) {
         mGraphicsContext = reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get());
         mUsage = usage;
         mSize = size;
@@ -86,7 +84,7 @@ namespace Car {
         vkCmdBindVertexBuffers(mGraphicsContext->getCurrentRenderCommandBuffer(), 0, 1, vertexBuffers, offsets);
     }
 
-    void VulkanVertexBuffer::updateData(void* data, uint32_t size, uint32_t offset) {
+    void VulkanVertexBuffer::updateData(void* data, uint64_t size, uint64_t offset) {
         CR_IF (data == nullptr) {
             CR_CORE_ERROR("Car::VertexBuffer::updateData(data, size, offset), data can not be a null pointer");
         }
@@ -276,7 +274,7 @@ namespace Car {
         }
     }
 
-    Ref<VertexBuffer> VertexBuffer::Create(void* data, uint32_t size, Buffer::Usage usage) {
+    Ref<VertexBuffer> VertexBuffer::Create(void* data, uint64_t size, Buffer::Usage usage) {
         return createRef<VulkanVertexBuffer>(data, size, usage);
     }
 } // namespace Car

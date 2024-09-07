@@ -74,7 +74,7 @@ namespace Car {
         void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkDeviceSize srcOffset = 0,
                         VkDeviceSize dstOffset = 0);
         void copyBufferToImage2D(VkBuffer* pBuffer, VkImage* pImage, uint32_t width, uint32_t height,
-                                 uint32_t srcOffset = 0, uint32_t dstOffsetX = 0, uint32_t dstOffsetY = 0);
+                                 uint64_t srcOffset = 0, uint64_t dstOffsetX = 0, uint64_t dstOffsetY = 0);
         void createImage2D(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
                            VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* pImage,
                            VkDeviceMemory* pImageMemory);

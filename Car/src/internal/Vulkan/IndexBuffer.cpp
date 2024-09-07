@@ -5,7 +5,7 @@
 #include <stdexcept>
 
 namespace Car {
-    VulkanIndexBuffer::VulkanIndexBuffer(void* data, uint32_t size, Buffer::Usage usage, Buffer::Type type) {
+    VulkanIndexBuffer::VulkanIndexBuffer(void* data, uint64_t size, Buffer::Usage usage, Buffer::Type type) {
         CR_ASSERT(type == Buffer::Type::UnsignedInt || type == Buffer::Type::UnsignedShort,
                   "Invalid type for IndexBuffer, only UnsignedInt and UnsignedShort is premited");
 
@@ -110,7 +110,7 @@ namespace Car {
         vkCmdBindIndexBuffer(mGraphicsContext->getCurrentRenderCommandBuffer(), mBuffer, 0, mVkIndexType);
     }
 
-    void VulkanIndexBuffer::updateData(void* data, uint32_t size, uint32_t offset) {
+    void VulkanIndexBuffer::updateData(void* data, uint64_t size, uint64_t offset) {
         CR_IF (data == nullptr) {
             CR_CORE_ERROR("Car::VertexBuffer::updateData(data, size, offset), data can not be a null pointer");
         }
@@ -351,7 +351,7 @@ namespace Car {
         mCount = mSize / Buffer::sizeOfType(mType);
     }
 
-    Ref<IndexBuffer> IndexBuffer::Create(void* data, uint32_t count, Buffer::Usage usage, Buffer::Type type) {
+    Ref<IndexBuffer> IndexBuffer::Create(void* data, uint64_t count, Buffer::Usage usage, Buffer::Type type) {
         return createRef<VulkanIndexBuffer>(data, count, usage, type);
     }
 } // namespace Car

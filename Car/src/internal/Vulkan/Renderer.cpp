@@ -49,16 +49,15 @@ namespace Car {
             throw std::runtime_error("failed to begin recording command buffer!");
         }
 
+        VkClearValue clearColor;
+        std::memcpy(clearColor.color.float32, glm::value_ptr(sData->clearColor), sizeof(glm::vec4));
+        
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassInfo.renderPass = sGraphicsContext->getRenderPass();
         renderPassInfo.framebuffer = sGraphicsContext->getSwapChainFramebuffers()[imageIndex];
         renderPassInfo.renderArea.offset = {0, 0};
         renderPassInfo.renderArea.extent = sGraphicsContext->getSwapChainExtent();
-
-        VkClearValue clearColor;
-        std::memcpy(clearColor.color.float32, glm::value_ptr(sData->clearColor), sizeof(glm::vec4));
-
         renderPassInfo.clearValueCount = 1;
         renderPassInfo.pClearValues = &clearColor;
 
@@ -114,7 +113,7 @@ namespace Car {
         vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
     }
 
-    void VulkanRenderer::DrawCommandImpl(const Ref<VertexArray> va, uint32_t indicesCount) {
+    void VulkanRenderer::DrawCommandImpl(const Ref<VertexArray> va, uint64_t indicesCount) {
         va->bind();
 
         VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();

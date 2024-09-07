@@ -10,11 +10,11 @@ namespace Car {
 
         virtual void bind() const = 0;
 
-        virtual void updateData(void* data, uint32_t size, uint32_t offset) = 0;
+        virtual void updateData(void* data, uint64_t size, uint64_t offset) = 0;
 
-        virtual uint32_t getSize() const = 0;
+        virtual uint64_t getSize() const = 0;
         virtual Buffer::Usage getUsage() const = 0;
 
-        static Ref<VertexBuffer> Create(void* data, uint32_t size, Buffer::Usage usage);
+        static Ref<VertexBuffer> Create(void* data, uint64_t size, Buffer::Usage usage);
     };
 } // namespace Car

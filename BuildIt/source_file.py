@@ -16,11 +16,11 @@ class SourceFile:
         self.path = Path(path)
         self.watches = SourceFile.from_list(watches)
         
-        if self.path not in SourceFile._mtimes:
-            SourceFile._mtimes[path] = os.path.getmtime(str(self.path))
-
         if not self.path.exists():
             Logger.error(f"file `{str(self.path)}` does not exist")
+        
+        if self.path not in SourceFile._mtimes:
+            SourceFile._mtimes[path] = os.path.getmtime(str(self.path))
 
     def __str__(self):
         return str(self.path)

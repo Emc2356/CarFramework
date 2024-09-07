@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Car/Core/Core.hpp"
-#include "Car/Renderer/BufferLayout.hpp"
 #include "Car/Renderer/Texture2D.hpp"
 #include "Car/Renderer/Shader.hpp"
 #include "Car/Renderer/Font.hpp"

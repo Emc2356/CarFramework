@@ -6,9 +6,8 @@
 #include <glad/vulkan.h>
 
 namespace Car {
-    VulkanUniformBuffer::VulkanUniformBuffer(uint32_t size, uint32_t binding, Buffer::Usage usage) {
+    VulkanUniformBuffer::VulkanUniformBuffer(uint64_t size, Buffer::Usage usage) {
         mSize = size;
-        mBinding = binding;
         mUsage = usage;
 
         mGraphicsContext = reinterpretCastRef<VulkanGraphicsContext>(GraphicsContext::Get());
@@ -49,7 +48,7 @@ namespace Car {
         std::memcpy(mBuffersMapped[mGraphicsContext->getCurrentFrameIndex()], data, mSize);
     }
 
-    Ref<Car::UniformBuffer> UniformBuffer::Create(uint32_t size, uint32_t binding, Buffer::Usage usage) {
-        return createRef<VulkanUniformBuffer>(size, binding, usage);
+    Ref<Car::UniformBuffer> UniformBuffer::Create(uint64_t size, Buffer::Usage usage) {
+        return createRef<VulkanUniformBuffer>(size, usage);
     }
 } // namespace Car
