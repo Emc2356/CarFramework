@@ -3,7 +3,6 @@
 
 #include "Car/internal/Vulkan/GraphicsContext.hpp"
 #include "Car/internal/Vulkan/Shader.hpp"
-#include "glm/gtc/type_ptr.hpp"
 #include "Car/internal/Vulkan/Renderer.hpp"
 
 #include <glad/vulkan.h>
@@ -87,6 +86,34 @@ namespace Car {
         }
     }
 
+    void VulkanRenderer::SetPushConstantImpl(Ref<VertexArray> va, bool vert, bool frag, void* data, uint32_t size, uint32_t offset) {
+        CR_IF (!vert && !frag) {
+            CR_CORE_ERROR("Car::Renderer::SetPushConstant(vert, frag, data, size, offset), one or both of `vert` and `frag` must be true");
+            return;
+        }
+        CR_IF (!data) {
+            CR_CORE_ERROR("Car::Renderer::SetPushConstant(vert, frag, data, size, offset), data must not be nullptr");
+            return;
+        }
+        CR_IF (size + offset > 128) {
+            CR_CORE_ERROR("Car::Renderer::SetPushConstant(vert, frag, data, size, offset), size + offset can not be larger then 128 per the vulkan specification");
+            return;
+        }
+        
+        VkShaderStageFlags stageFlags = 0;
+
+        if (vert) {
+            stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
+        }
+        if (frag) {
+            stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+        }
+        
+        VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();
+        
+        vkCmdPushConstants(cmdBuffer, reinterpretCastRef<VulkanShader>(va->getShader())->getPipelineLayout(), stageFlags, offset, size, data);
+    }
+    
     void VulkanRenderer::SetViewportImpl(float x, float y, float width, float height, float minDepth, float maxDepth) {
         VkCommandBuffer cmdBuffer = sGraphicsContext->getCurrentRenderCommandBuffer();
 

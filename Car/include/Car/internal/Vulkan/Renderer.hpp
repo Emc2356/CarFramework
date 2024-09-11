@@ -15,7 +15,8 @@ namespace Car {
         virtual void SetViewportImpl(float x, float y, float width, float height, float minDepth,
                                      float maxDepth) override;
         virtual void SetScissorImpl(int32_t x, int32_t y, int32_t width, int32_t height) override;
-
+        virtual void SetPushConstantImpl(Ref<VertexArray> va, bool vert, bool frag, void* data, uint32_t size, uint32_t offset) override;
+        
         virtual void BeginRecordingImpl() override;
         virtual void EndRecordingImpl() override;
     };

@@ -131,9 +131,16 @@ namespace Car {
             bool enableLogicOp = false;
             glm::vec4 blendConstant = glm::vec4(0.0f);
         };
+        
+        struct PushConstantLayout {
+            bool useInVertexShader = false;
+            bool useInFragmentShader = false;
+            uint32_t size = 0;
+        };
 
         struct Specification {
             VertexInputLayout vertexInputLayout;
+            PushConstantLayout pushConstantLayout;
             VertexInputRate vertexInputRate = VertexInputRate::VERTEX;
             PolygonMode polygonMode = PolygonMode::FILL;
             CullMode cullMode = CullMode::BACK;

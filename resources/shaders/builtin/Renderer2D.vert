@@ -9,7 +9,8 @@ layout(location=0) out vec2 oSourceUV;
 layout(location=1) out vec3 oTint;
 layout(location=2) out flat uint oTextureID;
 
-layout(std140, binding=0) uniform CarData {
+
+layout(push_constant) uniform PC {
     mat4 uProj;
 };
 

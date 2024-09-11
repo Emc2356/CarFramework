@@ -343,11 +343,33 @@ namespace Car {
             pipelineLayoutInfo.setLayoutCount = 0;
             pipelineLayoutInfo.pSetLayouts = nullptr;
         }
-
-        // i dont think i want to support push_constant
-        pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
-        pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-
+        
+        VkPushConstantRange pushConstantRange;
+        pushConstantRange.stageFlags = (mSpec.pushConstantLayout.useInVertexShader ? VK_SHADER_STAGE_VERTEX_BIT : 0) |
+                                       (mSpec.pushConstantLayout.useInFragmentShader ? VK_SHADER_STAGE_FRAGMENT_BIT : 0);
+        
+        pushConstantRange.size = mSpec.pushConstantLayout.size;
+        pushConstantRange.offset = 0;
+        
+        if (mSpec.pushConstantLayout.size > 0) {
+            CR_IF (!mSpec.pushConstantLayout.useInVertexShader && !mSpec.pushConstantLayout.useInFragmentShader) {
+                CR_CORE_ERROR("a push constant should be used in vertex shader or fragmeant shader or both");
+                CR_DEBUGBREAK();
+                return;
+            }
+            CR_IF (mSpec.pushConstantLayout.size > 128) {
+                CR_CORE_ERROR("push constant size cant be bigger then 128 bytes");
+                CR_DEBUGBREAK();
+                return;
+            }
+            
+            pipelineLayoutInfo.pushConstantRangeCount = 1;
+            pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+        } else {
+            pipelineLayoutInfo.pushConstantRangeCount = 0;
+            pipelineLayoutInfo.pPushConstantRanges = nullptr;
+        }
+        
         if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &mPipelineLayout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
         }

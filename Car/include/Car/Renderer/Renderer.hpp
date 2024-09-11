@@ -34,6 +34,9 @@ namespace Car {
         static void SetScissor(int32_t x, int32_t y, int32_t width, int32_t height) {
             sInstance->SetScissorImpl(x, y, width, height);
         }
+        static void SetPushConstant(Ref<VertexArray> va, bool vert, bool frag, void* data, uint32_t size, uint32_t offset) {
+            sInstance->SetPushConstantImpl(va, vert, frag, data, size, offset);
+        }
 
         // implementation detail
         static void BeginRecording() { sInstance->BeginRecordingImpl(); }
@@ -46,6 +49,7 @@ namespace Car {
         virtual void DrawCommandImpl(const Ref<VertexArray> va, uint64_t indicesCount) = 0;
         virtual void SetViewportImpl(float x, float y, float width, float height, float minDepth, float maxDepth) = 0;
         virtual void SetScissorImpl(int32_t x, int32_t y, int32_t width, int32_t height) = 0;
+        virtual void SetPushConstantImpl(Ref<VertexArray> va, bool vert, bool frag, void* data, uint32_t size, uint32_t offset) = 0;
         virtual void BeginRecordingImpl() = 0;
         virtual void EndRecordingImpl() = 0;
 

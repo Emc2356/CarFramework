@@ -30,7 +30,10 @@
 #define CR_APP_ERROR(...) fmt::print("[APPLICATION] (ERROR): {0}\n", fmt::format(__VA_ARGS__))
 #define CR_APP_CRITICAL(...) fmt::print("[APPLICATION] (CRITICAL): {0}\n", fmt::format(__VA_ARGS__))
 
-#define CR_DEBUGBREAK() debug_break()
+#define CR_STRINGIFY(x) #x
+#define CR_EXPAND(x) x
+
+#define CR_DEBUGBREAK() CR_CORE_DEBUG("Debug breakpoint hit in {}:{}",__FILE__, __LINE__); debug_break()
 
 #define CR_ASSERT(x, message)                                                                                          \
     if (!(x)) {                                                                                                        \

@@ -19,7 +19,6 @@ struct Renderer2DVertex {
 
 struct Renderer2DData {
     Car::Ref<Car::Shader> shader;
-    Car::Ref<Car::UniformBuffer> ubo;
     Car::Ref<Car::IndexBuffer> ib;
     Car::Ref<Car::VertexBuffer> vb;
     Car::Ref<Car::VertexArray> va;
@@ -62,6 +61,9 @@ namespace Car {
         assert(sizeof(Renderer2DVertex) == layout.getTotalSize());
 
         Shader::Specification spec{};
+        spec.pushConstantLayout.useInVertexShader = true;
+        spec.pushConstantLayout.useInFragmentShader = false;
+        spec.pushConstantLayout.size = sizeof(glm::mat4);
         spec.vertexInputLayout = layout;
         spec.vertexInputRate = Shader::VertexInputRate::VERTEX;
         spec.polygonMode = Shader::PolygonMode::FILL;
@@ -73,14 +75,12 @@ namespace Car {
         spec.fragmentShaderEntryName = "main";
         // internal use only so no reason to register with the ResourceManager
         sData->shader = Shader::Create("builtin/Renderer2D.vert", "builtin/Renderer2D.frag", &spec);
-        sData->ubo = UniformBuffer::Create(sizeof(glm::mat4), Buffer::Usage::DynamicDraw);
 
         uint32_t nullTextureData = 0xFFFFFFFF;
         sData->nullTexture = Car::Texture2D::Create(1, 1, &nullTextureData);
 
-        sData->shader->setInput(0, 0, true, sData->ubo);
         for (uint32_t i = 0; i < 8; i++) {
-            sData->shader->setInput(1, i, true, sData->nullTexture);
+            sData->shader->setInput(0, i, true, sData->nullTexture);
         }
 
         // TODO: change the batch size so the index buffer can use uint16_t
@@ -148,11 +148,11 @@ namespace Car {
 
         glm::mat4 proj = glm::ortho(0.0f, (float)window->getWidth(), 0.0f, (float)window->getHeight(), 1.0f, -1.0f);
 
-        sData->ubo->setData(glm::value_ptr(proj));
+        Renderer::SetPushConstant(sData->va, true, false, glm::value_ptr(proj), sizeof(glm::mat4), 0);
 
         for (size_t i = 0; i < sData->textureTextures.size(); i++) {
             // sData->textureTextures[i]->bind(i);
-            sData->shader->setInput(1, i, false, sData->textureTextures[i]);
+            sData->shader->setInput(0, i, false, sData->textureTextures[i]);
         }
 
         sData->vb->updateData((void*)sData->vertices, sData->currentBatchSize * 4 * sizeof(Renderer2DVertex), 0);
